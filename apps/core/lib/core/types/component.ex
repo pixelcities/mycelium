@@ -63,12 +63,17 @@ defmodule Core.Types.Component do
     end)
   end
 
-  def validate_wal(changeset) do
-    wal = changeset
-    |> fetch_field!(:wal)
-    |> WAL.new()
+  def validate_wal(changeset, opts \\ []) do
+    allow_nil = Keyword.get(opts, :allow_nil, false)
 
-    Enum.reduce(wal.errors, changeset, fn {err, {message, additional}}, changeset -> add_error(changeset, err, message, additional) end)
+    field = fetch_field!(changeset, :wal)
+    if allow_nil and field == nil do
+      changeset
+    else
+      wal = WAL.new(field)
+
+      Enum.reduce(wal.errors, changeset, fn {err, {message, additional}}, changeset -> add_error(changeset, err, message, additional) end)
+    end
   end
 
 end
