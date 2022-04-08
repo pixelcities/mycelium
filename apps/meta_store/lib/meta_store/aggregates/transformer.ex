@@ -8,11 +8,12 @@ defmodule MetaStore.Aggregates.Transformer do
             is_ready: false,
             collections: [],
             transformers: [],
-            date: nil
+            date: nil,
+            wal: nil
 
   alias MetaStore.Aggregates.Transformer
-  alias Core.Commands.{CreateTransformer, UpdateTransformer, SetTransformerPosition, AddTransformerTarget, AddTransformerInput}
-  alias Core.Events.{TransformerCreated, TransformerUpdated, TransformerPositionSet, TransformerTargetAdded, TransformerInputAdded}
+  alias Core.Commands.{CreateTransformer, UpdateTransformer, SetTransformerPosition, AddTransformerTarget, AddTransformerInput, UpdateTransformerWAL}
+  alias Core.Events.{TransformerCreated, TransformerUpdated, TransformerPositionSet, TransformerTargetAdded, TransformerInputAdded, TransformerWALUpdated}
 
   @doc """
   Create a new transformer
@@ -68,6 +69,13 @@ defmodule MetaStore.Aggregates.Transformer do
     end
   end
 
+  def execute(%Transformer{} = transformer, %UpdateTransformerWAL{} = update)
+    when transformer.workspace == update.workspace
+  do
+    TransformerWALUpdated.new(update, date: NaiveDateTime.utc_now())
+  end
+
+
   # State mutators
 
   def apply(%Transformer{} = transformer, %TransformerCreated{} = created) do
@@ -118,6 +126,13 @@ defmodule MetaStore.Aggregates.Transformer do
         date: event.date
       }
     end
+  end
+
+  def apply(%Transformer{} = transformer, %TransformerWALUpdated{} = updated) do
+    %Transformer{transformer |
+      wal: updated.wal,
+      date: updated.date
+    }
   end
 
 end

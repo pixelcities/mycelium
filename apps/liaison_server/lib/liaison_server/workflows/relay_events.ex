@@ -19,7 +19,8 @@ defmodule LiaisonServer.Workflows.RelayEvents do
     TransformerUpdated,
     TransformerPositionSet,
     TransformerTargetAdded,
-    TransformerInputAdded
+    TransformerInputAdded,
+    TransformerWALUpdated
   }
 
   @impl true
@@ -56,31 +57,34 @@ defmodule LiaisonServer.Workflows.RelayEvents do
   def handle(%UserUpdated{} = event, metadata), do: handle_event("UserUpdated", event, metadata, true)
 
   @impl true
-  def handle(%CollectionCreated{} = event, metadata), do: handle_event("CollectionCreated", event, metadata, true)
+  def handle(%CollectionCreated{} = event, metadata), do: handle_event("CollectionCreated", event, metadata)
 
   @impl true
-  def handle(%CollectionUpdated{} = event, metadata), do: handle_event("CollectionUpdated", event, metadata, true)
+  def handle(%CollectionUpdated{} = event, metadata), do: handle_event("CollectionUpdated", event, metadata)
 
   @impl true
-  def handle(%CollectionPositionSet{} = event, metadata), do: handle_event("CollectionPositionSet", event, metadata, true)
+  def handle(%CollectionPositionSet{} = event, metadata), do: handle_event("CollectionPositionSet", event, metadata)
 
   @impl true
-  def handle(%CollectionTargetAdded{} = event, metadata), do: handle_event("CollectionTargetAdded", event, metadata, true)
+  def handle(%CollectionTargetAdded{} = event, metadata), do: handle_event("CollectionTargetAdded", event, metadata)
 
   @impl true
-  def handle(%TransformerCreated{} = event, metadata), do: handle_event("TransformerCreated", event, metadata, true)
+  def handle(%TransformerCreated{} = event, metadata), do: handle_event("TransformerCreated", event, metadata)
 
   @impl true
-  def handle(%TransformerUpdated{} = event, metadata), do: handle_event("TransformerUpdated", event, metadata, true)
+  def handle(%TransformerUpdated{} = event, metadata), do: handle_event("TransformerUpdated", event, metadata)
 
   @impl true
-  def handle(%TransformerPositionSet{} = event, metadata), do: handle_event("TransformerPositionSet", event, metadata, true)
+  def handle(%TransformerPositionSet{} = event, metadata), do: handle_event("TransformerPositionSet", event, metadata)
 
   @impl true
-  def handle(%TransformerTargetAdded{} = event, metadata), do: handle_event("TransformerTargetAdded", event, metadata, true)
+  def handle(%TransformerTargetAdded{} = event, metadata), do: handle_event("TransformerTargetAdded", event, metadata)
 
   @impl true
-  def handle(%TransformerInputAdded{} = event, metadata), do: handle_event("TransformerInputAdded", event, metadata, true)
+  def handle(%TransformerInputAdded{} = event, metadata), do: handle_event("TransformerInputAdded", event, metadata)
+
+  @impl true
+  def handle(%TransformerWALUpdated{} = event, metadata), do: handle_event("TransformerWALUpdated", event, metadata)
 
 
   defp handle_event(type, event, metadata, all_workspaces \\ false) do

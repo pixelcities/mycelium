@@ -52,3 +52,9 @@ defmodule Core.Events.TransformerInputAdded do
     with: [:date]
 end
 
+defmodule Core.Events.TransformerWALUpdated do
+  use Commanded.Event,
+    from: Core.Commands.UpdateTransformerWAL,
+    with: [:date]
+end
+

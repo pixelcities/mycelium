@@ -15,7 +15,8 @@ defmodule MetaStore.Router do
     UpdateTransformer,
     SetTransformerPosition,
     AddTransformerTarget,
-    AddTransformerInput
+    AddTransformerInput,
+    UpdateTransformerWAL
   }
   alias MetaStore.Aggregates.{Source, Metadata, Collection, Transformer}
 
@@ -27,6 +28,6 @@ defmodule MetaStore.Router do
   dispatch([ CreateSource, UpdateSource ], to: Source)
   dispatch([ CreateMetadata, UpdateMetadata ], to: Metadata)
   dispatch([ CreateCollection, UpdateCollection, SetCollectionPosition, AddCollectionTarget ], to: Collection)
-  dispatch([ CreateTransformer, UpdateTransformer, SetTransformerPosition, AddTransformerTarget, AddTransformerInput ], to: Transformer)
+  dispatch([ CreateTransformer, UpdateTransformer, SetTransformerPosition, AddTransformerTarget, AddTransformerInput, UpdateTransformerWAL ], to: Transformer)
 
 end

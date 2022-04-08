@@ -85,13 +85,15 @@ defmodule Core.Commands.CreateTransformer do
     color: {:string, default: "#000000"},
     is_ready: {:boolean, default: false},
     collections: {{:array, :binary_id}, default: []},
-    transformers: {{:array, :binary_id}, default: []}
+    transformers: {{:array, :binary_id}, default: []},
+    wal: :map
 
   def handle_validate(changeset) do
     changeset
     |> validate_required([:id, :workspace, :type])
     |> validate_inclusion(:type, ["merge", "function", "custom"])
     |> validate_component()
+    |> validate_wal()
   end
 end
 
@@ -107,13 +109,15 @@ defmodule Core.Commands.UpdateTransformer do
     color: {:string, default: "#000000"},
     is_ready: {:boolean, default: false},
     collections: {{:array, :binary_id}, default: []},
-    transformers: {{:array, :binary_id}, default: []}
+    transformers: {{:array, :binary_id}, default: []},
+    wal: :map
 
   def handle_validate(changeset) do
     changeset
     |> validate_required([:id, :workspace, :type])
     |> validate_inclusion(:type, ["merge", "function", "custom"])
     |> validate_component()
+    |> validate_wal()
   end
 end
 
@@ -159,6 +163,21 @@ defmodule Core.Commands.AddTransformerInput do
     changeset
     |> validate_required([:id, :workspace])
     |> validate_one_of([:collection, :transformer])
+  end
+end
+
+defmodule Core.Commands.UpdateTransformerWAL do
+  import Core.Types.Component
+
+  use Commanded.Command,
+    id: :binary_id,
+    workspace: :string,
+    wal: :map
+
+  def handle_validate(changeset) do
+    changeset
+    |> validate_required([:id, :workspace, :wal])
+    |> validate_wal()
   end
 end
 

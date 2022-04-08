@@ -1,7 +1,7 @@
 defmodule Core.Types.Component do
   import Ecto.Changeset
 
-  alias Core.Types.Schema
+  alias Core.Types.{Schema, WAL}
 
   defp validate_targets(changeset) do
     changeset
@@ -61,6 +61,14 @@ defmodule Core.Types.Component do
         []
       end
     end)
+  end
+
+  def validate_wal(changeset) do
+    wal = changeset
+    |> fetch_field!(:wal)
+    |> WAL.new()
+
+    Enum.reduce(wal.errors, changeset, fn {err, {message, additional}}, changeset -> add_error(changeset, err, message, additional) end)
   end
 
 end

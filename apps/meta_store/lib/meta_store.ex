@@ -18,7 +18,8 @@ defmodule MetaStore do
     UpdateTransformer,
     SetTransformerPosition,
     AddTransformerTarget,
-    AddTransformerInput
+    AddTransformerInput,
+    UpdateTransformerWAL
   }
 
 
@@ -106,6 +107,10 @@ defmodule MetaStore do
     else
       reply -> reply
     end
+  end
+
+  def update_transformer_wal(attrs, %{user_id: _user_id} = metadata) do
+    handle_dispatch(UpdateTransformerWAL.new(attrs), metadata)
   end
 
 

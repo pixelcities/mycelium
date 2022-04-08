@@ -89,6 +89,10 @@ defmodule LiaisonServerWeb.UserChannel do
   @impl true
   def handle_in("action", %{"type" => "AddTransformerInput"} = action, socket), do: handle_action(&MetaStore.add_transformer_input/2, action, socket)
 
+  @impl true
+  def handle_in("action", %{"type" => "UpdateTransformerWAL"} = action, socket), do: handle_action(&MetaStore.update_transformer_wal/2, action, socket)
+
+
 
   # Add authorization logic here as required.
   defp authorized?(_payload) do
