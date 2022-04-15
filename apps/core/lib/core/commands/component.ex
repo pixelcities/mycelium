@@ -93,7 +93,7 @@ defmodule Core.Commands.CreateTransformer do
     |> validate_required([:id, :workspace, :type])
     |> validate_inclusion(:type, ["merge", "function", "custom"])
     |> validate_component()
-    |> validate_wal([:allow_nil])
+    |> validate_wal([allow_nil: true])
   end
 end
 
@@ -117,7 +117,7 @@ defmodule Core.Commands.UpdateTransformer do
     |> validate_required([:id, :workspace, :type])
     |> validate_inclusion(:type, ["merge", "function", "custom"])
     |> validate_component()
-    |> validate_wal([:allow_nil])
+    |> validate_wal([allow_nil: true])
   end
 end
 

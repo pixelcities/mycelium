@@ -5,11 +5,11 @@ defmodule Core.Types.WAL do
 
       iex> Core.Types.WAL.new(%{
       ...>   "identifiers" => %{
-      ...>     1 => "table",
-      ...>     2 => "col1"
+      ...>     "1" => "table",
+      ...>     "2" => "col1"
       ...>   },
       ...>   "values" => %{
-      ...>     1 => "1"
+      ...>     "1" => "1"
       ...>   },
       ...>   "transactions" => [
       ...>     "UPDATE %1$I SET %2$I = $1;"
@@ -58,7 +58,7 @@ defmodule Core.Types.WAL do
         positions -> Enum.reduce(positions, [], fn position, err ->
           field = if String.starts_with?(hd(position), "$"), do: :values, else: :identifiers
 
-          if Map.has_key?(get_field(changeset, field), String.to_integer(Enum.at(position, -1))), do: err, else: [hd(position) | err]
+          if Map.has_key?(get_field(changeset, field), Enum.at(position, -1)), do: err, else: [hd(position) | err]
         end)
       end
 

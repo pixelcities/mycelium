@@ -46,7 +46,7 @@ defmodule MetaStore.Aggregates.Transformer do
       if command.collection and length(transformer.collections) <= 1 do
         TransformerInputAdded.new(%{
           id: transformer.id,
-          workspace: transformer.id,
+          workspace: transformer.workspace,
           collection: command.collection,
           date: NaiveDateTime.utc_now()
         })
@@ -58,7 +58,7 @@ defmodule MetaStore.Aggregates.Transformer do
       if length(transformer.collections) == 0 and length(transformer.transformers) == 0 do
         TransformerInputAdded.new(%{
           id: transformer.id,
-          workspace: transformer.id,
+          workspace: transformer.workspace,
           collection: command.collection,
           transformer: command.transformer,
           date: NaiveDateTime.utc_now()
