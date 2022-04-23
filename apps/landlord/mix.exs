@@ -31,7 +31,11 @@ defmodule Landlord.MixProject do
       {:jason, "~> 1.1"},
       {:postgrex, ">= 0.0.0"},
       {:swoosh, "~> 1.6"},
+      {:hackney, "~> 1.9"},
       {:gen_smtp, "~> 1.0"},
+      {:commanded, "~> 1.1"},
+      {:commanded_eventstore_adapter, "~> 1.1"},
+      {:eventstore, "~> 1.1"},
 
       {:core, "~> 0.1", in_umbrella: true}
     ]

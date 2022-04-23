@@ -1,20 +1,33 @@
 defmodule Maestro.Application do
-  # See https://hexdocs.pm/elixir/Application.html
-  # for more information on OTP Applications
   @moduledoc false
+
+  @parent_module __MODULE__ |> Module.split |> Enum.drop(-1) |> Module.concat
 
   use Application
 
   @impl true
   def start(_type, _args) do
-    children = [
-      # Starts a worker by calling: Maestro.Worker.start_link(arg)
-      # {Maestro.Worker, arg}
-    ]
+    app = get_app()
+    tenants = Landlord.Registry.get()
 
-    # See https://hexdocs.pm/elixir/Supervisor.html
-    # for other strategies and supported options
-    opts = [strategy: :one_for_one, name: Maestro.Supervisor]
+    children = if app == @parent_module.App do
+      Enum.flat_map(tenants, fn tenant ->
+        [
+          {Maestro.App, name: Module.concat([app, tenant]), tenant: tenant}
+        ]
+      end) ++ [
+        {Maestro.Supervisor, backend: app, tenants: tenants}
+      ]
+    else
+      []
+    end
+
+    opts = [strategy: :one_for_one, name: Maestro.ApplicationSupervisor]
     Supervisor.start_link(children, opts)
   end
+
+  def get_app() do
+    Application.fetch_env!(:maestro, :backend_config)[:backend_app]
+  end
+
 end

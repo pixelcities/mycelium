@@ -14,5 +14,7 @@ config :landlord, ecto_repos: [Landlord.Repo]
 
 config :key_x, ecto_repos: [KeyX.Repo]
 
+config :maestro, event_stores: [Maestro.EventStore]
+
 import_config "#{Mix.env()}.exs"
 

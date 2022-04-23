@@ -80,4 +80,9 @@ config :key_x, KeyX.Repo,
   hostname: "localhost"
 
 
+# Maestro
+config :maestro, :backend_config,
+  backend_app: LiaisonServer.App
+
+
 import_config "dev.secret.exs"

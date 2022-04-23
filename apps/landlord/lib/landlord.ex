@@ -3,7 +3,7 @@ defmodule Landlord do
   Documentation for `Landlord`.
   """
 
-  @app MetaStore.Application.get_app()
+  @app Landlord.Application.get_app()
 
   alias Core.Commands.{CreateUser, UpdateUser}
 
@@ -37,5 +37,6 @@ defmodule Landlord do
       reply -> reply
     end
   end
+
 
 end

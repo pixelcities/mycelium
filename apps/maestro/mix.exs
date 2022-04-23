@@ -9,9 +9,11 @@ defmodule Maestro.MixProject do
       config_path: "../../config/config.exs",
       deps_path: "../../deps",
       lockfile: "../../mix.lock",
-      elixir: "~> 1.12",
+      elixir: "~> 1.11",
+      elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      deps: deps(),
+      xref: [exclude: [LiaisonServer.App]]
     ]
   end
 
@@ -23,12 +25,18 @@ defmodule Maestro.MixProject do
     ]
   end
 
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_), do: ["lib"]
+
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      # {:dep_from_hexpm, "~> 0.3.0"},
-      # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"},
-      # {:sibling_app_in_umbrella, in_umbrella: true}
+      {:commanded, "~> 1.1"},
+      {:commanded_eventstore_adapter, "~> 1.1"},
+      {:eventstore, "~> 1.1"},
+
+      {:core, "~> 0.1", in_umbrella: true},
+      {:landlord, "~> 0.1", in_umbrella: true}
     ]
   end
 end

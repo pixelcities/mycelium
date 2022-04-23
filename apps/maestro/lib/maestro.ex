@@ -3,16 +3,7 @@ defmodule Maestro do
   Documentation for `Maestro`.
   """
 
-  @doc """
-  Hello world.
-
-  ## Examples
-
-      iex> Maestro.hello()
-      :world
-
-  """
-  def hello do
-    :world
+  def schedule_job do
+    :noop
   end
 end
