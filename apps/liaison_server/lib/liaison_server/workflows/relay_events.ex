@@ -91,7 +91,7 @@ defmodule LiaisonServer.Workflows.RelayEvents do
     %{state: state} = metadata
 
     if all_workspaces || state.workspace == event.workspace do
-      if Map.has_key?(LiaisonServerWeb.Presence.list("user:" <> state.user_id), state.user_id) do
+      if Map.has_key?(Enum.into(Phoenix.Tracker.list(LiaisonServerWeb.Tracker, "user:" <> state.user_id), %{}), state.user_id) do
         LiaisonServerWeb.Endpoint.broadcast("user:" <> state.user_id, "event", %{"type" => type, "payload" => event})
 
         :ok

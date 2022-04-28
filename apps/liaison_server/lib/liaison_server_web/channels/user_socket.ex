@@ -4,6 +4,7 @@ defmodule LiaisonServerWeb.UserSocket do
   alias Landlord.Accounts
 
   channel "user:*", LiaisonServerWeb.UserChannel
+  channel "ds:*", LiaisonServerWeb.DataSpaceChannel
 
   @impl true
   def connect(%{"token" => token}, socket, _connect_info) do

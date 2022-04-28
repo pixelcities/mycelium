@@ -17,6 +17,7 @@ defmodule Maestro.Supervisor do
       end)
       ++
         [
+          {Maestro.Allocator, name: Maestro.Allocator},
           {Maestro.Heartbeat, name: Maestro.Heartbeat}
         ]
 

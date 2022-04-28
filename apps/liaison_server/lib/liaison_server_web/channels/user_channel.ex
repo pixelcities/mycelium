@@ -3,7 +3,7 @@ defmodule LiaisonServerWeb.UserChannel do
 
   require Logger
 
-  alias LiaisonServerWeb.Presence
+  alias LiaisonServerWeb.Tracker
 
   @impl true
   def join("user:" <> user_id, payload, socket) do
@@ -19,11 +19,11 @@ defmodule LiaisonServerWeb.UserChannel do
   end
 
   def handle_info(:after_join, socket) do
-    {:ok, _} = Presence.track(socket, socket.assigns.current_user.id, %{
+    user_id = socket.assigns.current_user.id
+    {:ok, _} = Phoenix.Tracker.track(Tracker, self(), "user:" <> user_id, user_id, %{
       online_at: inspect(System.system_time(:second))
     })
 
-    push(socket, "presence_state", Presence.list(socket))
     {:noreply, socket}
   end
 

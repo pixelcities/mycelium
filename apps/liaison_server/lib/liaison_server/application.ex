@@ -28,12 +28,13 @@ defmodule LiaisonServer.Application do
       {MetaStore.Supervisor, backend: LiaisonServer.App, tenants: tenants},
       {DataStore.Supervisor, backend: LiaisonServer.App, tenants: tenants},
       {KeyX.Supervisor, backend: LiaisonServer.App, tenants: tenants},
-      {Landlord.Supervisor, backend: LiaisonServer.App, tenants: tenants}
+      {Landlord.Supervisor, backend: LiaisonServer.App, tenants: tenants},
+      {Maestro.Supervisor, backend: LiaisonServer.App, tenants: tenants}
     ]
 
     children = [
       {Phoenix.PubSub, name: LiaisonServer.PubSub},
-      LiaisonServerWeb.Presence,
+      {LiaisonServerWeb.Tracker, name: LiaisonServerWeb.Tracker, pubsub_server: LiaisonServer.PubSub},
       LiaisonServerWeb.Endpoint
     ]
 

@@ -39,7 +39,8 @@ defmodule LiaisonServer.MixProject do
       {:meta_store, "~> 0.1", in_umbrella: true},
       {:data_store, "~> 0.1", in_umbrella: true},
       {:landlord, "~> 0.1", in_umbrella: true},
-      {:key_x, "~> 0.1", in_umbrella: true}
+      {:key_x, "~> 0.1", in_umbrella: true},
+      {:maestro, "~> 0.1", in_umbrella: true}
     ]
   end
 end
