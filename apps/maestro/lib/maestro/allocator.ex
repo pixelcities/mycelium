@@ -9,6 +9,7 @@ defmodule Maestro.Allocator do
 
   use GenServer
 
+  alias KeyX.Protocol
 
   ## Client
 
@@ -47,7 +48,13 @@ defmodule Maestro.Allocator do
 
   @impl true
   def handle_cast({:register, user_id, meta}, workers) do
-    :ets.insert(workers, {user_id, meta})
+    worker = :ets.lookup(workers, user_id)
+
+    if length(worker) == 0 do
+      :ets.insert(workers, {user_id, meta})
+
+      maybe_schedule_bundle_task(user_id)
+    end
 
     {:noreply, workers}
   end
@@ -57,6 +64,25 @@ defmodule Maestro.Allocator do
     :ets.delete(workers, user_id)
 
     {:noreply, workers}
+  end
+
+  defp maybe_schedule_bundle_task(user_id) do
+    nr_bundles = Protocol.get_nr_bundles_by_user_id!(user_id)
+
+    if nr_bundles < 5 do
+      id = UUID.uuid4()
+
+      Maestro.schedule_task(%{
+        id: id,
+        type: "protocol",
+        task: "add_bundles"
+      })
+
+      Maestro.assign_task(%{
+        id: id,
+        worker: user_id
+      })
+    end
   end
 
 end

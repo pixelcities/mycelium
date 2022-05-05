@@ -20,6 +20,20 @@ defmodule KeyX.Protocol do
     )
   end
 
+  def get_max_bundle_id_by_user!(user) do
+    Repo.one(from b in Bundle,
+      select: max(b.bundle_id),
+      where: b.user_id == ^user.id
+    )
+  end
+
+  def get_nr_bundles_by_user_id!(user_id) do
+    Repo.one(from b in Bundle,
+      select: count(b.bundle_id),
+      where: b.user_id == ^user_id
+    )
+  end
+
   def get_state!(id), do: Repo.get!(State, id)
 
   def get_state_by_user!(user) do

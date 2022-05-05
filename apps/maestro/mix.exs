@@ -36,7 +36,9 @@ defmodule Maestro.MixProject do
       {:eventstore, "~> 1.1"},
 
       {:core, "~> 0.1", in_umbrella: true},
-      {:landlord, "~> 0.1", in_umbrella: true}
+      {:landlord, "~> 0.1", in_umbrella: true},
+      {:key_x, "~> 0.1", in_umbrella: true},
+      {:meta_store, "~> 0.1", in_umbrella: true}
     ]
   end
 end

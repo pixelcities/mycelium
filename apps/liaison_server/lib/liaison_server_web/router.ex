@@ -63,6 +63,7 @@ defmodule LiaisonServerWeb.Router do
     pipe_through [:api, :require_authenticated_user]
 
     post "/bundles", ProtocolController, :create_bundle
+    get "/bundles", ProtocolController, :get_latest_bundle
     get "/bundles/:user_id", ProtocolController, :get_bundle
     delete "/bundles/:user_id/:bundle_id", ProtocolController, :delete_bundle
 

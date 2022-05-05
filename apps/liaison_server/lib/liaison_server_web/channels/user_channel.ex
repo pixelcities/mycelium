@@ -41,6 +41,10 @@ defmodule LiaisonServerWeb.UserChannel do
   @impl true
   def handle_in("init", %{"type" => "secrets"}, socket), do: handle_subscribe(LiaisonServer.Workflows.RelaySecrets, socket, false)
 
+  @impl true
+  def handle_in("init", %{"type" => "tasks"}, socket), do: handle_subscribe(LiaisonServer.Workflows.RelayTasks, socket, false)
+
+
 
   # Command handlers
 
@@ -92,6 +96,8 @@ defmodule LiaisonServerWeb.UserChannel do
   @impl true
   def handle_in("action", %{"type" => "UpdateTransformerWAL"} = action, socket), do: handle_action(&MetaStore.update_transformer_wal/2, action, socket)
 
+  @impl true
+  def handle_in("action", %{"type" => "CompleteTask"} = action, socket), do: handle_action(&Maestro.complete_task/2, action, socket)
 
 
   # Add authorization logic here as required.

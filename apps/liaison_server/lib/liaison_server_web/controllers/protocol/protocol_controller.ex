@@ -16,6 +16,20 @@ defmodule LiaisonServerWeb.Protocol.ProtocolController do
   end
 
   @doc """
+  Get the latest bundle id
+  """
+  def get_latest_bundle(conn, _params) do
+    user = conn.assigns.current_user
+
+    bundle_id = case Protocol.get_max_bundle_id_by_user!(user) do
+      nil -> nil
+      bundle_id -> bundle_id
+    end
+
+    json(conn, bundle_id)
+  end
+
+  @doc """
   Get an available bundle id for given user
   """
   def get_bundle(conn, %{"user_id" => remote_user_id} = _params) do

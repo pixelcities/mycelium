@@ -27,8 +27,9 @@ defmodule Maestro.Aggregates.Task do
     TaskCreated.new(command, date: NaiveDateTime.utc_now())
   end
 
-  def execute(%Task{}, %AssignTask{} = command) do
-    TaskAssigned.new(command, date: NaiveDateTime.utc_now())
+  def execute(%Task{} = task, %AssignTask{} = command) do
+    event = Map.put(task, :worker, command.worker)
+    TaskAssigned.new(event, date: NaiveDateTime.utc_now())
   end
 
   def execute(%Task{}, %CompleteTask{} = command)
