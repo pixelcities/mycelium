@@ -17,6 +17,8 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
   defstruct [
     :id,
     :transformer,
+    # :wants_collection,
+    :has_collection,
     :task_id
   ]
 
@@ -35,6 +37,11 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
 
   # Command dispatch
 
+
+  # TODO: Create the collection, uri, and link the two components
+  def handle(%TransformerTaskProcessManager{has_collection: false} = pm, %TransformerWALUpdated{wal: wal} = _event) do
+  end
+
   @doc """
   Create unassigned task
 
@@ -45,11 +52,16 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
   Task assignment will instead take care of duplicating the task as many times as needed
   so that all fragments make up a full collection.
   """
-  def handle(%TransformerTaskProcessManager{}, %TransformerWALUpdated{wal: wal} = _event) do
+  def handle(%TransformerTaskProcessManager{has_collection: true} = pm, %TransformerWALUpdated{wal: wal} = _event) do
     %CreateTask{
       id: UUID.uuid4(),
       type: "transformer",
-      task: wal
+      task: %{
+        "instruction" => "compute_fragment",
+        "transformer_id" => pm.id,
+        "columns" => [],
+        "wal" => wal
+      }
     }
   end
 

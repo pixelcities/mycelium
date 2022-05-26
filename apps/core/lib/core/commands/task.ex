@@ -27,11 +27,11 @@ end
 defmodule Core.Commands.CompleteTask do
   use Commanded.Command,
     id: :string,
-    is_complete: :boolean
+    is_completed: :boolean
 
   def handle_validate(changeset) do
     changeset
-    |> validate_required([:id, :is_complete])
+    |> validate_required([:id, :is_completed])
   end
 end
 

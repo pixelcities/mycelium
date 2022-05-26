@@ -12,11 +12,13 @@ defmodule Maestro.Supervisor do
     children =
       Enum.flat_map(tenants, fn tenant ->
         [
+          {Maestro.Projectors.Task, application: Module.concat(backend, tenant)},
           {Maestro.Managers.TransformerTaskProcessManager, application: Module.concat(backend, tenant)}
         ]
       end)
       ++
         [
+          Maestro.Repo,
           {Maestro.Allocator, name: Maestro.Allocator},
           {Maestro.Heartbeat, name: Maestro.Heartbeat}
         ]

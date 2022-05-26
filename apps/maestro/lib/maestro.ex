@@ -5,8 +5,11 @@ defmodule Maestro do
 
   @app Maestro.Application.get_app()
 
-  alias Core.Commands.{CreateTask, AssignTask, CompleteTask}
+  import Ecto.Query, warn: false
 
+  alias Core.Commands.{CreateTask, AssignTask, CompleteTask}
+  alias Maestro.Projections.Task
+  alias Maestro.Repo
 
   def schedule_task(attrs, metadata \\ %{}) do
     task =
@@ -42,6 +45,12 @@ defmodule Maestro do
     else
       reply -> reply
     end
+  end
+
+  def get_tasks(_attrs \\ %{}) do
+    Repo.all(from t in Task,
+      where: t.is_completed == false
+    )
   end
 
 end

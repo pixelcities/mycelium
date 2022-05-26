@@ -33,7 +33,11 @@ defmodule Maestro.MixProject do
     [
       {:commanded, "~> 1.1"},
       {:commanded_eventstore_adapter, "~> 1.1"},
+      {:commanded_ecto_projections, "~> 1.1"},
       {:eventstore, "~> 1.1"},
+      {:ecto_sql, "~> 3.0"},
+      {:postgrex, ">= 0.0.0"},
+      {:jason, "~> 1.1"},
 
       {:core, "~> 0.1", in_umbrella: true},
       {:landlord, "~> 0.1", in_umbrella: true},

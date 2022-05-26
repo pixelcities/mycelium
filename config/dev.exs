@@ -84,5 +84,10 @@ config :key_x, KeyX.Repo,
 config :maestro, :backend_config,
   backend_app: LiaisonServer.App
 
+config :maestro, Maestro.Repo,
+  database: "maestro",
+  username: "postgres",
+  hostname: "localhost"
+
 
 import_config "dev.secret.exs"

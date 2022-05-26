@@ -14,7 +14,7 @@ defmodule Maestro.Aggregates.Task do
             type: nil,
             task: nil,
             worker: nil,
-            is_complete: false
+            is_completed: false
 
   alias Maestro.Aggregates.Task
   alias Core.Commands.{CreateTask, AssignTask, CompleteTask}
@@ -33,7 +33,7 @@ defmodule Maestro.Aggregates.Task do
   end
 
   def execute(%Task{}, %CompleteTask{} = command)
-    when command.is_complete == true
+    when command.is_completed == true
   do
     TaskCompleted.new(command, date: NaiveDateTime.utc_now())
   end
@@ -58,7 +58,7 @@ defmodule Maestro.Aggregates.Task do
 
   def apply(%Task{} = task, %TaskCompleted{} = _event) do
     %Task{task |
-      is_complete: true
+      is_completed: true
     }
   end
 
