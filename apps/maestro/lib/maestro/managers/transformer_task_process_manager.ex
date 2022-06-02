@@ -40,6 +40,16 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
 
   # TODO: Create the collection, uri, and link the two components
   def handle(%TransformerTaskProcessManager{has_collection: false} = pm, %TransformerWALUpdated{wal: wal} = _event) do
+    %CreateTask{
+      id: UUID.uuid4(),
+      type: "transformer",
+      task: %{
+        "instruction" => "compute_fragment",
+        "transformer_id" => pm.id,
+        "columns" => [],
+        "wal" => wal
+      }
+    }
   end
 
   @doc """
@@ -70,7 +80,8 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
   def apply(%TransformerTaskProcessManager{} = pm, %TransformerCreated{} = event) do
     %TransformerTaskProcessManager{pm |
       id: event.id,
-      transformer: event
+      transformer: event,
+      has_collection: false
     }
   end
 

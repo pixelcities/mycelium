@@ -13,7 +13,8 @@ defmodule MetaStore.Supervisor do
       Enum.flat_map(tenants, fn tenant ->
         [
           {MetaStore.Workflows.AddCollectionInput, application: Module.concat(backend, tenant)},
-          {MetaStore.Projectors.Source, application: Module.concat(backend, tenant)}
+          {MetaStore.Projectors.Source, application: Module.concat(backend, tenant)},
+          {MetaStore.Projectors.Collection, application: Module.concat(backend, tenant)}
         ]
       end)
       ++

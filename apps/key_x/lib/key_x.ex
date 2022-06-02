@@ -3,7 +3,7 @@ defmodule KeyX do
   Documentation for `KeyX`.
   """
 
-  @app MetaStore.Application.get_app()
+  @app KeyX.Application.get_app()
 
   alias Core.Commands.ShareSecret
 

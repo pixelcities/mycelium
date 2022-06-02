@@ -1,9 +1,12 @@
 defmodule MetaStoreTest do
   use MetaStore.InMemoryEventStoreCase
 
+  doctest MetaStore
+
   import Commanded.Assertions.EventAssertions
 
-  alias MetaStore.{App, Router}
+  alias MetaStore.{App, Router, Projectors}
+  alias MetaStore.Projections.Source
   alias Core.Commands.CreateSource
   alias Core.Events.SourceCreated
 
@@ -11,10 +14,14 @@ defmodule MetaStoreTest do
     tenants = Landlord.Registry.get()
     application = Module.concat([App, hd(tenants)])
 
-    :ok = Router.dispatch(%CreateSource{source_id: 1, owner: "me"}, application: application)
+    source_id = UUID.uuid4()
+    :ok = Router.dispatch(%CreateSource{
+      id: source_id,
+      workspace: "default"
+    }, application: application)
 
     assert_receive_event(application, SourceCreated, fn event ->
-      assert event.source_id == 1
+      assert event.id == source_id
     end)
   end
 

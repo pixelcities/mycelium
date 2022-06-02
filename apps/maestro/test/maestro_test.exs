@@ -34,6 +34,9 @@ defmodule MaestroTest do
       "values" => %{},
       "transactions" => [
         "SELECT $1"
+      ],
+      "artifacts" => [
+        "[1,2]"
       ]
     }
 

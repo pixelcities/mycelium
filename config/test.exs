@@ -19,7 +19,7 @@ config :maestro, Maestro.App,
   ]
 
 config :meta_store, :backend_config,
-backend_app: MetaStore.App
+  backend_app: MetaStore.App
 
 config :landlord, :backend_config,
   backend_app: LiaisonServer.App
@@ -29,3 +29,11 @@ config :landlord, Landlord.Mailer,
 
 config :maestro, :backend_config,
   backend_app: Maestro.App
+
+config :key_x, :backend_config,
+  backend_app: LiaisonServer.App
+
+config :data_store, :backend_config,
+  backend_app: LiaisonServer.App
+
+

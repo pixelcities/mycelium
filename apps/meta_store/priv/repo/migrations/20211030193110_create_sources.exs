@@ -27,9 +27,9 @@ defmodule MetaStore.Repo.Migrations.CreateSources do
       add :id, :uuid, primary_key: true
       add :key_id, :uuid
       add :column_order, {:array, :string}
-      add :source_id, references(:sources, type: :uuid, on_delete: :delete_all), null: false
 
       timestamps()
+      add :source_id, references(:sources, type: :uuid, on_delete: :delete_all), null: false
     end
 
     create table(:schemas__shares) do
