@@ -1,21 +1,84 @@
-defmodule Landlord.Registry do
-  use GenServer
+defmodule Landlord.Tenants do
+  @moduledoc """
+  The Tenants context.
 
-  def start_link(opts) do
-    name = Keyword.fetch!(opts, :name)
-    GenServer.start_link(__MODULE__, name, opts)
+  Each tenant is a group of users behind a subscription. Users may be part
+  of multiple tenants.
+
+  A tenant provides the data space for users to collaborate in.
+  """
+
+  import Ecto.Query, warn: false
+
+  alias Landlord.Repo
+  alias Landlord.Accounts.User
+  alias Landlord.Tenants.DataSpace
+
+  ## Database getters
+
+  @doc """
+  Gets all data spaces
+  """
+  def get_data_spaces!(), do: Repo.all(DataSpace)
+
+  @doc """
+  Get data spaces for given user
+  """
+  def get_data_spaces_by_user(user) do
+    Repo.all(from d in DataSpace,
+      join: u in assoc(d, :users),
+      where: u.id == ^user.id
+    )
   end
 
-  def get() do
-    result = :ets.lookup(__MODULE__, :tenants)
-    result[:tenants]
+  @doc """
+  Get a single data space
+  """
+  def get_data_space!(id), do: Repo.get!(DataSpace, id)
+
+
+  ## Database setters
+
+  @doc """
+  Create a new data space
+
+  A dataspace requires a metadata key, which should be created
+  beforehand. The key id is then associated with the data space.
+
+  Collaborators may be invited using invite_to_data_space/4.
+  """
+  def create_data_space(%User{} = user, %{key_id: _key_id} = attrs) do
+    %DataSpace{}
+    |> DataSpace.changeset(attrs)
+    |> Ecto.Changeset.put_assoc(:users, [user])
+    |> Repo.insert()
   end
 
-  @impl true
-  def init(table) do
-    tenants = :ets.new(table, [:set, :protected, :named_table])
-    :ets.insert(tenants, {:tenants, [:ds1, :ds2]})
+  @doc """
+  Invite a user to a data space
 
-    {:ok, tenants}
+  It is expected that the metadata key has been shared as well.
+  """
+  def invite_to_data_space(%DataSpace{} = data_space, %User{} = user, %User{} = invitee, attrs \\ %{}) do
+    if not is_member?(data_space, user) || is_member?(data_space, invitee) do
+      {:error, :invalid_membership}
+    else
+      users = Repo.all(from u in User, join: d in assoc(u, :data_spaces))
+
+      data_space
+      |> Repo.preload(:users)
+      |> Ecto.Changeset.change()
+      |> Ecto.Changeset.put_assoc(:users, users ++ [invitee])
+      |> Repo.update!
+    end
+  end
+
+  defp is_member?(%DataSpace{} = data_space, %User{} = user) do
+    query = from u in User,
+      join: d in assoc(u, :data_spaces),
+      where: d.id == ^data_space.id and u.id == ^user.id
+
+    Repo.exists?(query)
   end
 end
+

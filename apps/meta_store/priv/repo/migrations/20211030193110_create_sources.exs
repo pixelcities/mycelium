@@ -20,7 +20,7 @@ defmodule MetaStore.Repo.Migrations.CreateSources do
         principal text,
         type text
       );
-    """
+    """, "DROP TABLE shares"
 
     # schemas
     create table(:schemas, primary_key: false) do

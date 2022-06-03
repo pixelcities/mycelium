@@ -9,51 +9,54 @@ defmodule MetaStore.Projectors.Schema do
       raise "Schema should belong to either a source or collection"
     end
 
-    multi
-    |> Ecto.Multi.run(:schema, fn repo, _ ->
-      schema =
-        case repo.get(Schema, input.schema.id) do
-          nil -> %Schema{id: input.schema.id}
-          schema -> schema
-        end
-        |> schema_changeset(input.schema.key_id, input.schema.column_order, input.id, is_source)
-        |> repo.insert_or_update!
+    case input.schema do
+      nil -> multi
+      _ -> multi
+        |> Ecto.Multi.run(:schema, fn repo, _ ->
+          schema =
+            case repo.get(Schema, input.schema.id) do
+              nil -> %Schema{id: input.schema.id}
+              schema -> schema
+            end
+            |> schema_changeset(input.schema.key_id, input.schema.column_order, input.id, is_source)
+            |> repo.insert_or_update!
 
-      shares = Enum.map(input.schema.shares, fn share ->
-        repo.insert!(%Share{principal: share.principal, type: share.type}, on_conflict: {:replace_all_except, [:id]}, conflict_target: :id)
-      end)
+          shares = Enum.map(input.schema.shares, fn share ->
+            repo.insert!(%Share{principal: share.principal, type: share.type}, on_conflict: {:replace_all_except, [:id]}, conflict_target: :id)
+          end)
 
-      schema
-      |> repo.preload(:shares)
-      |> Ecto.Changeset.change()
-      |> Ecto.Changeset.put_assoc(:shares, shares)
-      |> repo.update!
+          schema
+          |> repo.preload(:shares)
+          |> Ecto.Changeset.change()
+          |> Ecto.Changeset.put_assoc(:shares, shares)
+          |> repo.update!
 
-      {:ok, schema}
-    end)
-    |> Ecto.Multi.run(:columns, fn repo, changes ->
-      columns = Enum.map(input.schema.columns, fn c ->
-        column =
-          case repo.get(Column, c.id) do
-            nil -> %Column{id: c.id}
-            column -> column
-          end
-          |> Column.changeset(%{key_id: c.key_id, schema_id: changes.schema.id})
-          |> repo.insert_or_update!
-
-        shares = Enum.map(c.shares, fn share ->
-          repo.insert!(%Share{principal: share.principal, type: share.type}, on_conflict: {:replace_all_except, [:id]}, conflict_target: :id)
+          {:ok, schema}
         end)
+        |> Ecto.Multi.run(:columns, fn repo, changes ->
+          columns = Enum.map(input.schema.columns, fn c ->
+            column =
+              case repo.get(Column, c.id) do
+                nil -> %Column{id: c.id}
+                column -> column
+              end
+              |> Column.changeset(%{key_id: c.key_id, schema_id: changes.schema.id})
+              |> repo.insert_or_update!
 
-        column
-        |> repo.preload(:shares)
-        |> Ecto.Changeset.change()
-        |> Ecto.Changeset.put_assoc(:shares, shares)
-        |> repo.update!
-      end)
+            shares = Enum.map(c.shares, fn share ->
+              repo.insert!(%Share{principal: share.principal, type: share.type}, on_conflict: {:replace_all_except, [:id]}, conflict_target: :id)
+            end)
 
-      {:ok, columns}
-    end)
+            column
+            |> repo.preload(:shares)
+            |> Ecto.Changeset.change()
+            |> Ecto.Changeset.put_assoc(:shares, shares)
+            |> repo.update!
+          end)
+
+          {:ok, columns}
+        end)
+    end
   end
 
   defp schema_changeset(schema, key_id, column_order, input_id, is_source) do

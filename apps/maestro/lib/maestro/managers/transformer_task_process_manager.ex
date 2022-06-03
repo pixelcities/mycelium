@@ -16,44 +16,40 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
   @derive Jason.Encoder
   defstruct [
     :id,
+    :task_id,
     :transformer,
-    # :wants_collection,
+    :wants_collection,
     :has_collection,
-    :task_id
+    :uri,
+    :target
   ]
 
   alias Maestro.Managers.TransformerTaskProcessManager
-  alias Core.Commands.CreateTask
+  alias Core.Commands.{
+    CreateDataURI,
+    CreateCollection,
+    AddTransformerTarget,
+    CreateTask
+  }
   alias Core.Events.{
+    DataURICreated,
+    CollectionCreated,
     TransformerCreated,
-    TransformerWALUpdated
+    TransformerWALUpdated,
+    TransformerTargetAdded
   }
 
   # Process routing
 
   def interested?(%TransformerCreated{id: id}), do: {:start, id}
   def interested?(%TransformerWALUpdated{id: id}), do: {:continue, id}
+  def interested?(%DataURICreated{id: id}), do: {:continue, id}
   def interested?(_event), do: false
 
   # Command dispatch
 
-
-  # TODO: Create the collection, uri, and link the two components
-  def handle(%TransformerTaskProcessManager{has_collection: false} = pm, %TransformerWALUpdated{wal: wal} = _event) do
-    %CreateTask{
-      id: UUID.uuid4(),
-      type: "transformer",
-      task: %{
-        "instruction" => "compute_fragment",
-        "transformer_id" => pm.id,
-        "columns" => [],
-        "wal" => wal
-      }
-    }
-  end
-
   @doc """
-  Create unassigned task
+  Create unassigned tasks, and potentially a collection
 
   An unassigned task will be materialized and queued for future assignments when a suitable
   worker comes online.
@@ -61,19 +57,51 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
   Note that one worker may not have enough ownership to create the full output collection.
   Task assignment will instead take care of duplicating the task as many times as needed
   so that all fragments make up a full collection.
+
+  An empty collection needs to be created when this is the last transformer in a group, so that
+  each worker can add their fragment to the right dataset. We first request and wait for the
+  dataset uri, after which the collection can be created.
   """
-  def handle(%TransformerTaskProcessManager{has_collection: true} = pm, %TransformerWALUpdated{wal: wal} = _event) do
-    %CreateTask{
-      id: UUID.uuid4(),
-      type: "transformer",
-      task: %{
-        "instruction" => "compute_fragment",
-        "transformer_id" => pm.id,
-        "columns" => [],
-        "wal" => wal
-      }
+  def handle(%TransformerTaskProcessManager{wants_collection: true, has_collection: false, uri: nil} = pm, %TransformerWALUpdated{wal: wal} = _event) do
+    %CreateDataURI{
+      id: pm.id,
+      workspace: pm.transformer.workspace
     }
   end
+
+  def handle(%TransformerTaskProcessManager{wants_collection: true, has_collection: false} = pm, %DataURICreated{uri: uri} = _event) do
+    collection_id = UUID.uuid4()
+
+    [
+      %CreateCollection{
+        id: collection_id,
+        workspace: pm.transformer.workspace,
+        type: "collection",
+        uri: uri,
+        schema: nil,
+        position: [hd(pm.transformer.position) + 200.0, tl(pm.transformer.position)],
+        color: pm.transformer.color,
+        is_ready: false
+      },
+      %AddTransformerTarget{
+        id: pm.id,
+        workspace: pm.transformer.workspace,
+        target: collection_id
+      },
+      %CreateTask{
+        id: UUID.uuid4(),
+        type: "transformer",
+        task: %{
+          "instruction" => "compute_fragment",
+          "transformer_id" => pm.id,
+          "uri" => uri,
+          "columns" => [],
+          "wal" => pm.wal
+        }
+      }
+    ]
+  end
+
 
   # State mutators
 
@@ -81,7 +109,27 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
     %TransformerTaskProcessManager{pm |
       id: event.id,
       transformer: event,
+      wants_collection: true, # Hardcoded for now
       has_collection: false
+    }
+  end
+
+  def apply(%TransformerTaskProcessManager{} = pm, %TransformerWALUpdated{} = event) do
+    %TransformerTaskProcessManager{pm |
+      transformer: Map.put(pm.transformer, :wal, event.wal)
+    }
+  end
+
+  def apply(%TransformerTaskProcessManager{uri: nil} = pm, %DataURICreated{} = event) do
+    %TransformerTaskProcessManager{pm |
+      uri: event.uri
+    }
+  end
+
+  def apply(%TransformerTaskProcessManager{} = pm, %TransformerTargetAdded{} = event) do
+    %TransformerTaskProcessManager{pm |
+      has_collection: true,
+      target: event.target
     }
   end
 

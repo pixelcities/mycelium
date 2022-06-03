@@ -1,8 +1,8 @@
 use Mix.Config
 
 config :ex_aws,
-  secret_access_key: [{:awscli, "default", 30}],
-  access_key_id: [{:awscli, "default", 30}],
+  secret_access_key: [{:awscli, "mycelium", 30}],
+  access_key_id: [{:awscli, "mycelium", 30}],
   region: "eu-west-1",
   awscli_auth_adapter: ExAws.STS.AuthCache.AssumeRoleCredentialsAdapter
 

@@ -73,18 +73,16 @@ defmodule Maestro.Allocator do
     if nr_bundles < 5 do
       id = UUID.uuid4()
 
-      Maestro.schedule_task(%{
+      task = %{
         id: id,
         type: "protocol",
         task: %{
           "instruction" => "add_bundles"
         }
-      })
+      }
 
-      Maestro.assign_task(%{
-        id: id,
-        worker: user_id
-      })
+      Maestro.schedule_task(task)
+      Maestro.assign_task(Map.put(task, :worker, user_id))
     end
   end
 
