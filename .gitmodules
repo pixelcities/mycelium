@@ -1,0 +1,3 @@
+[submodule "apps/key_x/native/key_x_protocol_agent/key-x-wasm"]
+	path = apps/key_x/native/key_x_protocol_agent/key-x-wasm
+	url = https://github.com/pixelcities/key-x-wasm

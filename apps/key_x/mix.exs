@@ -29,8 +29,13 @@ defmodule KeyX.MixProject do
       {:ecto_sql, "~> 3.6"},
       {:jason, "~> 1.1"},
       {:postgrex, ">= 0.0.0"},
+      {:commanded, "~> 1.1"},
+      {:commanded_eventstore_adapter, "~> 1.1"},
+      {:eventstore, "~> 1.1"},
+      {:rustler, "~> 0.25.0"},
 
-      {:core, "~> 0.1", in_umbrella: true}
+      {:core, "~> 0.1", in_umbrella: true},
+      {:landlord, "~> 0.1", in_umbrella: true}
     ]
   end
 

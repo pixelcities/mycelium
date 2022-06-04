@@ -22,6 +22,8 @@ erl_crash.dump
 # Ignore package tarball (built via "mix hex.build").
 key_x-*.tar
 
+# Native
+priv/native/*
 
 # Temporary files for e.g. tests
 /tmp
