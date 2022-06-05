@@ -13,6 +13,9 @@ config :data_store, event_stores: [DataStore.EventStore]
 config :landlord, ecto_repos: [Landlord.Repo]
 
 config :key_x, ecto_repos: [KeyX.Repo]
+config :key_x, KeyX.TrialAgent,
+  email: "hello@pixelcities.io",
+  key_id: "633e6f89-3530-41c0-a7dc-7ce6d586f832"
 
 config :maestro, event_stores: [Maestro.EventStore]
 config :maestro, ecto_repos: [Maestro.Repo]

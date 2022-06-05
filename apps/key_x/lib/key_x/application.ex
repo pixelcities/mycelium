@@ -16,7 +16,7 @@ defmodule KeyX.Application do
           {KeyX.App, name: Module.concat(app, tenant), tenant: tenant}
         ]
       end) ++ [
-        {KeyX.TenantSupervisor, backend: app, tenants: tenants}
+        {KeyX.TenantSupervisor, registry: Landlord.Registry, tenants: tenants}
       ]
     else
       []

@@ -58,7 +58,7 @@ defmodule Landlord.Tenants do
   Collaborators may be invited using invite_to_data_space/4.
   """
   def create_data_space(%User{} = user, %{key_id: _key_id} = attrs) do
-    data_space = %DataSpace{}
+    {:ok, data_space} = %DataSpace{}
     |> DataSpace.changeset(attrs)
     |> Ecto.Changeset.put_assoc(:users, [user])
     |> Repo.insert()

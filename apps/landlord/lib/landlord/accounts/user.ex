@@ -13,6 +13,7 @@ defmodule Landlord.Accounts.User do
     field :password, :string, virtual: true, redact: true
     field :hashed_password, :string, redact: true
     field :confirmed_at, :naive_datetime
+    field :is_agent, :boolean, default: false
     many_to_many :data_spaces, Landlord.Tenants.DataSpace, join_through: "data_spaces__users"
 
     timestamps()
@@ -41,6 +42,14 @@ defmodule Landlord.Accounts.User do
     |> validate_email()
     |> validate_password(opts)
   end
+
+  def agent_changeset(user, attrs, opts \\ []) do
+    user
+    |> cast(attrs, [:email, :password, :confirmed_at, :is_agent])
+    |> validate_email()
+    |> validate_password(opts)
+  end
+
 
   defp validate_email(changeset) do
     changeset

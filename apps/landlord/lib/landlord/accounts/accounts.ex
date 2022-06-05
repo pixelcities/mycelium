@@ -81,6 +81,27 @@ defmodule Landlord.Accounts do
   end
 
   @doc """
+  Create an agent
+
+  An agent is a virtual user. An agent may own/create a data space
+  or even send a message to real users.
+
+  Login should be disabled, but a random password will do for now.
+  """
+  def create_agent(email) do
+    attrs = %{
+      email: email,
+      password: :crypto.strong_rand_bytes(32) |> Base.encode64(padding: true),
+      confirmed_at: NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second),
+      is_agent: true
+    }
+
+    %User{}
+    |> User.agent_changeset(attrs)
+    |> Repo.insert()
+  end
+
+  @doc """
   Returns an `%Ecto.Changeset{}` for tracking user changes.
 
   ## Examples

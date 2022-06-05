@@ -50,7 +50,7 @@ defmodule LiaisonServer.Application do
   """
   def start_children(application) do
     children = [
-      {LiaisonServer.App, name: application}
+      {LiaisonServer.App, name: Module.concat(LiaisonServer.App, application), tenant: application}
     ]
 
     Enum.each(children, fn spec ->
@@ -58,7 +58,8 @@ defmodule LiaisonServer.Application do
     end)
   end
 
-  defp init_event_store!(name) do
+  def init_event_store!(name) when is_atom(name), do: init_event_store!(Atom.to_string(name))
+  def init_event_store!(name) do
     event_store = hd(Application.get_env(:liaison_server, :event_stores, []))
     config = event_store.config()
     config = Keyword.put(config, :schema, name)
