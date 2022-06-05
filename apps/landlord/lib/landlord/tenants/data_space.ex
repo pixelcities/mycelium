@@ -5,7 +5,7 @@ defmodule Landlord.Tenants.DataSpace do
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
 
-  @derive {Jason.Encoder, only: [:id, :email, :name, :picture]}
+  @derive {Jason.Encoder, only: [:id, :handle, :name, :key_id]}
   schema "data_spaces" do
     field :handle, :string
     field :name, :string

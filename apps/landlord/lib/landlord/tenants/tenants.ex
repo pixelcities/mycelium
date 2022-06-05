@@ -17,9 +17,19 @@ defmodule Landlord.Tenants do
   ## Database getters
 
   @doc """
+  Get data space handles
+
+  Note that a handle is expected to be an atom.
+  """
+  def get() do
+    Repo.all(from d in DataSpace, select: d.handle)
+    |> Enum.map(fn handle -> String.to_atom(handle) end)
+  end
+
+  @doc """
   Gets all data spaces
   """
-  def get_data_spaces!(), do: Repo.all(DataSpace)
+  def get_data_spaces(), do: Repo.all(DataSpace)
 
   @doc """
   Get data spaces for given user
@@ -48,10 +58,12 @@ defmodule Landlord.Tenants do
   Collaborators may be invited using invite_to_data_space/4.
   """
   def create_data_space(%User{} = user, %{key_id: _key_id} = attrs) do
-    %DataSpace{}
+    data_space = %DataSpace{}
     |> DataSpace.changeset(attrs)
     |> Ecto.Changeset.put_assoc(:users, [user])
     |> Repo.insert()
+
+    Landlord.Registry.dispatch(String.to_atom(data_space.handle))
   end
 
   @doc """
@@ -59,7 +71,7 @@ defmodule Landlord.Tenants do
 
   It is expected that the metadata key has been shared as well.
   """
-  def invite_to_data_space(%DataSpace{} = data_space, %User{} = user, %User{} = invitee, attrs \\ %{}) do
+  def invite_to_data_space(%DataSpace{} = data_space, %User{} = user, %User{} = invitee, _attrs \\ %{}) do
     if not is_member?(data_space, user) || is_member?(data_space, invitee) do
       {:error, :invalid_membership}
     else

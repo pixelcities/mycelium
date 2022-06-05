@@ -19,7 +19,9 @@ defmodule LiaisonServerWeb.Auth.Local.UserConfirmationController do
 
   def confirm(conn, %{"token" => token}) do
     case Accounts.confirm_user(token) do
-      {:ok, _} ->
+      {:ok, user} ->
+        Landlord.create_user(Map.from_struct(user), %{user_id: user.id})
+
         json(conn, %{"status": "ok"})
 
       :error ->

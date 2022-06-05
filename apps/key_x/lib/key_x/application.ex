@@ -8,22 +8,26 @@ defmodule KeyX.Application do
   @impl true
   def start(_type, _args) do
     app = get_app()
-    tenants = Landlord.Registry.get()
+    tenants = Landlord.Tenants.get()
 
-    children = if app == @parent_module.App do
+    commanded = if app == @parent_module.App do
       Enum.flat_map(tenants, fn tenant ->
         [
-          {KeyX.App, name: Module.concat([app, tenant]), tenant: tenant}
+          {KeyX.App, name: Module.concat(app, tenant), tenant: tenant}
         ]
       end) ++ [
-        {KeyX.Supervisor, backend: app, tenants: tenants}
+        {KeyX.TenantSupervisor, backend: app, tenants: tenants}
       ]
     else
       []
     end
 
+    children = [
+      KeyX.Repo
+    ]
+
     opts = [strategy: :one_for_one, name: KeyX.ApplicationSupervisor]
-    Supervisor.start_link(children, opts)
+    Supervisor.start_link(children ++ commanded, opts)
   end
 
   def get_app() do

@@ -9,9 +9,9 @@ defmodule LiaisonServerWeb.DataSpaceChannel do
   def join("ds:" <> ds_id, payload, socket) do
     user = socket.assigns.current_user
 
-    send(self(), :after_join)
+    if authorized?(user, payload) do
+      send(self(), :after_join)
 
-    if authorized?(payload) do
       {:ok, socket}
     else
       {:error, %{reason: "unauthorized"}}
@@ -29,8 +29,8 @@ defmodule LiaisonServerWeb.DataSpaceChannel do
   end
 
   # Add authorization logic here as required.
-  defp authorized?(_payload) do
-    true
-  end
+  defp authorized?(user, _payload) when user.confirmed_at, do: true
+  defp authorized?(_user, _payload), do: false
+
 
 end

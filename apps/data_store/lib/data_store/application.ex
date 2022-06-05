@@ -7,25 +7,26 @@ defmodule DataStore.Application do
 
   @impl true
   def start(_type, _args) do
-    # app = Application.fetch_env!(:data_store, :backend_config)[:backend_app]
     app = get_app()
-    tenants = Landlord.Registry.get()
+    tenants = Landlord.Tenants.get()
 
     # Refrain from loading the local app when we have a central backend (e.g. LiaisonServer)
-    children = if app == @parent_module.App do
+    commanded = if app == @parent_module.App do
       Enum.flat_map(tenants, fn tenant ->
         [
-          {DataStore.App, name: Module.concat([app, tenant]), tenant: tenant}
+          {DataStore.App, name: Module.concat(app, tenant), tenant: tenant}
         ]
       end) ++ [
-        {DataStore.Supervisor, backend: app, tenants: tenants}
+        {DataStore.TenantSupervisor, registry: Landlord.Registry, tenants: tenants}
       ]
     else
       []
     end
 
+    children = []
+
     opts = [strategy: :one_for_one, name: DataStore.ApplicationSupervisor]
-    Supervisor.start_link(children, opts)
+    Supervisor.start_link(children ++ commanded, opts)
   end
 
   def get_app() do

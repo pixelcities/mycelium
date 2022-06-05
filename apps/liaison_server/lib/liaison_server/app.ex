@@ -10,7 +10,6 @@ defmodule LiaisonServer.App do
   def init(config) do
     {tenant, config} = Keyword.pop(config, :tenant)
 
-    # TODO: ensure that there is an eventstore schema for each tenant
     config =
       config
       |> put_in([:event_store, :name], Module.concat([LiaisonServer.EventStore, tenant]))

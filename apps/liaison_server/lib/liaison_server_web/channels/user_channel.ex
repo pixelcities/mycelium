@@ -9,9 +9,9 @@ defmodule LiaisonServerWeb.UserChannel do
   def join("user:" <> user_id, payload, socket) do
     user = socket.assigns.current_user
 
-    send(self(), :after_join)
+    if user_id == user.id and authorized?(user, payload) do
+      send(self(), :after_join)
 
-    if user_id == user.id and authorized?(payload) do
       {:ok, socket}
     else
       {:error, %{reason: "unauthorized"}}
@@ -101,9 +101,9 @@ defmodule LiaisonServerWeb.UserChannel do
 
 
   # Add authorization logic here as required.
-  defp authorized?(_payload) do
-    true
-  end
+  defp authorized?(user, _payload) when user.confirmed_at, do: true
+  defp authorized?(_user, _payload), do: false
+
 
   defp handle_action(func, action, socket) do
     user = socket.assigns.current_user

@@ -7,25 +7,28 @@ defmodule MetaStore.Application do
 
   @impl true
   def start(_type, _args) do
-    # app = Application.fetch_env!(:meta_store, :backend_config)[:backend_app]
     app = get_app()
-    tenants = Landlord.Registry.get()
+    tenants = Landlord.Tenants.get()
 
     # Refrain from loading the local app when we have a central backend (e.g. LiaisonServer)
-    children = if app == @parent_module.App do
+    commanded = if app == @parent_module.App do
       Enum.flat_map(tenants, fn tenant ->
         [
-          {MetaStore.App, name: Module.concat([app, tenant]), tenant: tenant}
+          {MetaStore.App, name: tenant}
         ]
       end) ++ [
-        {MetaStore.Supervisor, backend: app, tenants: tenants}
+        {MetaStore.TenantSupervisor, registry: Landlord.Registry, tenants: tenants}
       ]
     else
       []
     end
 
+    children = [
+      MetaStore.Repo
+    ]
+
     opts = [strategy: :one_for_one, name: MetaStore.ApplicationSupervisor]
-    Supervisor.start_link(children, opts)
+    Supervisor.start_link(children ++ commanded, opts)
   end
 
   def get_app() do

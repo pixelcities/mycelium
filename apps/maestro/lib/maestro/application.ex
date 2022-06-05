@@ -8,22 +8,28 @@ defmodule Maestro.Application do
   @impl true
   def start(_type, _args) do
     app = get_app()
-    tenants = Landlord.Registry.get()
+    tenants = Landlord.Tenants.get()
 
-    children = if app == @parent_module.App do
+    commanded = if app == @parent_module.App do
       Enum.flat_map(tenants, fn tenant ->
         [
           {Maestro.App, name: Module.concat([app, tenant]), tenant: tenant}
         ]
       end) ++ [
-        {Maestro.Supervisor, backend: app, tenants: tenants}
+        {Maestro.TenantSupervisor, registry: Landlord.Registry, tenants: tenants}
       ]
     else
       []
     end
 
+    children = [
+      Maestro.Repo,
+      {Maestro.Allocator, name: Maestro.Allocator},
+      {Maestro.Heartbeat, name: Maestro.Heartbeat}
+    ]
+
     opts = [strategy: :one_for_one, name: Maestro.ApplicationSupervisor]
-    Supervisor.start_link(children, opts)
+    Supervisor.start_link(children ++ commanded, opts)
   end
 
   def get_app() do

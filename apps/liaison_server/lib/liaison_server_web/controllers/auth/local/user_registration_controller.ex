@@ -15,8 +15,6 @@ defmodule LiaisonServerWeb.Auth.Local.UserRegistrationController do
             &Routes.user_confirmation_url(get_external_host(), :confirm, &1)
           )
 
-        Landlord.create_user(Map.from_struct(user), %{user_id: user.id})
-
         conn
         |> Auth.log_in_user(user)
 

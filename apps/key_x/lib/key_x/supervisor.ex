@@ -1,24 +1,19 @@
-defmodule KeyX.Supervisor do
+defmodule KeyX.TenantSupervisor do
   use Supervisor
 
   def start_link(arg) do
     Supervisor.start_link(__MODULE__, arg, name: __MODULE__)
   end
 
+  @impl true
   def init(args) do
-    backend = Keyword.fetch!(args, :backend)
+    registry = Keyword.fetch!(args, :registry)
     tenants = Keyword.fetch!(args, :tenants)
 
-    children =
-      Enum.flat_map(tenants, fn tenant ->
-        []
-      end)
-      ++
-        [
-          KeyX.Repo
-        ]
+    dynamic = []
+    children = []
 
-
-    Supervisor.init(children, strategy: :one_for_one)
+    Supervisor.init(children ++ dynamic, strategy: :one_for_one)
   end
+
 end

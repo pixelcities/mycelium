@@ -1,21 +1,27 @@
 defmodule Landlord.Registry do
-  use GenServer
 
   def start_link(opts) do
     name = Keyword.fetch!(opts, :name)
-    GenServer.start_link(__MODULE__, name, opts)
+
+    Registry.start_link(name: name, keys: :duplicate)
   end
 
-  def get() do
-    result = :ets.lookup(__MODULE__, :tenants)
-    result[:tenants]
+  def child_spec(opts) do
+    %{
+      id: Keyword.get(opts, :name, __MODULE__),
+      start: {__MODULE__, :start_link, [opts]},
+      type: :supervisor
+    }
   end
 
-  @impl true
-  def init(table) do
-    tenants = :ets.new(table, [:set, :protected, :named_table])
-    :ets.insert(tenants, {:tenants, [:ds1, :ds2]})
-
-    {:ok, tenants}
+  def dispatch(application) when is_atom(application) do
+    Registry.dispatch(__MODULE__, "start", fn entries ->
+      entries
+      |> Enum.sort_by(fn {_pid, {weight, _module, _function}} -> weight end)
+      |> Enum.each(fn {_pid, {_weight, module, function}} ->
+        apply(module, function, [application])
+      end)
+    end)
   end
+
 end
