@@ -40,6 +40,15 @@ defmodule LiaisonServerWeb.Router do
     put "/profile/confirm_email/:token", UserProfileController, :confirm_email
   end
 
+  ## Data space routes
+
+  scope "/spaces", LiaisonServerWeb.DataSpaces do
+    pipe_through [:api, :require_authenticated_user]
+
+    get "/", DataSpaceController, :list
+    get "/:handle", DataSpaceController, :get
+  end
+
   ## KeyStore routes
 
   scope "/keys", LiaisonServerWeb.KeyStore do

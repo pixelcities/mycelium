@@ -46,6 +46,21 @@ defmodule Landlord.Tenants do
   """
   def get_data_space!(id), do: Repo.get!(DataSpace, id)
 
+  @doc """
+  Get a single data space by user and handle
+
+  Users should not be able to get data spaces they are not a part of.
+  """
+  def get_data_space_by_user_and_handle(user, handle) do
+    case Repo.one(from d in DataSpace,
+      join: u in assoc(d, :users),
+      where: d.handle == ^handle and u.id == ^user.id
+    ) do
+      nil -> {:error, nil}
+      data_space -> {:ok, data_space}
+    end
+  end
+
 
   ## Database setters
 
