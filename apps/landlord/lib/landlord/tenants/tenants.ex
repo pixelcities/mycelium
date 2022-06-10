@@ -61,6 +61,18 @@ defmodule Landlord.Tenants do
     end
   end
 
+  @doc """
+  Convert handle to atom
+
+  Verifies the user has access to the handle and that it already exists
+  """
+  def to_atom(user, handle) do
+    case get_data_space_by_user_and_handle(user, handle) do
+      {:ok, data_space} -> {:ok, String.to_atom(data_space.handle)}
+      {:error, _} -> {:error, :invalid_handle}
+    end
+  end
+
 
   ## Database setters
 

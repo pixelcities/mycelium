@@ -4,6 +4,7 @@ defmodule LiaisonServerWeb.UserChannel do
   require Logger
 
   alias LiaisonServerWeb.Tracker
+  alias LiaisonServerWeb.Registry.UserDataSpaces
 
   @impl true
   def join("user:" <> user_id, payload, socket) do
@@ -11,6 +12,8 @@ defmodule LiaisonServerWeb.UserChannel do
 
     if user_id == user.id and authorized?(user, payload) do
       send(self(), :after_join)
+
+      Registry.register(UserDataSpaces, user.id, nil)
 
       {:ok, socket}
     else
@@ -21,12 +24,18 @@ defmodule LiaisonServerWeb.UserChannel do
   def handle_info(:after_join, socket) do
     user_id = socket.assigns.current_user.id
     {:ok, _} = Phoenix.Tracker.track(Tracker, self(), "user:" <> user_id, user_id, %{
+      ds_id: Map.get(socket.assigns, :current_ds),
       online_at: inspect(System.system_time(:second))
     })
 
     {:noreply, socket}
   end
 
+  def handle_info({:set_data_space, ds_id}, socket) do
+    socket = assign(socket, :current_ds, ds_id)
+
+    {:noreply, socket}
+  end
 
   # Re(p)lay handlers
   #
@@ -43,7 +52,6 @@ defmodule LiaisonServerWeb.UserChannel do
 
   @impl true
   def handle_in("init", %{"type" => "tasks"}, socket), do: handle_subscribe(LiaisonServer.Workflows.RelayTasks, socket, false)
-
 
 
   # Command handlers
@@ -101,14 +109,15 @@ defmodule LiaisonServerWeb.UserChannel do
 
 
   # Add authorization logic here as required.
-  defp authorized?(user, _payload) when user.confirmed_at, do: true
-  defp authorized?(_user, _payload), do: false
+  defp authorized?(user, _payload) when user.confirmed_at == nil, do: false
+  defp authorized?(_user, _payload), do: true
 
 
   defp handle_action(func, action, socket) do
     user = socket.assigns.current_user
+    ds_id = socket.assigns.current_ds
 
-    with {:ok, :done} <- func.(Map.fetch!(action, "payload"), %{user_id: user.id}) do
+    with {:ok, :done} <- func.(Map.fetch!(action, "payload"), %{user_id: user.id, ds_id: ds_id}) do
       {:noreply, socket}
     else
       err -> {:stop, err, socket}
@@ -118,8 +127,10 @@ defmodule LiaisonServerWeb.UserChannel do
   defp handle_subscribe(module, socket, restart \\ true) do
     user = socket.assigns.current_user
 
+    app = Module.concat(LiaisonServer.App, socket.assigns.current_ds)
+
     # (Re)start an event handler that will broadcast all relevant events in history
-    {:ok, pid} = DynamicSupervisor.start_child(LiaisonServer.RelayEventSupervisor, {module, application: Module.concat([LiaisonServer.App, :ds1]), user_id: user.id, workspace: "default"})
+    {:ok, pid} = DynamicSupervisor.start_child(LiaisonServer.RelayEventSupervisor, {module, application: app, user_id: user.id, workspace: "default"})
 
     if restart do
       send(pid, :reset)

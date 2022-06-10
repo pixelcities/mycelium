@@ -53,8 +53,10 @@ defmodule Maestro.Allocator do
     if length(worker) == 0 do
       :ets.insert(workers, {user_id, meta})
 
-      assign_bundle_tasks(user_id)
-      assign_transformer_tasks(user_id)
+      ds_id = Map.get(meta, :ds_id)
+
+      assign_bundle_tasks(user_id, ds_id)
+      assign_transformer_tasks(user_id, ds_id)
     end
 
     {:noreply, workers}
@@ -67,7 +69,7 @@ defmodule Maestro.Allocator do
     {:noreply, workers}
   end
 
-  defp assign_bundle_tasks(user_id) do
+  defp assign_bundle_tasks(user_id, ds_id) do
     nr_bundles = Protocol.get_nr_bundles_by_user_id!(user_id)
 
     if nr_bundles < 5 do
@@ -81,19 +83,19 @@ defmodule Maestro.Allocator do
         }
       }
 
-      Maestro.schedule_task(task)
-      Maestro.assign_task(Map.put(task, :worker, user_id))
+      Maestro.schedule_task(task, %{ds_id: ds_id})
+      Maestro.assign_task(Map.put(task, :worker, user_id), %{ds_id: ds_id})
     end
   end
 
-  defp assign_transformer_tasks(user_id) do
+  defp assign_transformer_tasks(user_id, ds_id) do
     Enum.each(Maestro.get_tasks(), fn(task) ->
       # TODO: validate ownership
 
       Maestro.assign_task(%{
         id: task.id,
         worker: user_id
-      })
+      }, %{ds_id: ds_id})
     end)
   end
 

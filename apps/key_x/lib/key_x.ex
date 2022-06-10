@@ -11,12 +11,12 @@ defmodule KeyX do
   @doc """
   Forward a secret
   """
-  def share_secret(attrs, %{user_id: _user_id} = metadata) do
+  def share_secret(attrs, %{user_id: _user_id, ds_id: ds_id} = metadata) do
     share_secret =
       attrs
       |> ShareSecret.new()
 
-    with :ok <- @app.validate_and_dispatch(share_secret, consistency: :strong, application: Module.concat([@app, :ds1]), metadata: metadata) do
+    with :ok <- @app.validate_and_dispatch(share_secret, consistency: :strong, application: Module.concat(@app, ds_id), metadata: metadata) do
       {:ok, :done}
     else
       reply -> reply
