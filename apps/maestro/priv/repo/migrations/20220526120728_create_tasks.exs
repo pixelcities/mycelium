@@ -7,6 +7,7 @@ defmodule Maestro.Repo.Migrations.CreateTasks do
       add :type, :string, null: false
       add :task, :map, null: false
       add :worker, :uuid, null: true
+      add :fragments, {:array, :string}, default: []
       add :is_completed, :boolean, default: false
 
       timestamps()

@@ -2,8 +2,9 @@ defmodule Core.Commands.CreateTask do
   use Commanded.Command,
     id: :string,
     type: :string,
-    task: :string,
-    worker: :string
+    task: :map,
+    worker: :string,
+    fragments: {{:array, :string}, default: []}
 
   def handle_validate(changeset) do
     changeset
@@ -16,7 +17,8 @@ defmodule Core.Commands.AssignTask do
     id: :string,
     type: :string,
     task: :string,
-    worker: :string
+    worker: :string,
+    fragments: {{:array, :string}, default: []}
 
   def handle_validate(changeset) do
     changeset
@@ -27,7 +29,8 @@ end
 defmodule Core.Commands.CompleteTask do
   use Commanded.Command,
     id: :string,
-    is_completed: :boolean
+    is_completed: :boolean,
+    fragments: {{:array, :string}, default: []}
 
   def handle_validate(changeset) do
     changeset

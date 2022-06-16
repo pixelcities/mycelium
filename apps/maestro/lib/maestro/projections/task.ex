@@ -7,6 +7,7 @@ defmodule Maestro.Projections.Task do
     field :type, :string
     field :task, :map
     field :worker, :binary_id
+    field :fragments, {:array, :string}, default: []
     field :is_completed, :boolean, default: false
 
     timestamps()
@@ -14,7 +15,7 @@ defmodule Maestro.Projections.Task do
 
   def changeset(task, attrs) do
     task
-    |> cast(attrs, [:type, :task, :worker])
+    |> cast(attrs, [:type, :task, :worker, :fragments])
   end
 end
 

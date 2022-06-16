@@ -46,7 +46,7 @@ defmodule KeyX.TrialAgent do
     :crypto.crypto_one_time(:aes_128_cbc, secret, Base.decode64!(iv, padding: true), Base.decode64!(encrypted, padding: true), false)
   end
 
-  def share_manifest_key(receiver) do
+  def share_manifest_key(receiver, ds_id) do
     key = get_manifest_key()
     user = Accounts.get_user_by_email(@config[:email])
 
@@ -61,7 +61,8 @@ defmodule KeyX.TrialAgent do
       receiver: receiver.id,
       ciphertext: ciphertext
     }, %{
-      user_id: user.id
+      user_id: user.id,
+      ds_id: ds_id
     })
   end
 end

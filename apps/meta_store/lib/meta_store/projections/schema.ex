@@ -20,7 +20,7 @@ defmodule MetaStore.Projections.Schema do
 
   def changeset(schema, attrs) do
     schema
-    |> cast(attrs, [:key_id, :column_order, :source_id])
+    |> cast(attrs, [:key_id, :column_order, :source_id, :collection_id])
   end
 
 end

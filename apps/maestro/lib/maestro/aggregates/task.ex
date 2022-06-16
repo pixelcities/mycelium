@@ -3,7 +3,7 @@ defmodule Maestro.Aggregates.TaskLifespan do
 
   alias Core.Events.TaskCompleted
 
-  def after_event(%TaskCompleted{}), do: :stop
+  def after_event(%TaskCompleted{is_completed: is_completed}) when is_completed, do: :stop
   def after_event(_event), do: :infinity
   def after_command(_command), do: :infinity
   def after_error(_error), do: :stop
@@ -14,6 +14,8 @@ defmodule Maestro.Aggregates.Task do
             type: nil,
             task: nil,
             worker: nil,
+            fragments: [],
+            completed_fragments: [],
             is_completed: false
 
   alias Maestro.Aggregates.Task
@@ -32,10 +34,22 @@ defmodule Maestro.Aggregates.Task do
     TaskAssigned.new(event, date: NaiveDateTime.utc_now())
   end
 
-  def execute(%Task{}, %CompleteTask{} = command)
+  def execute(%Task{} = task, %CompleteTask{} = command)
     when command.is_completed == true
   do
-    TaskCompleted.new(command, date: NaiveDateTime.utc_now())
+    # Check if the task is truly complete, as it is not when there are still uncompleted
+    # fragments. When there are no fragments it is automatically completed.
+    if length(task.fragments) > 0 do
+      total_fragments = Enum.concat(task.completed_fragments, command.fragments) |> Enum.uniq
+
+      if Enum.sort(total_fragments) == Enum.sort(task.fragments) do
+        TaskCompleted.new(command, date: NaiveDateTime.utc_now())
+      else
+        TaskCompleted.new(Map.put(command, :is_completed, false), date: NaiveDateTime.utc_now())
+      end
+    else
+      TaskCompleted.new(command, date: NaiveDateTime.utc_now())
+    end
   end
 
 
@@ -46,7 +60,8 @@ defmodule Maestro.Aggregates.Task do
       id: event.id,
       type: event.type,
       task: event.task,
-      worker: event.worker
+      worker: event.worker,
+      fragments: event.fragments
     }
   end
 
@@ -56,9 +71,10 @@ defmodule Maestro.Aggregates.Task do
     }
   end
 
-  def apply(%Task{} = task, %TaskCompleted{} = _event) do
+  def apply(%Task{} = task, %TaskCompleted{} = event) do
     %Task{task |
-      is_completed: true
+      completed_fragments: Enum.concat(task.completed_fragments, event.fragments) |> Enum.uniq,
+      is_completed: event.is_completed
     }
   end
 

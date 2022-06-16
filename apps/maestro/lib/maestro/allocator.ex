@@ -49,11 +49,10 @@ defmodule Maestro.Allocator do
   @impl true
   def handle_cast({:register, user_id, meta}, workers) do
     worker = :ets.lookup(workers, user_id)
+    ds_id = Map.get(meta, :ds_id)
 
-    if length(worker) == 0 do
+    if length(worker) == 0 and ds_id != nil do
       :ets.insert(workers, {user_id, meta})
-
-      ds_id = Map.get(meta, :ds_id)
 
       assign_bundle_tasks(user_id, ds_id)
       assign_transformer_tasks(user_id, ds_id)

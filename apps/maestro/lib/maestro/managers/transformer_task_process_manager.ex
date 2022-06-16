@@ -35,6 +35,7 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
     DataURICreated,
     CollectionCreated,
     TransformerCreated,
+    TransformerInputAdded,
     TransformerWALUpdated,
     TransformerTargetAdded
   }
@@ -42,6 +43,7 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
   # Process routing
 
   def interested?(%TransformerCreated{id: id}), do: {:start, id}
+  def interested?(%TransformerInputAdded{id: id}), do: {:continue, id}
   def interested?(%TransformerWALUpdated{id: id}), do: {:continue, id}
   def interested?(%DataURICreated{id: id}), do: {:continue, id}
   def interested?(_event), do: false
@@ -71,6 +73,7 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
 
   def handle(%TransformerTaskProcessManager{wants_collection: true, has_collection: false} = pm, %DataURICreated{uri: uri} = _event) do
     collection_id = UUID.uuid4()
+    in_collection = MetaStore.get_collection!(hd(pm.transformer.collections))
 
     [
       %CreateCollection{
@@ -79,7 +82,7 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
         type: "collection",
         uri: uri,
         schema: nil,
-        position: [hd(pm.transformer.position) + 200.0, tl(pm.transformer.position)],
+        position: [hd(pm.transformer.position) + 200.0, Enum.at(pm.transformer.position, 1)],
         color: pm.transformer.color,
         is_ready: false
       },
@@ -95,9 +98,9 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
           "instruction" => "compute_fragment",
           "transformer_id" => pm.id,
           "uri" => uri,
-          "columns" => [],
-          "wal" => pm.wal
-        }
+          "wal" => pm.transformer.wal
+        },
+        fragments: in_collection.schema.column_order
       }
     ]
   end
@@ -111,6 +114,12 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
       transformer: event,
       wants_collection: true, # Hardcoded for now
       has_collection: false
+    }
+  end
+
+  def apply(%TransformerTaskProcessManager{} = pm, %TransformerInputAdded{} = event) do
+    %TransformerTaskProcessManager{pm |
+      transformer: Map.put(pm.transformer, :collections, [event.collection])
     }
   end
 

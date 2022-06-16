@@ -5,6 +5,10 @@ defmodule MetaStore do
 
   @app MetaStore.Application.get_app()
 
+  import Ecto.Query, warn: false
+
+  alias MetaStore.Repo
+  alias MetaStore.Projections.Collection
   alias Core.Commands.{
     CreateSource,
     UpdateSource,
@@ -22,6 +26,18 @@ defmodule MetaStore do
     UpdateTransformerWAL
   }
 
+
+  ## Database getters
+
+  def get_collection!(id) do
+    Repo.one(from c in Collection,
+      where: c.id == ^id,
+      preload: [:schema]
+    )
+  end
+
+
+  ## Commands
 
   @doc """
   Create a source

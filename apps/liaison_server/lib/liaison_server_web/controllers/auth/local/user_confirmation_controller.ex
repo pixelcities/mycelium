@@ -1,9 +1,11 @@
 defmodule LiaisonServerWeb.Auth.Local.UserConfirmationController do
   use LiaisonServerWeb, :controller
 
+  require Logger
   import LiaisonServerWeb.Utils
 
-  alias Landlord.Accounts
+  alias Landlord.{Accounts, Tenants}
+  alias KeyX.TrialAgent
 
   def create(conn, %{"user" => %{"email" => email}}) do
     if user = Accounts.get_user_by_email(email) do
@@ -17,10 +19,33 @@ defmodule LiaisonServerWeb.Auth.Local.UserConfirmationController do
     |> redirect(to: "/")
   end
 
+  @doc """
+  Complete the user creation
+
+  A newly created user is also invited to a trial dataspace.
+  """
   def confirm(conn, %{"token" => token}) do
     case Accounts.confirm_user(token) do
       {:ok, user} ->
-        Landlord.create_user(Map.from_struct(user), %{user_id: user.id})
+        # Grab the trial agent config
+        config = Application.get_env(:key_x, KeyX.TrialAgent)
+
+        # Invite the user to the trial dataspace
+        with ds <- Tenants.get_data_space_by_handle(:ds1),
+             trial_user <- Accounts.get_user_by_email(config[:email]),
+             ds <- Tenants.invite_to_data_space(ds, trial_user, user)
+
+        do
+          # Share the metadata key
+          TrialAgent.share_manifest_key(user, :ds1)
+
+          # TODO: Do not create the user in the ds unless the invite is accepted
+          Landlord.create_user(Map.from_struct(user), %{user_id: user.id, ds_id: :ds1})
+        else
+          err ->
+            Logger.error("Error inviting user to trial")
+            IO.inspect(err)
+        end
 
         json(conn, %{"status": "ok"})
 
