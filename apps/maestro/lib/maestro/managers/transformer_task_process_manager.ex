@@ -33,7 +33,6 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
   }
   alias Core.Events.{
     DataURICreated,
-    CollectionCreated,
     TransformerCreated,
     TransformerInputAdded,
     TransformerWALUpdated,
@@ -64,7 +63,7 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
   each worker can add their fragment to the right dataset. We first request and wait for the
   dataset uri, after which the collection can be created.
   """
-  def handle(%TransformerTaskProcessManager{wants_collection: true, has_collection: false, uri: nil} = pm, %TransformerWALUpdated{wal: wal} = _event) do
+  def handle(%TransformerTaskProcessManager{wants_collection: true, has_collection: false, uri: nil} = pm, %TransformerWALUpdated{wal: _wal} = _event) do
     %CreateDataURI{
       id: pm.id,
       workspace: pm.transformer.workspace
@@ -83,7 +82,7 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
         uri: uri,
         schema: nil,
         position: [hd(pm.transformer.position) + 200.0, Enum.at(pm.transformer.position, 1)],
-        color: pm.transformer.color,
+        color: in_collection.color,
         is_ready: false
       },
       %AddTransformerTarget{
@@ -96,6 +95,7 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
         type: "transformer",
         task: %{
           "instruction" => "compute_fragment",
+          "collection_id" => collection_id,
           "transformer_id" => pm.id,
           "uri" => uri,
           "wal" => pm.transformer.wal

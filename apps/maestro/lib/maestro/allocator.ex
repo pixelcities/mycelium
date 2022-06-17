@@ -91,10 +91,13 @@ defmodule Maestro.Allocator do
     Enum.each(Maestro.get_tasks(), fn(task) ->
       # TODO: validate ownership
 
-      Maestro.assign_task(%{
-        id: task.id,
-        worker: user_id
-      }, %{ds_id: ds_id})
+      if task.type == "transformer" do
+        Maestro.assign_task(%{
+          id: task.id,
+          worker: user_id,
+          fragments: task.fragments
+        }, %{ds_id: ds_id})
+      end
     end)
   end
 

@@ -30,7 +30,10 @@ defmodule Maestro.Aggregates.Task do
   end
 
   def execute(%Task{} = task, %AssignTask{} = command) do
-    event = Map.merge(task, command, fn _k, v1, v2 -> v1 || v2 end)
+    event = task
+      |> Map.merge(command, fn _k, v1, v2 -> v1 || v2 end)
+      |> Map.put(:fragments, command.fragments)
+
     TaskAssigned.new(event, date: NaiveDateTime.utc_now())
   end
 
