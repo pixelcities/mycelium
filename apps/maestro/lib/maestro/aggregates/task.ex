@@ -16,25 +16,43 @@ defmodule Maestro.Aggregates.Task do
             worker: nil,
             fragments: [],
             completed_fragments: [],
-            is_completed: false
+            is_completed: false,
+            is_assigned: false
 
   alias Maestro.Aggregates.Task
-  alias Core.Commands.{CreateTask, AssignTask, CompleteTask}
-  alias Core.Events.{TaskCreated, TaskAssigned, TaskCompleted}
+  alias Core.Commands.{CreateTask, AssignTask, UnAssignTask, CompleteTask}
+  alias Core.Events.{TaskCreated, TaskAssigned, TaskUnAssigned, TaskCompleted}
 
-  @doc """
-  Create a new (unassigned) task
-  """
+
   def execute(%Task{id: nil}, %CreateTask{} = command) do
     TaskCreated.new(command, date: NaiveDateTime.utc_now())
   end
 
+  def execute(%Task{} = task, %AssignTask{} = _) when task.is_assigned == true, do: {:error, :task_already_assigned}
   def execute(%Task{} = task, %AssignTask{} = command) do
+    # Fragments are guaranteed to be owned by the middleware enrichment, but maybe
+    # some fragments are already completed so we can deduct those.
+    fragments = Enum.filter(command.fragments, fn fragment -> fragment not in task.completed_fragments end)
+
     event = task
       |> Map.merge(command, fn _k, v1, v2 -> v1 || v2 end)
-      |> Map.put(:fragments, command.fragments)
+      |> Map.put(:fragments, fragments)
 
     TaskAssigned.new(event, date: NaiveDateTime.utc_now())
+  end
+
+  def execute(%Task{} = task, %UnAssignTask{} = _) when task.is_assigned == false, do: {:error, :task_already_unassigned}
+  def execute(%Task{} = task, %UnAssignTask{} = _) when length(task.fragments) == 0 do
+    # Special case. Tasks without fragments are oneshots, so we might as well close them.
+    TaskCompleted.new(%{
+      id: task.id,
+      is_completed: true,
+      fragments: [],
+      date: NaiveDateTime.utc_now()
+    })
+  end
+  def execute(%Task{} = task, %UnAssignTask{} = command) do
+    TaskUnAssigned.new(command, date: NaiveDateTime.utc_now())
   end
 
   def execute(%Task{} = task, %CompleteTask{} = command)
@@ -70,7 +88,15 @@ defmodule Maestro.Aggregates.Task do
 
   def apply(%Task{} = task, %TaskAssigned{} = event) do
     %Task{task |
-      worker: event.worker
+      worker: event.worker,
+      is_assigned: true
+    }
+  end
+
+  def apply(%Task{} = task, %TaskUnAssigned{} = event) do
+    %Task{task |
+      worker: nil,
+      is_assigned: false
     }
   end
 

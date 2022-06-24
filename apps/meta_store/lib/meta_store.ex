@@ -8,7 +8,12 @@ defmodule MetaStore do
   import Ecto.Query, warn: false
 
   alias MetaStore.Repo
-  alias MetaStore.Projections.Collection
+  alias MetaStore.Projections.{
+    Collection,
+    Schema,
+    Column,
+    Share
+  }
   alias Core.Commands.{
     CreateSource,
     UpdateSource,
@@ -33,6 +38,26 @@ defmodule MetaStore do
     Repo.one(from c in Collection,
       where: c.id == ^id,
       preload: [:schema]
+    )
+  end
+
+  def get_schema!(id) do
+    Repo.one(from c in Schema,
+      where: c.id == ^id,
+      preload: [:columns, :shares]
+    )
+  end
+
+  def get_column!(id) do
+    Repo.one(from c in Column,
+      where: c.id == ^id,
+      preload: [:shares]
+    )
+  end
+
+  def get_share!(id) do
+    Repo.one(from c in Share,
+      where: c.id == ^id
     )
   end
 

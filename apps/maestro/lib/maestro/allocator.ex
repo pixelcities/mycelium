@@ -63,7 +63,13 @@ defmodule Maestro.Allocator do
 
   @impl true
   def handle_cast({:deregister, user_id}, workers) do
+    worker = :ets.lookup(workers, user_id)
     :ets.delete(workers, user_id)
+
+    if length(worker) == 1 do
+      {_user_id, meta} = hd(worker)
+      unassign_tasks(user_id, meta.ds_id)
+    end
 
     {:noreply, workers}
   end
@@ -89,13 +95,21 @@ defmodule Maestro.Allocator do
 
   defp assign_transformer_tasks(user_id, ds_id) do
     Enum.each(Maestro.get_tasks(), fn(task) ->
-      # TODO: validate ownership
-
       if task.type == "transformer" do
         Maestro.assign_task(%{
           id: task.id,
           worker: user_id,
           fragments: task.fragments
+        }, %{ds_id: ds_id})
+      end
+    end)
+  end
+
+  defp unassign_tasks(user_id, ds_id) do
+    Enum.each(Maestro.get_tasks(), fn task ->
+      if task.worker == user_id do
+        Maestro.unassign_task(%{
+          id: task.id
         }, %{ds_id: ds_id})
       end
     end)

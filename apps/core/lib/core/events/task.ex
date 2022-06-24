@@ -10,6 +10,12 @@ defmodule Core.Events.TaskAssigned do
     with: [:date]
 end
 
+defmodule Core.Events.TaskUnAssigned do
+  use Commanded.Event,
+    from: Core.Commands.UnAssignTask,
+    with: [:date]
+end
+
 defmodule Core.Events.TaskCompleted do
   use Commanded.Event,
     from: Core.Commands.CompleteTask,
