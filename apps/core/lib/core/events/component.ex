@@ -10,6 +10,12 @@ defmodule Core.Events.CollectionUpdated do
     with: [:date]
 end
 
+defmodule Core.Events.CollectionSchemaUpdated do
+  use Commanded.Event,
+    from: Core.Commands.UpdateCollectionSchema,
+    with: [:date]
+end
+
 defmodule Core.Events.CollectionTargetAdded do
   use Commanded.Event,
     from: Core.Commands.AddCollectionTarget,
@@ -19,6 +25,12 @@ end
 defmodule Core.Events.CollectionPositionSet do
   use Commanded.Event,
     from: Core.Commands.SetCollectionPosition,
+    with: [:date]
+end
+
+defmodule Core.Events.CollectionIsReadySet do
+  use Commanded.Event,
+    from: Core.Commands.SetCollectionIsReady,
     with: [:date]
 end
 

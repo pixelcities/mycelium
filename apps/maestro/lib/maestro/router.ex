@@ -7,6 +7,7 @@ defmodule Maestro.Router do
     CreateTask,
     AssignTask,
     UnAssignTask,
+    CancelTask,
     CompleteTask
   }
   alias Maestro.Aggregates.{Task, TaskLifespan}
@@ -15,7 +16,7 @@ defmodule Maestro.Router do
 
   identify(Task, by: :id, prefix: "tasks-")
 
-  dispatch([ CreateTask, AssignTask, UnAssignTask, CompleteTask ],
+  dispatch([ CreateTask, AssignTask, UnAssignTask, CancelTask, CompleteTask ],
     to: Task,
     lifespan: TaskLifespan
   )

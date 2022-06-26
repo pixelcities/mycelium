@@ -11,8 +11,8 @@ defmodule MetaStore.Aggregates.Collection do
             date: nil
 
   alias MetaStore.Aggregates.Collection
-  alias Core.Commands.{CreateCollection, UpdateCollection, SetCollectionPosition, AddCollectionTarget}
-  alias Core.Events.{CollectionCreated, CollectionUpdated, CollectionPositionSet, CollectionTargetAdded}
+  alias Core.Commands.{CreateCollection, UpdateCollection, UpdateCollectionSchema, SetCollectionPosition, SetCollectionIsReady, AddCollectionTarget}
+  alias Core.Events.{CollectionCreated, CollectionUpdated, CollectionSchemaUpdated, CollectionPositionSet, CollectionIsReadySet, CollectionTargetAdded}
 
   @doc """
   Create a new collection
@@ -27,8 +27,16 @@ defmodule MetaStore.Aggregates.Collection do
     CollectionUpdated.new(update, date: NaiveDateTime.utc_now())
   end
 
+  def execute(%Collection{} = collection, %UpdateCollectionSchema{} = update) do
+    CollectionSchemaUpdated.new(update, date: NaiveDateTime.utc_now())
+  end
+
   def execute(%Collection{} = _collection, %SetCollectionPosition{} = position) do
     CollectionPositionSet.new(position, date: NaiveDateTime.utc_now())
+  end
+
+  def execute(%Collection{} = _collection, %SetCollectionIsReady{} = command) do
+    CollectionIsReadySet.new(command, date: NaiveDateTime.utc_now())
   end
 
   def execute(%Collection{} = collection, %AddCollectionTarget{} = command) do
@@ -65,9 +73,23 @@ defmodule MetaStore.Aggregates.Collection do
     }
   end
 
+  def apply(%Collection{} = collection, %CollectionSchemaUpdated{} = updated) do
+    %Collection{collection |
+      schema: updated.schema,
+      date: updated.date
+    }
+  end
+
   def apply(%Collection{} = collection, %CollectionPositionSet{} = event) do
     %Collection{collection |
       position: event.position,
+      date: event.date
+    }
+  end
+
+  def apply(%Collection{} = collection, %CollectionIsReadySet{} = event) do
+    %Collection{collection |
+      is_ready: event.is_ready,
       date: event.date
     }
   end

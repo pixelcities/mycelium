@@ -1,8 +1,9 @@
 defmodule Maestro.Aggregates.TaskLifespan do
   @behaviour Commanded.Aggregates.AggregateLifespan
 
-  alias Core.Events.TaskCompleted
+  alias Core.Events.{TaskCancelled, TaskCompleted}
 
+  def after_event(%TaskCancelled{}), do: :stop
   def after_event(%TaskCompleted{is_completed: is_completed}) when is_completed, do: :stop
   def after_event(_event), do: :infinity
   def after_command(_command), do: :infinity
@@ -11,17 +12,19 @@ end
 
 defmodule Maestro.Aggregates.Task do
   defstruct id: nil,
+            causation_id: nil,
             type: nil,
             task: nil,
             worker: nil,
             fragments: [],
             completed_fragments: [],
+            is_cancelled: false,
             is_completed: false,
             is_assigned: false
 
   alias Maestro.Aggregates.Task
-  alias Core.Commands.{CreateTask, AssignTask, UnAssignTask, CompleteTask}
-  alias Core.Events.{TaskCreated, TaskAssigned, TaskUnAssigned, TaskCompleted}
+  alias Core.Commands.{CreateTask, AssignTask, UnAssignTask, CancelTask, CompleteTask}
+  alias Core.Events.{TaskCreated, TaskAssigned, TaskUnAssigned, TaskCancelled, TaskCompleted}
 
 
   def execute(%Task{id: nil}, %CreateTask{} = command) do
@@ -44,10 +47,9 @@ defmodule Maestro.Aggregates.Task do
   def execute(%Task{} = task, %UnAssignTask{} = _) when task.is_assigned == false, do: {:error, :task_already_unassigned}
   def execute(%Task{} = task, %UnAssignTask{} = _) when length(task.fragments) == 0 do
     # Special case. Tasks without fragments are oneshots, so we might as well close them.
-    TaskCompleted.new(%{
+    TaskCancelled.new(%{
       id: task.id,
-      is_completed: true,
-      fragments: [],
+      is_cancelled: true,
       date: NaiveDateTime.utc_now()
     })
   end
@@ -55,22 +57,24 @@ defmodule Maestro.Aggregates.Task do
     TaskUnAssigned.new(command, date: NaiveDateTime.utc_now())
   end
 
+  def execute(%Task{} = task, %CancelTask{} = command) do
+    TaskCancelled.new(command, causation_id: task.causation_id, date: NaiveDateTime.utc_now())
+  end
+
   def execute(%Task{} = task, %CompleteTask{} = command)
     when command.is_completed == true
   do
     # Check if the task is truly complete, as it is not when there are still uncompleted
     # fragments. When there are no fragments it is automatically completed.
-    if length(task.fragments) > 0 do
+    is_completed = if length(task.fragments) > 0 do
       total_fragments = Enum.concat(task.completed_fragments, command.fragments) |> Enum.uniq
 
-      if Enum.sort(total_fragments) == Enum.sort(task.fragments) do
-        TaskCompleted.new(command, date: NaiveDateTime.utc_now())
-      else
-        TaskCompleted.new(Map.put(command, :is_completed, false), date: NaiveDateTime.utc_now())
-      end
+      Enum.sort(total_fragments) == Enum.sort(task.fragments)
     else
-      TaskCompleted.new(command, date: NaiveDateTime.utc_now())
+      true
     end
+
+    TaskCompleted.new(Map.put(command, :is_completed, is_completed), causation_id: task.causation_id, date: NaiveDateTime.utc_now())
   end
 
 
@@ -79,6 +83,7 @@ defmodule Maestro.Aggregates.Task do
   def apply(%Task{} = task, %TaskCreated{} = event) do
     %Task{task |
       id: event.id,
+      causation_id: event.causation_id,
       type: event.type,
       task: event.task,
       worker: event.worker,
@@ -97,6 +102,12 @@ defmodule Maestro.Aggregates.Task do
     %Task{task |
       worker: nil,
       is_assigned: false
+    }
+  end
+
+  def apply(%Task{} = task, %TaskCancelled{} = event) do
+    %Task{task |
+      is_cancelled: true
     }
   end
 

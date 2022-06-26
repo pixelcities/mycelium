@@ -13,7 +13,9 @@ defmodule LiaisonServer.Workflows.RelayEvents do
     UserUpdated,
     CollectionCreated,
     CollectionUpdated,
+    CollectionSchemaUpdated,
     CollectionPositionSet,
+    CollectionIsReadySet,
     CollectionTargetAdded,
     TransformerCreated,
     TransformerUpdated,
@@ -63,7 +65,13 @@ defmodule LiaisonServer.Workflows.RelayEvents do
   def handle(%CollectionUpdated{} = event, metadata), do: handle_event("CollectionUpdated", event, metadata)
 
   @impl true
+  def handle(%CollectionSchemaUpdated{} = event, metadata), do: handle_event("CollectionSchemaUpdated", event, metadata)
+
+  @impl true
   def handle(%CollectionPositionSet{} = event, metadata), do: handle_event("CollectionPositionSet", event, metadata)
+
+  @impl true
+  def handle(%CollectionIsReadySet{} = event, metadata), do: handle_event("CollectionIsReadySet", event, metadata)
 
   @impl true
   def handle(%CollectionTargetAdded{} = event, metadata), do: handle_event("CollectionTargetAdded", event, metadata)
@@ -106,3 +114,4 @@ defmodule LiaisonServer.Workflows.RelayEvents do
   end
 
 end
+

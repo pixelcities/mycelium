@@ -16,9 +16,15 @@ defmodule Core.Events.TaskUnAssigned do
     with: [:date]
 end
 
+defmodule Core.Events.TaskCancelled do
+  use Commanded.Event,
+    from: Core.Commands.CancelTask,
+    with: [:causation_id, :date]
+end
+
 defmodule Core.Events.TaskCompleted do
   use Commanded.Event,
     from: Core.Commands.CompleteTask,
-    with: [:date]
+    with: [:causation_id, :date]
 end
 

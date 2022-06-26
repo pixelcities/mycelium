@@ -81,7 +81,13 @@ defmodule LiaisonServerWeb.UserChannel do
   def handle_in("action", %{"type" => "UpdateCollection"} = action, socket), do: handle_action(&MetaStore.update_collection/2, action, socket)
 
   @impl true
+  def handle_in("action", %{"type" => "UpdateCollectionSchema"} = action, socket), do: handle_action(&MetaStore.update_collection_schema/2, action, socket)
+
+  @impl true
   def handle_in("action", %{"type" => "SetCollectionPosition"} = action, socket), do: handle_action(&MetaStore.set_collection_position/2, action, socket)
+
+  @impl true
+  def handle_in("action", %{"type" => "SetCollectionIsReady"} = action, socket), do: handle_action(&MetaStore.set_collection_is_ready/2, action, socket)
 
   @impl true
   def handle_in("action", %{"type" => "AddCollectionTarget"} = action, socket), do: handle_action(&MetaStore.add_collection_target/2, action, socket)

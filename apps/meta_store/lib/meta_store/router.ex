@@ -9,7 +9,9 @@ defmodule MetaStore.Router do
     UpdateMetadata,
     CreateCollection,
     UpdateCollection,
+    UpdateCollectionSchema,
     SetCollectionPosition,
+    SetCollectionIsReady,
     AddCollectionTarget,
     CreateTransformer,
     UpdateTransformer,
@@ -27,7 +29,7 @@ defmodule MetaStore.Router do
 
   dispatch([ CreateSource, UpdateSource ], to: Source)
   dispatch([ CreateMetadata, UpdateMetadata ], to: Metadata)
-  dispatch([ CreateCollection, UpdateCollection, SetCollectionPosition, AddCollectionTarget ], to: Collection)
+  dispatch([ CreateCollection, UpdateCollection, UpdateCollectionSchema, SetCollectionPosition, SetCollectionIsReady, AddCollectionTarget ], to: Collection)
   dispatch([ CreateTransformer, UpdateTransformer, SetTransformerPosition, AddTransformerTarget, AddTransformerInput, UpdateTransformerWAL ], to: Transformer)
 
 end

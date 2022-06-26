@@ -21,7 +21,9 @@ defmodule MetaStore do
     UpdateMetadata,
     CreateCollection,
     UpdateCollection,
+    UpdateCollectionSchema,
     SetCollectionPosition,
+    SetCollectionIsReady,
     AddCollectionTarget,
     CreateTransformer,
     UpdateTransformer,
@@ -115,8 +117,16 @@ defmodule MetaStore do
     handle_dispatch(UpdateCollection.new(attrs), metadata)
   end
 
+  def update_collection_schema(attrs, %{user_id: _user_id} = metadata) do
+    handle_dispatch(UpdateCollectionSchema.new(attrs), metadata)
+  end
+
   def set_collection_position(attrs, %{user_id: _user_id} = metadata) do
     handle_dispatch(SetCollectionPosition.new(attrs), metadata)
+  end
+
+  def set_collection_is_ready(attrs, %{user_id: _user_id} = metadata) do
+    handle_dispatch(SetCollectionIsReady.new(attrs), metadata)
   end
 
   def add_collection_target(attrs, %{user_id: _user_id} = metadata) do

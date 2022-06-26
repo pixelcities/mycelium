@@ -59,7 +59,7 @@ defmodule Maestro do
 
   def get_tasks(_attrs \\ %{}) do
     Repo.all(from t in Task,
-      where: t.is_completed == false
+      where: t.is_completed == false and t.is_cancelled == false
     )
   end
 

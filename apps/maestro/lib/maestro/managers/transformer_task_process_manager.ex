@@ -16,23 +16,29 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
   @derive Jason.Encoder
   defstruct [
     :id,
-    :task_id,
     :transformer,
     :wants_collection,
     :has_collection,
     :uri,
-    :target
+    :target,
+    :created_tasks
   ]
 
   alias Maestro.Managers.TransformerTaskProcessManager
   alias Core.Commands.{
     CreateDataURI,
+    TruncateDataset,
     CreateCollection,
+    SetCollectionIsReady,
     AddTransformerTarget,
-    CreateTask
+    CreateTask,
+    CancelTask
   }
   alias Core.Events.{
     DataURICreated,
+    TaskCreated,
+    TaskCancelled,
+    TaskCompleted,
     TransformerCreated,
     TransformerInputAdded,
     TransformerWALUpdated,
@@ -44,6 +50,8 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
   def interested?(%TransformerCreated{id: id}), do: {:start, id}
   def interested?(%TransformerInputAdded{id: id}), do: {:continue, id}
   def interested?(%TransformerWALUpdated{id: id}), do: {:continue, id}
+  def interested?(%TaskCreated{causation_id: id}) when id != nil, do: {:continue, id}
+  def interested?(%TaskCompleted{causation_id: id}) when id != nil, do: {:continue, id}
   def interested?(%DataURICreated{id: id}), do: {:continue, id}
   def interested?(_event), do: false
 
@@ -63,11 +71,47 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
   each worker can add their fragment to the right dataset. We first request and wait for the
   dataset uri, after which the collection can be created.
   """
+
   def handle(%TransformerTaskProcessManager{wants_collection: true, has_collection: false, uri: nil} = pm, %TransformerWALUpdated{wal: _wal} = _event) do
     %CreateDataURI{
       id: pm.id,
       workspace: pm.transformer.workspace
     }
+  end
+
+  def handle(%TransformerTaskProcessManager{has_collection: true} = pm, %TransformerWALUpdated{wal: wal} = _event) do
+    in_collection = MetaStore.get_collection!(hd(pm.transformer.collections))
+
+    Enum.map(pm.created_tasks, fn task_id ->
+      %CancelTask{
+        id: task_id,
+        is_cancelled: true
+      }
+    end)
+      ++
+    [
+      %SetCollectionIsReady{
+        id: pm.target,
+        workspace: pm.transformer.workspace,
+        is_ready: false
+      },
+      %TruncateDataset{
+        id: pm.id
+      },
+      %CreateTask{
+        id: UUID.uuid4(),
+        causation_id: pm.id,
+        type: "transformer",
+        task: %{
+          "instruction" => "compute_fragment",
+          "collection_id" => pm.target,
+          "transformer_id" => pm.id,
+          "uri" => pm.uri,
+          "wal" => wal
+        },
+        fragments: in_collection.schema.column_order
+      }
+    ]
   end
 
   def handle(%TransformerTaskProcessManager{wants_collection: true, has_collection: false} = pm, %DataURICreated{uri: uri} = _event) do
@@ -92,6 +136,7 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
       },
       %CreateTask{
         id: UUID.uuid4(),
+        causation_id: pm.id,
         type: "transformer",
         task: %{
           "instruction" => "compute_fragment",
@@ -103,6 +148,14 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
         fragments: in_collection.schema.column_order
       }
     ]
+  end
+
+  def handle(%TransformerTaskProcessManager{has_collection: true} = pm, %TaskCompleted{is_completed: true} = _event) do
+    %SetCollectionIsReady{
+      id: pm.target,
+      workspace: pm.transformer.workspace,
+      is_ready: true
+    }
   end
 
 
@@ -132,6 +185,24 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
   def apply(%TransformerTaskProcessManager{uri: nil} = pm, %DataURICreated{} = event) do
     %TransformerTaskProcessManager{pm |
       uri: event.uri
+    }
+  end
+
+  def apply(%TransformerTaskProcessManager{} = pm, %TaskCreated{} = event) do
+    %TransformerTaskProcessManager{pm |
+      created_tasks: Enum.concat(pm.created_tasks || [], [event.id]) |> Enum.uniq()
+    }
+  end
+
+  def apply(%TransformerTaskProcessManager{} = pm, %TaskCancelled{} = event) do
+    %TransformerTaskProcessManager{pm |
+      created_tasks: Enum.filter(pm.created_tasks, fn task_id -> task_id != event.id end)
+    }
+  end
+
+  def apply(%TransformerTaskProcessManager{} = pm, %TaskCompleted{} = event) do
+    %TransformerTaskProcessManager{pm |
+      created_tasks: Enum.filter(pm.created_tasks, fn task_id -> task_id != event.id end)
     }
   end
 

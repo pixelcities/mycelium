@@ -4,7 +4,7 @@ defmodule MetaStore.Projectors.Collection do
     name: "Projectors.Collection",
     consistency: :strong
 
-  alias Core.Events.{CollectionCreated, CollectionUpdated}
+  alias Core.Events.{CollectionCreated, CollectionUpdated, CollectionSchemaUpdated, CollectionIsReadySet}
   alias MetaStore.Projections.Collection
   alias MetaStore.Projectors
 
@@ -14,6 +14,23 @@ defmodule MetaStore.Projectors.Collection do
 
   project %CollectionUpdated{} = collection, _metadata, fn multi ->
     upsert_collection(multi, collection)
+  end
+
+  project %CollectionSchemaUpdated{} = collection, _metadata, fn multi ->
+    multi
+    |> Projectors.Schema.upsert_schema(collection, [is_collection: true])
+  end
+
+  project %CollectionIsReadySet{} = collection, _metadata, fn multi ->
+    multi
+    |> Ecto.Multi.run(:get_collection, fn repo, _changes ->
+      {:ok, repo.get(Collection, collection.id)}
+    end)
+    |> Ecto.Multi.update(:collection, fn %{get_collection: s} ->
+      Collection.changeset(s, %{
+        is_ready: collection.is_ready
+      })
+    end)
   end
 
   defp upsert_collection(multi, collection) do

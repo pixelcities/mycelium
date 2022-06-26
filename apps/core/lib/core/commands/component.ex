@@ -44,6 +44,21 @@ defmodule Core.Commands.UpdateCollection do
   end
 end
 
+defmodule Core.Commands.UpdateCollectionSchema do
+  import Core.Types.Component
+
+  use Commanded.Command,
+    id: :binary_id,
+    workspace: :string,
+    schema: :map
+
+  def handle_validate(changeset) do
+    changeset
+    |> validate_required([:id, :workspace, :schema])
+    |> validate_schema()
+  end
+end
+
 defmodule Core.Commands.AddCollectionTarget do
   import Core.Types.Component
 
@@ -70,6 +85,20 @@ defmodule Core.Commands.SetCollectionPosition do
     changeset
     |> validate_required([:id, :workspace, :position])
     |> validate_position()
+  end
+end
+
+defmodule Core.Commands.SetCollectionIsReady do
+  import Core.Types.Component
+
+  use Commanded.Command,
+    id: :binary_id,
+    workspace: :string,
+    is_ready: {:boolean, default: false}
+
+  def handle_validate(changeset) do
+    changeset
+    |> validate_required([:id, :workspace, :is_ready])
   end
 end
 

@@ -1,6 +1,7 @@
 defmodule Core.Commands.CreateTask do
   use Commanded.Command,
     id: :string,
+    causation_id: :string,
     type: :string,
     task: :map,
     worker: :string,
@@ -33,6 +34,17 @@ defmodule Core.Commands.UnAssignTask do
   def handle_validate(changeset) do
     changeset
     |> validate_required([:id])
+  end
+end
+
+defmodule Core.Commands.CancelTask do
+  use Commanded.Command,
+    id: :string,
+    is_cancelled: :boolean
+
+  def handle_validate(changeset) do
+    changeset
+    |> validate_required([:id, :is_cancelled])
   end
 end
 
