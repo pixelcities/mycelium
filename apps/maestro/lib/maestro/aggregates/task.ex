@@ -37,14 +37,21 @@ defmodule Maestro.Aggregates.Task do
     # some fragments are already completed so we can deduct those.
     fragments = Enum.filter(command.fragments, fn fragment -> fragment not in task.completed_fragments end)
 
-    event = task
-      |> Map.merge(command, fn _k, v1, v2 -> v1 || v2 end)
-      |> Map.put(:fragments, fragments)
+    # Maybe this worker has no uncompleted fragments left, which is
+    # essentially a noop.
+    if length(task.fragments) > 0 and length(fragments) == 0 do
+      {:error, :task_noop}
 
-    TaskAssigned.new(event, date: NaiveDateTime.utc_now())
+    else
+      event = task
+        |> Map.merge(command, fn _k, v1, v2 -> v1 || v2 end)
+        |> Map.put(:fragments, fragments)
+
+      TaskAssigned.new(event, date: NaiveDateTime.utc_now())
+    end
   end
 
-  def execute(%Task{} = task, %UnAssignTask{} = _) when task.is_assigned == false, do: {:error, :task_already_unassigned}
+  # def execute(%Task{} = task, %UnAssignTask{} = _) when task.is_assigned == false, do: {:error, :task_already_unassigned}
   def execute(%Task{} = task, %UnAssignTask{} = _) when length(task.fragments) == 0 do
     # Special case. Tasks without fragments are oneshots, so we might as well close them.
     TaskCancelled.new(%{
@@ -114,7 +121,8 @@ defmodule Maestro.Aggregates.Task do
   def apply(%Task{} = task, %TaskCompleted{} = event) do
     %Task{task |
       completed_fragments: Enum.concat(task.completed_fragments, event.fragments) |> Enum.uniq,
-      is_completed: event.is_completed
+      is_completed: event.is_completed,
+      is_assigned: false
     }
   end
 

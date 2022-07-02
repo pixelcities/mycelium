@@ -9,6 +9,7 @@ defmodule MetaStore do
 
   alias MetaStore.Repo
   alias MetaStore.Projections.{
+    Transformer,
     Collection,
     Schema,
     Column,
@@ -35,6 +36,12 @@ defmodule MetaStore do
 
 
   ## Database getters
+
+  def get_transformer!(id) do
+    Repo.one(from t in Transformer,
+      where: t.id == ^id
+    )
+  end
 
   def get_collection!(id) do
     Repo.one(from c in Collection,

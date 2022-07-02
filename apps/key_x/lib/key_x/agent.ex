@@ -50,7 +50,9 @@ defmodule KeyX.TrialAgent do
     key = get_manifest_key()
     user = Accounts.get_user_by_email(@config[:email])
 
-    bundle_id = Protocol.get_max_bundle_id_by_user!(receiver)
+    bundle_id = case Protocol.get_bundle_by_user_id!(receiver.id) do
+      bundle -> bundle.bundle_id
+    end
     bundle = Protocol.pop_bundle(receiver.id, bundle_id)
 
     ciphertext = Protocol.Agent.encrypt_once(receiver.id, bundle, key)

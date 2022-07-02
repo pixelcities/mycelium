@@ -30,6 +30,10 @@ defmodule Maestro.Allocator do
     GenServer.cast(__MODULE__, {:deregister, user_id})
   end
 
+  def clean_workers() do
+    GenServer.call(__MODULE__, :clean)
+  end
+
 
   ## Callbacks
 
@@ -74,6 +78,17 @@ defmodule Maestro.Allocator do
     {:noreply, workers}
   end
 
+  @impl true
+  def handle_call(:clean, _from, workers) do
+    all = :ets.tab2list(workers)
+
+    live_workers = Enum.map(all, fn {worker_id, _meta} -> worker_id end)
+    clean_tasks(live_workers, :ds1)
+
+    {:reply, :ok, workers}
+  end
+
+
   defp assign_bundle_tasks(user_id, ds_id) do
     nr_bundles = Protocol.get_nr_bundles_by_user_id!(user_id)
 
@@ -98,9 +113,13 @@ defmodule Maestro.Allocator do
       if task.type == "transformer" do
         Maestro.assign_task(%{
           id: task.id,
+          type: task.type,
+          task: task.task,
           worker: user_id,
           fragments: task.fragments
-        }, %{ds_id: ds_id})
+        }, %{
+          ds_id: ds_id
+        })
       end
     end)
   end
@@ -108,6 +127,16 @@ defmodule Maestro.Allocator do
   defp unassign_tasks(user_id, ds_id) do
     Enum.each(Maestro.get_tasks(), fn task ->
       if task.worker == user_id do
+        Maestro.unassign_task(%{
+          id: task.id
+        }, %{ds_id: ds_id})
+      end
+    end)
+  end
+
+  defp clean_tasks(workers, ds_id) do
+    Enum.each(Maestro.get_tasks(), fn task ->
+      if task.worker not in workers do
         Maestro.unassign_task(%{
           id: task.id
         }, %{ds_id: ds_id})

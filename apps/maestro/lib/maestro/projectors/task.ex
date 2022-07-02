@@ -4,7 +4,7 @@ defmodule Maestro.Projectors.Task do
     name: "Projectors.Task",
     consistency: :strong
 
-  alias Core.Events.{TaskCreated, TaskAssigned, TaskCancelled, TaskCompleted}
+  alias Core.Events.{TaskCreated, TaskAssigned, TaskUnAssigned, TaskCancelled, TaskCompleted}
   alias Maestro.Projections.Task
 
   project %TaskCreated{} = task, _metadata, fn multi ->
@@ -26,6 +26,16 @@ defmodule Maestro.Projectors.Task do
     end)
     |> Ecto.Multi.update(:update, fn %{get_task: t} ->
       Ecto.Changeset.change(t, worker: task.worker)
+    end)
+  end
+
+  project %TaskUnAssigned{} = task, _metadata, fn multi ->
+    multi
+    |> Ecto.Multi.run(:get_task, fn repo, _changes ->
+      {:ok, repo.get(Task, task.id) }
+    end)
+    |> Ecto.Multi.update(:update, fn %{get_task: t} ->
+      Ecto.Changeset.change(t, worker: nil)
     end)
   end
 

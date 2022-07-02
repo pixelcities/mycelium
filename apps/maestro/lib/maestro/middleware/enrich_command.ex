@@ -8,12 +8,12 @@ defimpl Core.Middleware.CommandEnrichment, for: Core.Commands.AssignTask do
   def enrich(%AssignTask{} = command) do
     # Only implemented for transformer tasks
     if command.type == "transformer" do
-      collection_id = Map.get(command.task, "collection_id")
+      transformer_id = Map.get(command.task, "transformer_id")
       user_id = command.worker
 
-      case lookup_owned_fragments(collection_id, user_id) do
+      case lookup_owned_fragments(transformer_id, user_id) do
         {:ok, fragments} ->
-          AssignTask.new(Map.put(command, :fragments, fragments))
+          {:ok, Map.put(command, :fragments, fragments)}
         {:error, error} -> {:error, error}
       end
 
@@ -22,8 +22,13 @@ defimpl Core.Middleware.CommandEnrichment, for: Core.Commands.AssignTask do
     end
   end
 
-  defp lookup_owned_fragments(collection_id, user_id) do
+  defp lookup_owned_fragments(transformer_id, user_id) do
     user = Landlord.Accounts.get_user!(user_id)
+    transformer = MetaStore.get_transformer!(transformer_id)
+
+    # TODO: handle multiple collections and transitive transformers
+    collection_id = hd(transformer.collections)
+
     collection = MetaStore.get_collection!(collection_id)
     schema = MetaStore.get_schema!(collection.schema.id)
 

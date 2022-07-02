@@ -49,6 +49,7 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
 
   def interested?(%TransformerCreated{id: id}), do: {:start, id}
   def interested?(%TransformerInputAdded{id: id}), do: {:continue, id}
+  def interested?(%TransformerTargetAdded{id: id}), do: {:continue, id}
   def interested?(%TransformerWALUpdated{id: id}), do: {:continue, id}
   def interested?(%TaskCreated{causation_id: id}) when id != nil, do: {:continue, id}
   def interested?(%TaskCompleted{causation_id: id}) when id != nil, do: {:continue, id}
