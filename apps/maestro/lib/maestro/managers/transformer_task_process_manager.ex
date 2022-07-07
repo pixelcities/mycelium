@@ -146,7 +146,8 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
           "uri" => uri,
           "wal" => pm.transformer.wal
         },
-        fragments: in_collection.schema.column_order
+        fragments: in_collection.schema.column_order,
+        metadata: %{}
       }
     ]
   end

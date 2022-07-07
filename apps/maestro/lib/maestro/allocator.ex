@@ -116,7 +116,8 @@ defmodule Maestro.Allocator do
           type: task.type,
           task: task.task,
           worker: user_id,
-          fragments: task.fragments
+          fragments: task.fragments,
+          metadata: task.metadata
         }, %{
           ds_id: ds_id
         })

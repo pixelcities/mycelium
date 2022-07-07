@@ -18,6 +18,7 @@ defmodule Maestro.Aggregates.Task do
             worker: nil,
             fragments: [],
             completed_fragments: [],
+            metadata: %{},
             is_cancelled: false,
             is_completed: false,
             is_assigned: false
@@ -60,7 +61,7 @@ defmodule Maestro.Aggregates.Task do
       date: NaiveDateTime.utc_now()
     })
   end
-  def execute(%Task{} = task, %UnAssignTask{} = command) do
+  def execute(%Task{} = _task, %UnAssignTask{} = command) do
     TaskUnAssigned.new(command, date: NaiveDateTime.utc_now())
   end
 
@@ -94,7 +95,8 @@ defmodule Maestro.Aggregates.Task do
       type: event.type,
       task: event.task,
       worker: event.worker,
-      fragments: event.fragments
+      fragments: event.fragments,
+      metadata: event.metadata
     }
   end
 
@@ -105,14 +107,14 @@ defmodule Maestro.Aggregates.Task do
     }
   end
 
-  def apply(%Task{} = task, %TaskUnAssigned{} = event) do
+  def apply(%Task{} = task, %TaskUnAssigned{} = _event) do
     %Task{task |
       worker: nil,
       is_assigned: false
     }
   end
 
-  def apply(%Task{} = task, %TaskCancelled{} = event) do
+  def apply(%Task{} = task, %TaskCancelled{} = _event) do
     %Task{task |
       is_cancelled: true
     }
@@ -121,6 +123,7 @@ defmodule Maestro.Aggregates.Task do
   def apply(%Task{} = task, %TaskCompleted{} = event) do
     %Task{task |
       completed_fragments: Enum.concat(task.completed_fragments, event.fragments) |> Enum.uniq,
+      metadata: event.metadata,
       is_completed: event.is_completed,
       is_assigned: false
     }
