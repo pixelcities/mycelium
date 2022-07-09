@@ -56,7 +56,11 @@ defmodule Maestro.Projectors.Task do
       {:ok, repo.get(Task, task.id) }
     end)
     |> Ecto.Multi.update(:update, fn %{get_task: t} ->
-      Ecto.Changeset.change(t, is_completed: task.is_completed, metadata: task.metadata)
+      Ecto.Changeset.change(t,
+        is_completed: task.is_completed,
+        metadata: task.metadata,
+        worker: nil
+      )
     end)
   end
 

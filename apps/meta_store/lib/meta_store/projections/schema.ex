@@ -33,6 +33,7 @@ defmodule MetaStore.Projections.Column do
   @foreign_key_type :binary_id
 
   schema "columns" do
+    field :concept_id, :binary_id
     field :key_id, :binary_id
     belongs_to :schema, MetaStore.Projections.Schema
     many_to_many :shares, MetaStore.Projections.Share, join_through: "columns__shares"
@@ -42,7 +43,7 @@ defmodule MetaStore.Projections.Column do
 
   def changeset(column, attrs) do
     column
-    |> cast(attrs, [:key_id, :schema_id])
+    |> cast(attrs, [:concept_id, :key_id, :schema_id])
   end
 
 end

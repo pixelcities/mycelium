@@ -125,6 +125,7 @@ defmodule Maestro.Aggregates.Task do
       completed_fragments: Enum.concat(task.completed_fragments, event.fragments) |> Enum.uniq,
       metadata: event.metadata,
       is_completed: event.is_completed,
+      worker: nil,
       is_assigned: false
     }
   end

@@ -6,7 +6,20 @@ defmodule Mycelium.MixProject do
       apps_path: "apps",
       version: "0.1.0",
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      deps: deps(),
+      releases: [
+        demo: [
+          include_executables_for: [:unix],
+          applications: [
+            data_store: :permanent,
+            key_x: :permanent,
+            landlord: :permanent,
+            liaison_server: :permanent,
+            maestro: :permanent,
+            meta_store: :permanent
+          ]
+        ]
+      ]
     ]
   end
 

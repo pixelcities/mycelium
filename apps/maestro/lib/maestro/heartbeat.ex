@@ -3,6 +3,9 @@ defmodule Maestro.Heartbeat do
 
   @interval 60_000
 
+  alias Maestro.Allocator
+
+
   def start_link(opts) do
     name = Keyword.fetch!(opts, :name)
     GenServer.start_link(__MODULE__, name, opts)
@@ -16,6 +19,13 @@ defmodule Maestro.Heartbeat do
   def handle_info(:send, state) do
     clock = state + @interval
 
+    tick(clock)
+
     {:noreply, clock}
   end
+
+  defp tick(clock) do
+    Allocator.assign_workers()
+  end
+
 end

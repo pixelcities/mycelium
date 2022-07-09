@@ -24,15 +24,16 @@ defmodule Core.Types.Column do
   @primary_key false
   embedded_schema do
     field :id, :string
+    field :concept_id, :string
     field :key_id, :string
     embeds_many :shares, Share
   end
 
   def changeset(schema, attrs) do
     schema
-    |> cast(attrs, [:id, :key_id])
+    |> cast(attrs, [:id, :concept_id, :key_id])
     |> cast_embed(:shares, with: &Share.changeset/2)
-    |> validate_required([:id, :key_id])
+    |> validate_required([:id, :concept_id, :key_id])
   end
 end
 

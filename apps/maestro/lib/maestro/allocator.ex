@@ -22,16 +22,20 @@ defmodule Maestro.Allocator do
     GenServer.call(__MODULE__, :list)
   end
 
+  def assign_workers() do
+    GenServer.call(__MODULE__, :assign)
+  end
+
+  def clean_workers() do
+    GenServer.call(__MODULE__, :clean)
+  end
+
   def register_worker(user_id, meta) do
     GenServer.cast(__MODULE__, {:register, user_id, meta})
   end
 
   def deregister_worker(user_id) do
     GenServer.cast(__MODULE__, {:deregister, user_id})
-  end
-
-  def clean_workers() do
-    GenServer.call(__MODULE__, :clean)
   end
 
 
@@ -48,6 +52,32 @@ defmodule Maestro.Allocator do
   def handle_call(:list, _from, workers) do
     all = :ets.tab2list(workers)
     {:reply, all, workers}
+  end
+
+  @impl true
+  def handle_call(:assign, _from, workers) do
+    all = :ets.tab2list(workers)
+
+    Enum.each(all, fn {user_id, meta} ->
+      ds_id = Map.get(meta, :ds_id)
+
+      if ds_id != nil do
+        assign_bundle_tasks(user_id, ds_id)
+        assign_transformer_tasks(user_id, ds_id)
+      end
+    end)
+
+    {:reply, :ok, workers}
+  end
+
+  @impl true
+  def handle_call(:clean, _from, workers) do
+    all = :ets.tab2list(workers)
+
+    live_workers = Enum.map(all, fn {worker_id, _meta} -> worker_id end)
+    clean_tasks(live_workers, :ds1)
+
+    {:reply, :ok, workers}
   end
 
   @impl true
@@ -76,16 +106,6 @@ defmodule Maestro.Allocator do
     end
 
     {:noreply, workers}
-  end
-
-  @impl true
-  def handle_call(:clean, _from, workers) do
-    all = :ets.tab2list(workers)
-
-    live_workers = Enum.map(all, fn {worker_id, _meta} -> worker_id end)
-    clean_tasks(live_workers, :ds1)
-
-    {:reply, :ok, workers}
   end
 
 
