@@ -9,16 +9,11 @@ defmodule Landlord.Aggregates.User do
   alias Core.Commands.{CreateUser, UpdateUser}
   alias Core.Events.{UserCreated, UserUpdated}
 
-  @doc """
-  Create a user
-  """
+
   def execute(%User{id: nil}, %CreateUser{} = user) do
     UserCreated.new(user, date: NaiveDateTime.utc_now())
   end
 
-  @doc """
-  Update a user
-  """
   def execute(%User{id: _id}, %UpdateUser{} = update) do
     UserUpdated.new(update, date: NaiveDateTime.utc_now())
   end

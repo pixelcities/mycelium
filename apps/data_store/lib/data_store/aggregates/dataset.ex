@@ -5,7 +5,7 @@ defmodule DataStore.Aggregates.Dataset do
 
   alias DataStore.Aggregates.Dataset
   alias Core.Commands.{CreateDataURI, TruncateDataset}
-  alias Core.Events.{DataURICreated, DatasetTruncated}
+  alias Core.Events.DataURICreated
 
   @doc """
   Generate a new data URI and associate a session
@@ -20,7 +20,7 @@ defmodule DataStore.Aggregates.Dataset do
     )
   end
 
-  def execute(%Dataset{uri: uri}, %TruncateDataset{} = cmd) do
+  def execute(%Dataset{uri: uri}, %TruncateDataset{} = _cmd) do
     # TODO: Release truncate requested event and have PM handle the side effect
     IO.puts("Truncate for dataset #{uri} requested")
   end

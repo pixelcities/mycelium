@@ -33,7 +33,7 @@ defmodule LiaisonServerWeb.Auth.Local.UserConfirmationController do
         # Invite the user to the trial dataspace
         with ds <- Tenants.get_data_space_by_handle(:ds1),
              trial_user <- Accounts.get_user_by_email(config[:email]),
-             ds <- Tenants.invite_to_data_space(ds, trial_user, user)
+             _ds <- Tenants.invite_to_data_space(ds, trial_user, user)
 
         do
           # Share the metadata key
@@ -41,25 +41,21 @@ defmodule LiaisonServerWeb.Auth.Local.UserConfirmationController do
 
           # TODO: Do not create the user in the ds unless the invite is accepted
           Landlord.create_user(Map.from_struct(user), %{user_id: user.id, ds_id: :ds1})
-        else
-          err ->
-            Logger.error("Error inviting user to trial")
-            IO.inspect(err)
         end
 
-        json(conn, %{"status": "ok"})
+        json(conn, %{status: "ok"})
 
       :error ->
         case conn.assigns do
           %{current_user: %{confirmed_at: confirmed_at}} when not is_nil(confirmed_at) ->
             conn
             |> put_status(409)
-            |> json(%{"error": "user already confirmed"})
+            |> json(%{error: "user already confirmed"})
 
           %{} ->
             conn
             |> put_status(401)
-            |> json(%{"error": "user confirmation link is invalid or it has expired"})
+            |> json(%{error: "user confirmation link is invalid or it has expired"})
         end
     end
   end

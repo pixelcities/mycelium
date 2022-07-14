@@ -23,7 +23,7 @@ defmodule KeyX.TrialAgent do
   def create_manifest_key() do
     user = Accounts.get_user_by_email(@config[:email])
 
-    secret = @config[:secret_key] |> Base.decode16!(case: :lower)
+    secret = Application.get_env(:key_x, KeyX.TrialAgent)[:secret_key] |> Base.decode16!(case: :lower)
     iv = :crypto.strong_rand_bytes(16)
 
     rand_plaintext = :crypto.strong_rand_bytes(32) |> Base.encode16(case: :lower)
@@ -39,7 +39,7 @@ defmodule KeyX.TrialAgent do
   def get_manifest_key() do
     user = Accounts.get_user_by_email(@config[:email])
 
-    secret = @config[:secret_key] |> Base.decode16!(case: :lower)
+    secret = Application.get_env(:key_x, KeyX.TrialAgent)[:secret_key] |> Base.decode16!(case: :lower)
     {:ok, key} = KeyStore.get_key_by_id_and_user(@config[:key_id], user)
     [iv, encrypted] = String.split(key.ciphertext, ":")
 

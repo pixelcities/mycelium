@@ -1,5 +1,5 @@
 defmodule Landlord.Mailer do
-  """
+  @moduledoc """
   View development emails using `Swoosh.Adapters.Local.Storage.Memory`
   """
 

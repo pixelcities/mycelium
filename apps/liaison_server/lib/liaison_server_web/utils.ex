@@ -5,9 +5,7 @@ defmodule LiaisonServerWeb.Utils do
 
   import Ecto.Changeset
 
-  alias LiaisonServerWeb.Router.Helpers
-
-  @host %URI{scheme: "http", host: "localhost", port: 3000}
+  @host %URI{scheme: "https", host: "datagarden.app"}
 
   @doc """
   Translate a changeset to a map with error messages

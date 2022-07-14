@@ -24,7 +24,7 @@ defmodule Maestro.Heartbeat do
     {:noreply, clock}
   end
 
-  defp tick(clock) do
+  defp tick(_clock) do
     Allocator.assign_workers()
   end
 

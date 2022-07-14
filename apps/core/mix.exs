@@ -18,13 +18,14 @@ defmodule Core.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      extra_applications: [:logger]
+      extra_applications: [:logger, :crypto]
     ]
   end
 
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
+      {:commanded, "~> 1.1"},
       {:commanded_messaging, "~> 0.2.0"},
       {:elixir_uuid, "~> 1.2"},
       {:jason, "~> 1.1"}

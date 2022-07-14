@@ -21,6 +21,7 @@ defmodule LiaisonServerWeb.UserChannel do
     end
   end
 
+  @impl true
   def handle_info(:after_join, socket) do
     user_id = socket.assigns.current_user.id
     {:ok, _} = Phoenix.Tracker.track(Tracker, self(), "user:" <> user_id, user_id, %{
@@ -31,6 +32,7 @@ defmodule LiaisonServerWeb.UserChannel do
     {:noreply, socket}
   end
 
+  @impl true
   def handle_info({:set_data_space, ds_id}, socket) do
     socket = assign(socket, :current_ds, ds_id)
 

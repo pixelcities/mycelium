@@ -8,7 +8,7 @@ defmodule Landlord.Accounts.UserNotifier do
     email =
       new()
       |> to(recipient)
-      |> from({"Mycelium", "contact@example.com"})
+      |> from({"PixelCities", "no-reply@pixelcities.io"})
       |> subject(subject)
       |> text_body(body)
 

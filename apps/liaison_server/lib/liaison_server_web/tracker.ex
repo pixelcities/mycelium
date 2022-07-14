@@ -14,11 +14,11 @@ defmodule LiaisonServerWeb.Tracker do
   end
 
   def handle_diff(diff, state) do
-    for {topic, {joins, leaves}} <- diff do
+    for {_topic, {joins, leaves}} <- diff do
       for {key, meta} <- joins do
         Allocator.register_worker(key, meta)
       end
-      for {key, meta} <- leaves do
+      for {key, _meta} <- leaves do
         Allocator.deregister_worker(key)
       end
     end

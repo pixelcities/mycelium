@@ -21,7 +21,14 @@ defmodule LiaisonServerWeb.Auth.Local.UserRegistrationController do
       {:error, %Ecto.Changeset{} = changeset} ->
         errors = changeset_error(changeset)
 
-        json(conn, errors)
+        conn
+        |> put_status(400)
+        |> json(errors)
+
+      {:error, _} ->
+        conn
+        |> put_status(401)
+        |> json(%{error: "Unauthorized"})
     end
   end
 end

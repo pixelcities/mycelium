@@ -11,7 +11,8 @@ defmodule Landlord.MixProject do
       lockfile: "../../mix.lock",
       elixir: "~> 1.11",
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      deps: deps(),
+      xref: [exclude: [LiaisonServer.App]]
     ]
   end
 
@@ -30,7 +31,9 @@ defmodule Landlord.MixProject do
       {:ecto_sql, "~> 3.6"},
       {:jason, "~> 1.1"},
       {:postgrex, ">= 0.0.0"},
-      {:swoosh, "~> 1.6"},
+      {:swoosh, "~> 1.7.3"},
+      {:ex_aws, "~> 2.2"},
+      {:sweet_xml, "~> 0.6"},
       {:hackney, "~> 1.9"},
       {:gen_smtp, "~> 1.0"},
       {:commanded, "~> 1.1"},

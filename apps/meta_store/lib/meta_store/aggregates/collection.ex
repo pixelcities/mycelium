@@ -27,7 +27,7 @@ defmodule MetaStore.Aggregates.Collection do
     CollectionUpdated.new(update, date: NaiveDateTime.utc_now())
   end
 
-  def execute(%Collection{} = collection, %UpdateCollectionSchema{} = update) do
+  def execute(%Collection{} = _collection, %UpdateCollectionSchema{} = update) do
     CollectionSchemaUpdated.new(update, date: NaiveDateTime.utc_now())
   end
 

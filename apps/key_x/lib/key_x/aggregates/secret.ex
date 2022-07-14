@@ -1,16 +1,3 @@
-defmodule SecretLifespan do
-  @moduledoc """
-  Just nuke the secret aggregate as we only act as the messenger and
-  no further command validation is required for this secret
-  """
-
-  @behaviour Commanded.Aggregates.AggregateLifespan
-
-  def after_event(_event), do: :stop
-  def after_command(_command), do: :stop
-  def after_error(_error), do: :stop
-end
-
 defmodule KeyX.Aggregates.Secret do
   defstruct key_id: nil,
             owner: nil,

@@ -7,8 +7,8 @@ defmodule KeyX.TenantSupervisor do
 
   @impl true
   def init(args) do
-    registry = Keyword.fetch!(args, :registry)
-    tenants = Keyword.fetch!(args, :tenants)
+    _registry = Keyword.fetch!(args, :registry)
+    _tenants = Keyword.fetch!(args, :tenants)
 
     dynamic = []
     children = []

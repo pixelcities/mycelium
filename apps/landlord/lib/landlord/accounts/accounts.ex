@@ -75,9 +75,15 @@ defmodule Landlord.Accounts do
 
   """
   def register_user(attrs) do
-    %User{}
-    |> User.registration_changeset(attrs)
-    |> Repo.insert()
+    invite_code = Application.get_env(:landlord, Landlord.Accounts)[:invite_code]
+
+    if Map.get(attrs, "invite") == invite_code do
+      %User{}
+      |> User.registration_changeset(attrs)
+      |> Repo.insert()
+    else
+      {:error, :invalid_invite_code}
+    end
   end
 
   @doc """

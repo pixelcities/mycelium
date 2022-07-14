@@ -1,8 +1,6 @@
 defmodule LiaisonServerWeb.DataSpaces.DataSpaceController do
   use LiaisonServerWeb, :controller
 
-  import LiaisonServerWeb.Utils
-
   alias Landlord.Tenants
 
   @doc """

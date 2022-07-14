@@ -1,31 +1,26 @@
 use Mix.Config
 
 config :ex_aws,
-  secret_access_key: [{:awscli, "mycelium", 30}],
-  access_key_id: [{:awscli, "mycelium", 30}],
+  access_key_id: [{:system, "AWS_ACCESS_KEY_ID"}, :instance_role],
+  secret_access_key: [{:system, "AWS_SECRET_ACCESS_KEY"}, :instance_role],
   region: "eu-west-1",
   awscli_auth_adapter: ExAws.STS.AuthCache.AssumeRoleCredentialsAdapter
 
 config :phoenix, :json_library, Jason
 
 config :cors_plug,
-  origin: ["http://localhost:3000"]
-
-
+  origin: ["https://datagarden.app"]
 
 # LiaisonServer
 config :liaison_server, LiaisonServer.EventStore,
   serializer: Commanded.Serialization.JsonSerializer,
-  username: "postgres",
   database: "eventstore",
-  hostname: "localhost",
   pool_size: 10
 
 config :liaison_server, LiaisonServerWeb.Endpoint,
-  http: [port: 5000],
-  debug_errors: true,
+  debug_errors: false,
   code_reloader: false,
-  check_origin: false,
+  check_origin: true,
   watchers: [],
   server: true
 
@@ -38,9 +33,7 @@ config :meta_store, MetaStore.App,
   ]
 
 config :meta_store, MetaStore.Repo,
-  database: "meta_store",
-  username: "postgres",
-  hostname: "localhost"
+  database: "meta_store"
 
 config :meta_store, :backend_config,
   backend_app: LiaisonServer.App
@@ -62,12 +55,10 @@ config :landlord, :backend_config,
   backend_app: LiaisonServer.App
 
 config :landlord, Landlord.Mailer,
-  adapter: Swoosh.Adapters.Local
+  adapter: Swoosh.Adapters.ExAwsAmazonSES
 
 config :landlord, Landlord.Repo,
-  database: "landlord",
-  username: "postgres",
-  hostname: "localhost"
+  database: "landlord"
 
 
 # KeyX
@@ -75,19 +66,12 @@ config :key_x, :backend_config,
   backend_app: LiaisonServer.App
 
 config :key_x, KeyX.Repo,
-  database: "key_x",
-  username: "postgres",
-  hostname: "localhost"
-
+  database: "key_x"
 
 # Maestro
 config :maestro, :backend_config,
   backend_app: LiaisonServer.App
 
 config :maestro, Maestro.Repo,
-  database: "maestro",
-  username: "postgres",
-  hostname: "localhost"
+  database: "maestro"
 
-
-import_config "dev.secret.exs"

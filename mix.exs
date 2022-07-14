@@ -8,7 +8,7 @@ defmodule Mycelium.MixProject do
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       releases: [
-        demo: [
+        mycelium: [
           include_executables_for: [:unix],
           applications: [
             data_store: :permanent,

@@ -43,6 +43,6 @@ defmodule LiaisonServerWeb.DataSpaceChannel do
   # Add authorization logic here as required.
   defp authorized?(user, _ds_id, _payload) when user.confirmed_at == nil, do: false
   defp authorized?(_user, {:ok, ds_id}, _payload) when is_atom(ds_id), do: true
-  defp authorized?(user, _ds_id, _payload), do: false
+  defp authorized?(_user, _ds_id, _payload), do: false
 
 end
