@@ -7,11 +7,11 @@ defmodule LiaisonServerWeb.Auth.Local.UserConfirmationController do
   alias Landlord.{Accounts, Tenants}
   alias KeyX.TrialAgent
 
-  def create(conn, %{"user" => %{"email" => email}}) do
+  def request_confirm_registration(conn, %{"user" => %{"email" => email}}) do
     if user = Accounts.get_user_by_email(email) do
       Accounts.deliver_user_confirmation_instructions(
         user,
-        &Routes.user_confirmation_url(get_external_host(), :confirm, &1)
+        &Routes.user_confirmation_url(get_external_host(), :confirm_registration, &1)
       )
     end
 
@@ -24,7 +24,7 @@ defmodule LiaisonServerWeb.Auth.Local.UserConfirmationController do
 
   A newly created user is also invited to a trial dataspace.
   """
-  def confirm(conn, %{"token" => token}) do
+  def confirm_registration(conn, %{"token" => token}) do
     case Accounts.confirm_user(token) do
       {:ok, user} ->
         # Grab the trial agent config

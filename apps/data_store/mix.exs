@@ -48,7 +48,8 @@ defmodule DataStore.MixProject do
       {:sweet_xml, "~> 0.6"},
 
       {:core, "~> 0.1", in_umbrella: true},
-      {:landlord, "~> 0.1", in_umbrella: true}
+      {:landlord, "~> 0.1", in_umbrella: true},
+      {:meta_store, "~> 0.1", in_umbrella: true}
     ]
   end
 end

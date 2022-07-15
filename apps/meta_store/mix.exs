@@ -40,8 +40,7 @@ defmodule MetaStore.MixProject do
       {:jason, "~> 1.1"},
 
       {:core, "~> 0.1", in_umbrella: true},
-      {:landlord, "~> 0.1", in_umbrella: true},
-      {:data_store, "~> 0.1", in_umbrella: true}
+      {:landlord, "~> 0.1", in_umbrella: true}
     ]
   end
 end

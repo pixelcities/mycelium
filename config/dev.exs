@@ -12,7 +12,6 @@ config :cors_plug,
   origin: ["http://localhost:3000"]
 
 
-
 # LiaisonServer
 config :liaison_server, LiaisonServer.EventStore,
   serializer: Commanded.Serialization.JsonSerializer,
@@ -29,6 +28,12 @@ config :liaison_server, LiaisonServerWeb.Endpoint,
   watchers: [],
   server: true
 
+config :liaison_server, LiaisonServerWeb,
+  from: [
+    scheme: "http",
+    host: "localhost",
+    port: 3000
+  ]
 
 # MetaStore
 config :meta_store, MetaStore.App,
@@ -52,6 +57,11 @@ config :data_store, DataStore.App,
     adapter: Commanded.EventStore.Adapters.InMemory,
     serializer: Commanded.Serialization.JsonSerializer
   ]
+
+config :data_store, DataStore.DataTokens,
+  bucket: "pxc-collection-store",
+  role_arn: "arn:aws:iam::120183265440:role/mycelium-s3-collection-manager",
+  restrict_source_ip: false
 
 config :data_store, :backend_config,
   backend_app: LiaisonServer.App

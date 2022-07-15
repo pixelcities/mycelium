@@ -5,7 +5,7 @@ defmodule LiaisonServerWeb.Utils do
 
   import Ecto.Changeset
 
-  @host %URI{scheme: "https", host: "datagarden.app"}
+  @config Application.get_env(:liaison_server, LiaisonServerWeb)[:from]
 
   @doc """
   Translate a changeset to a map with error messages
@@ -22,6 +22,12 @@ defmodule LiaisonServerWeb.Utils do
   @doc """
   Returns a URL with the host pointing to the front-end
   """
-  def get_external_host() do @host end
+  def get_external_host() do
+    %URI{
+      scheme: @config[:scheme],
+      host: @config[:host],
+      port: @config[:port]
+    }
+  end
 end
 

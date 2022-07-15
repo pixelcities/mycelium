@@ -8,7 +8,7 @@ defmodule LiaisonServerWeb.KeyStore.KeyController do
   @doc """
   Get all keys
   """
-  def list(conn, _params) do
+  def list_keys(conn, _params) do
     user = conn.assigns.current_user
 
     json(conn, KeyStore.get_keys!(user))
@@ -17,7 +17,7 @@ defmodule LiaisonServerWeb.KeyStore.KeyController do
   @doc """
   Create new key
   """
-  def create(conn, params) do
+  def create_key(conn, params) do
     user = conn.assigns.current_user
 
     case KeyStore.create_key(user, params) do
@@ -34,7 +34,7 @@ defmodule LiaisonServerWeb.KeyStore.KeyController do
   @doc """
   Get key by id
   """
-  def get(conn, %{"id" => id}) do
+  def get_key(conn, %{"id" => id}) do
     user = conn.assigns.current_user
 
     case KeyStore.get_key_by_id_and_user(id, user) do
@@ -53,7 +53,7 @@ defmodule LiaisonServerWeb.KeyStore.KeyController do
   @doc """
   Update key
   """
-  def put(conn, %{"id" => id} = params) do
+  def put_key(conn, %{"id" => id} = params) do
     user = conn.assigns.current_user
 
     case KeyStore.upsert_key(id, user, params) do
@@ -78,7 +78,7 @@ defmodule LiaisonServerWeb.KeyStore.KeyController do
   @doc """
   Delete key
   """
-  def delete(conn, %{"id" => id}) do
+  def delete_key(conn, %{"id" => id}) do
     user = conn.assigns.current_user
 
     case KeyStore.get_key_by_id_and_user(id, user) do
@@ -107,7 +107,7 @@ defmodule LiaisonServerWeb.KeyStore.KeyController do
   @doc """
   Batch rotate all keys in payload
   """
-  def rotate(conn, %{"token" => token, "keys" => keys}) do
+  def rotate_keys(conn, %{"token" => token, "keys" => keys}) do
     user = conn.assigns.current_user
 
     case KeyStore.prepare_rotation(token, user, keys) do

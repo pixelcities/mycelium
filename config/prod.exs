@@ -11,6 +11,7 @@ config :phoenix, :json_library, Jason
 config :cors_plug,
   origin: ["https://datagarden.app"]
 
+
 # LiaisonServer
 config :liaison_server, LiaisonServer.EventStore,
   serializer: Commanded.Serialization.JsonSerializer,
@@ -23,6 +24,12 @@ config :liaison_server, LiaisonServerWeb.Endpoint,
   check_origin: true,
   watchers: [],
   server: true
+
+config :liaison_server, LiaisonServerWeb,
+  from: [
+    scheme: "https",
+    host: "datagarden.app"
+  ]
 
 
 # MetaStore
@@ -45,6 +52,11 @@ config :data_store, DataStore.App,
     adapter: Commanded.EventStore.Adapters.InMemory,
     serializer: Commanded.Serialization.JsonSerializer
   ]
+
+config :data_store, DataStore.DataTokens,
+  bucket: "pxc-collection-store",
+  role_arn: "arn:aws:iam::120183265440:role/mycelium-s3-collection-manager",
+  restrict_source_ip: true
 
 config :data_store, :backend_config,
   backend_app: LiaisonServer.App

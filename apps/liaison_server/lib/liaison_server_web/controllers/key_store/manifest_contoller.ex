@@ -8,7 +8,7 @@ defmodule LiaisonServerWeb.KeyStore.ManifestController do
   @doc """
   Get (empty) manifest
   """
-  def get(conn, _params) do
+  def get_manifest(conn, _params) do
     user = conn.assigns.current_user
 
     manifest = case KeyStore.get_manifest_by_user!(user) do
@@ -22,7 +22,7 @@ defmodule LiaisonServerWeb.KeyStore.ManifestController do
   @doc """
   Create or update manifest
   """
-  def put(conn, params) do
+  def put_manifest(conn, params) do
     user = conn.assigns.current_user
 
     case KeyStore.upsert_manifest(user, params) do

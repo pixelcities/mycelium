@@ -4,7 +4,11 @@ defmodule LiaisonServerWeb.Auth.Local.UserSessionController do
   alias Landlord.Accounts
   alias LiaisonServerWeb.Auth
 
-  def create(conn, %{"user" => user_params}) do
+  plug Hammer.Plug, [
+    rate_limit: {"login", 60_000, 5},
+  ] when action == :login_user
+
+  def login_user(conn, %{"user" => user_params}) do
     %{"email" => email, "password" => password} = user_params
 
     if user = Accounts.get_user_by_email_and_password(email, password) do
@@ -16,7 +20,7 @@ defmodule LiaisonServerWeb.Auth.Local.UserSessionController do
     end
   end
 
-  def delete(conn, _params) do
+  def logout_user(conn, _params) do
     conn
     |> Auth.log_out_user()
   end

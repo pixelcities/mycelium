@@ -34,6 +34,9 @@ defmodule LiaisonServer.MixProject do
       {:phoenix, "~> 1.6"},
       {:plug_cowboy, "~> 2.5"},
       {:cors_plug, "~> 2.0"},
+      {:remote_ip, "~> 1.0.0"},
+      {:hammer, "~> 6.0"},
+      {:hammer_plug, "~> 2.1"},
 
       {:core, "~> 0.1", in_umbrella: true},
       {:meta_store, "~> 0.1", in_umbrella: true},

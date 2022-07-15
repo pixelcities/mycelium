@@ -11,6 +11,7 @@ defmodule MetaStore do
   alias MetaStore.Projections.{
     Transformer,
     Collection,
+    Source,
     Schema,
     Column,
     Share
@@ -67,6 +68,30 @@ defmodule MetaStore do
   def get_share!(id) do
     Repo.one(from c in Share,
       where: c.id == ^id
+    )
+  end
+
+  def get_collections() do
+    Repo.all(from c in Collection)
+  end
+
+  def get_collections_by_user(user) do
+    Repo.all(from c in Collection,
+      join: s in Schema, on: c.id == s.collection_id,
+      join: h in assoc(s, :shares),
+      where: h.principal == ^user.email
+    )
+  end
+
+  def get_sources() do
+    Repo.all(from s in Source)
+  end
+
+  def get_sources_by_user(user) do
+    Repo.all(from s in Source,
+      join: c in Schema, on: s.id == c.source_id,
+      join: h in assoc(c, :shares),
+      where: h.principal == ^user.email
     )
   end
 

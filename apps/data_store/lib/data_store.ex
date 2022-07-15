@@ -9,7 +9,7 @@ defmodule DataStore do
 
 
   @doc """
-  Generate a unique dataset URI, including temporary session information
+  Generate a unique dataset URI
   """
   def request_data_uri(attrs, %{user_id: _user_id} = metadata) do
     command =
@@ -27,5 +27,5 @@ defmodule DataStore do
     end
   end
 
-  def generate_data_tokens(uri, user), do: DataStore.DataTokens.generate_data_tokens(uri, user.id)
+  def generate_data_tokens(uri, mode, user, ip), do: DataStore.DataTokens.generate_data_tokens(uri, mode, user, ip)
 end

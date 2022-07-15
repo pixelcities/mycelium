@@ -12,7 +12,7 @@ defmodule LiaisonServerWeb.Users.UserProfileController do
   @doc """
   Just returns the current user struct atm
   """
-  def get(conn, %{"id" => "me"}) do
+  def get_user(conn, %{"id" => "me"}) do
     user = conn.assigns.current_user
 
     json(conn, user)
@@ -33,13 +33,22 @@ defmodule LiaisonServerWeb.Users.UserProfileController do
   @doc """
   Get a set of session tokens to interact with remote datasets
   """
-  def datatokens(conn, %{"uri" => uri}) do
+  def datatokens(conn, %{"uri" => uri, "mode" => mode}) do
     user = conn.assigns.current_user
+    remote_ip = to_string(:inet_parse.ntoa(conn.remote_ip))
 
-    json(conn, DataStore.generate_data_tokens(uri, user))
+    case DataStore.generate_data_tokens(uri, mode, user, remote_ip) do
+      {:ok, tokens} ->
+        json(conn, tokens)
+
+      {:error, error} ->
+        conn
+        |> put_status(401)
+        |> json(%{:error => error})
+    end
   end
 
-  def update(conn, %{"action" => "update_profile"} = params) do
+  def update_user(conn, %{"action" => "update_profile"} = params) do
     %{"user" => user_params} = params
     user = conn.assigns.current_user
 
@@ -63,7 +72,7 @@ defmodule LiaisonServerWeb.Users.UserProfileController do
   end
 
 
-  def update(conn, %{"action" => "update_email"} = params) do
+  def update_user(conn, %{"action" => "update_email"} = params) do
     %{"current_password" => password, "user" => user_params, "rotation_token" => _rotation_token} = params
     user = conn.assigns.current_user
 
@@ -90,7 +99,7 @@ defmodule LiaisonServerWeb.Users.UserProfileController do
     end
   end
 
-  def update(conn, %{"action" => "update_password"} = params) do
+  def update_user(conn, %{"action" => "update_password"} = params) do
     %{"current_password" => password, "user" => user_params, "rotation_token" => rotation_token} = params
     user = conn.assigns.current_user
 

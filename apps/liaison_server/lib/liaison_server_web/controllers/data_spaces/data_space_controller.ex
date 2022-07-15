@@ -6,7 +6,7 @@ defmodule LiaisonServerWeb.DataSpaces.DataSpaceController do
   @doc """
   Get all data spaces for this user
   """
-  def list(conn, _params) do
+  def list_data_spaces(conn, _params) do
     user = conn.assigns.current_user
 
     json(conn, Tenants.get_data_spaces_by_user(user))
@@ -15,7 +15,7 @@ defmodule LiaisonServerWeb.DataSpaces.DataSpaceController do
   @doc """
   Get data space by handle
   """
-  def get(conn, %{"handle" => handle}) do
+  def get_data_space(conn, %{"handle" => handle}) do
     user = conn.assigns.current_user
 
     case Tenants.get_data_space_by_user_and_handle(user, handle) do

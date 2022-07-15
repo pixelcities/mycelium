@@ -7,7 +7,7 @@ defmodule LiaisonServerWeb.Auth.Local.UserResetPasswordController do
 
   plug :get_user_by_reset_password_token when action in [:edit, :update]
 
-  def create(conn, %{"user" => %{"email" => email}}) do
+  def reset_user_password(conn, %{"user" => %{"email" => email}}) do
     if user = Accounts.get_user_by_email(email) do
       Accounts.deliver_user_reset_password_instructions(
         user,
@@ -21,7 +21,7 @@ defmodule LiaisonServerWeb.Auth.Local.UserResetPasswordController do
     })
   end
 
-  def update(conn, %{"user" => user_params}) do
+  def confirm_password_reset(conn, %{"user" => user_params}) do
     case Accounts.reset_user_password(conn.assigns.user, user_params) do
       {:ok, _} ->
         json(conn, %{
