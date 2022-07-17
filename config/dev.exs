@@ -1,4 +1,4 @@
-use Config
+import Config
 
 config :ex_aws,
   secret_access_key: [{:awscli, "mycelium", 30}],

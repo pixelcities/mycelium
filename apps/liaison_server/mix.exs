@@ -37,6 +37,8 @@ defmodule LiaisonServer.MixProject do
       {:remote_ip, "~> 1.0.0"},
       {:hammer, "~> 6.0"},
       {:hammer_plug, "~> 2.1"},
+      {:telemetry, "~> 1.1", runtime: false},
+      {:cowboy_telemetry, "~> 0.4", runtime: false},
 
       {:core, "~> 0.1", in_umbrella: true},
       {:meta_store, "~> 0.1", in_umbrella: true},

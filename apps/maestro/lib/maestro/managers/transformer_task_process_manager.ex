@@ -174,7 +174,7 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
 
   def apply(%TransformerTaskProcessManager{} = pm, %TransformerInputAdded{} = event) do
     %TransformerTaskProcessManager{pm |
-      transformer: Map.put(pm.transformer, :collections, [event.collection])
+      transformer: Map.put(pm.transformer, :collections, pm.transformer.collections ++ [event.collection])
     }
   end
 
