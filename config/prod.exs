@@ -1,4 +1,4 @@
-use Mix.Config
+use Config
 
 config :ex_aws,
   access_key_id: [{:system, "AWS_ACCESS_KEY_ID"}, :instance_role],

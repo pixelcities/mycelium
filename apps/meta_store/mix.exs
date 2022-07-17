@@ -9,7 +9,7 @@ defmodule MetaStore.MixProject do
       config_path: "../../config/config.exs",
       deps_path: "../../deps",
       lockfile: "../../mix.lock",
-      elixir: "~> 1.11",
+      elixir: "~> 1.13",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       deps: deps(),
@@ -31,13 +31,13 @@ defmodule MetaStore.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:ecto_sql, "~> 3.0"},
-      {:postgrex, ">= 0.0.0"},
-      {:commanded, "~> 1.1"},
-      {:commanded_ecto_projections, "~> 1.1"},
-      {:commanded_eventstore_adapter, "~> 1.1"},
-      {:eventstore, "~> 1.1"},
-      {:jason, "~> 1.1"},
+      {:commanded, "~> 1.3"},
+      {:commanded_ecto_projections, "~> 1.2"},
+      {:commanded_eventstore_adapter, "~> 1.2"},
+      {:eventstore, "~> 1.3"},
+      {:ecto_sql, "~> 3.6"},
+      {:postgrex, "~> 0.16"},
+      {:jason, "~> 1.3"},
 
       {:core, "~> 0.1", in_umbrella: true},
       {:landlord, "~> 0.1", in_umbrella: true}

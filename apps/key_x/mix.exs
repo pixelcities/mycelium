@@ -9,7 +9,7 @@ defmodule KeyX.MixProject do
       config_path: "../../config/config.exs",
       deps_path: "../../deps",
       lockfile: "../../mix.lock",
-      elixir: "~> 1.11",
+      elixir: "~> 1.13",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       xref: [exclude: [LiaisonServer.App]]
@@ -27,13 +27,13 @@ defmodule KeyX.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
+      {:commanded, "~> 1.3"},
+      {:commanded_eventstore_adapter, "~> 1.2"},
+      {:eventstore, "~> 1.3"},
       {:ecto_sql, "~> 3.6"},
-      {:jason, "~> 1.1"},
-      {:postgrex, ">= 0.0.0"},
-      {:commanded, "~> 1.1"},
-      {:commanded_eventstore_adapter, "~> 1.1"},
-      {:eventstore, "~> 1.1"},
-      {:rustler, "~> 0.25.0"},
+      {:jason, "~> 1.3"},
+      {:postgrex, "~> 0.16"},
+      {:rustler, "~> 0.25"},
 
       {:core, "~> 0.1", in_umbrella: true},
       {:landlord, "~> 0.1", in_umbrella: true}

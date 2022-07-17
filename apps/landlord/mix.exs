@@ -9,7 +9,7 @@ defmodule Landlord.MixProject do
       config_path: "../../config/config.exs",
       deps_path: "../../deps",
       lockfile: "../../mix.lock",
-      elixir: "~> 1.11",
+      elixir: "~> 1.13",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       xref: [exclude: [LiaisonServer.App]]
@@ -27,18 +27,20 @@ defmodule Landlord.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:argon2_elixir, "~> 2.0"},
+      {:commanded, "~> 1.3"},
+      {:commanded_eventstore_adapter, "~> 1.2"},
+      {:eventstore, "~> 1.3"},
+
+      {:argon2_elixir, "~> 2.4"},
       {:ecto_sql, "~> 3.6"},
-      {:jason, "~> 1.1"},
-      {:postgrex, ">= 0.0.0"},
-      {:swoosh, "~> 1.7.3"},
-      {:ex_aws, "~> 2.2"},
-      {:sweet_xml, "~> 0.6"},
-      {:hackney, "~> 1.9"},
-      {:gen_smtp, "~> 1.0"},
-      {:commanded, "~> 1.1"},
-      {:commanded_eventstore_adapter, "~> 1.1"},
-      {:eventstore, "~> 1.1"},
+      {:jason, "~> 1.3"},
+      {:postgrex, "~> 0.16"},
+
+      {:swoosh, "~> 1.7"},
+      {:ex_aws, "~> 2.3"},
+      {:sweet_xml, "~> 0.7"},
+      {:hackney, "~> 1.18"},
+      {:gen_smtp, "~> 1.2"},
 
       {:core, "~> 0.1", in_umbrella: true}
     ]

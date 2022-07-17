@@ -9,7 +9,7 @@ defmodule LiaisonServer.MixProject do
       config_path: "../../config/config.exs",
       deps_path: "../../deps",
       lockfile: "../../mix.lock",
-      elixir: "~> 1.11",
+      elixir: "~> 1.13",
       start_permanent: Mix.env() == :prod,
       deps: deps()
     ]
@@ -26,11 +26,11 @@ defmodule LiaisonServer.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:commanded, "~> 1.1"},
-      {:commanded_ecto_projections, "~> 1.1"},
-      {:commanded_eventstore_adapter, "~> 1.1"},
-      {:eventstore, "~> 1.1"},
-      {:jason, "~> 1.1"},
+      {:commanded, "~> 1.3"},
+      {:commanded_ecto_projections, "~> 1.2"},
+      {:commanded_eventstore_adapter, "~> 1.2"},
+      {:eventstore, "~> 1.3"},
+      {:jason, "~> 1.3"},
       {:phoenix, "~> 1.6"},
       {:plug_cowboy, "~> 2.5"},
       {:cors_plug, "~> 2.0"},

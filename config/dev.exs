@@ -1,4 +1,4 @@
-use Mix.Config
+use Config
 
 config :ex_aws,
   secret_access_key: [{:awscli, "mycelium", 30}],
