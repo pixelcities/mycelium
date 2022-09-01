@@ -81,7 +81,7 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
   end
 
   def handle(%TransformerTaskProcessManager{has_collection: true} = pm, %TransformerWALUpdated{wal: wal} = _event) do
-    in_collection = MetaStore.get_collection!(hd(pm.transformer.collections))
+    in_collections = Enum.map(pm.transformer.collections, fn collection_id -> MetaStore.get_collection!(collection_id) end)
 
     Enum.map(pm.created_tasks, fn task_id ->
       %CancelTask{
@@ -110,14 +110,15 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
           "uri" => pm.uri,
           "wal" => wal
         },
-        fragments: in_collection.schema.column_order
+        fragments: Enum.flat_map(in_collections, fn collection -> collection.schema.column_order end)
       }
     ]
   end
 
   def handle(%TransformerTaskProcessManager{wants_collection: true, has_collection: false} = pm, %DataURICreated{uri: uri} = _event) do
     collection_id = UUID.uuid4()
-    in_collection = MetaStore.get_collection!(hd(pm.transformer.collections))
+    in_collections = Enum.map(pm.transformer.collections, fn collection_id -> MetaStore.get_collection!(collection_id) end)
+    collection_color = if length(in_collections) == 1, do: hd(in_collections).color, else: "#FFFFFF"
 
     [
       %CreateCollection{
@@ -127,7 +128,7 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
         uri: uri,
         schema: nil,
         position: [hd(pm.transformer.position) + 200.0, Enum.at(pm.transformer.position, 1)],
-        color: in_collection.color,
+        color: collection_color,
         is_ready: false
       },
       %AddTransformerTarget{
@@ -146,7 +147,7 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
           "uri" => uri,
           "wal" => pm.transformer.wal
         },
-        fragments: in_collection.schema.column_order,
+        fragments: Enum.flat_map(in_collections, fn collection -> collection.schema.column_order end),
         metadata: %{}
       }
     ]

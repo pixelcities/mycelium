@@ -43,7 +43,7 @@ defmodule MetaStore.Aggregates.Transformer do
 
   def execute(%Transformer{} = transformer, %AddTransformerInput{} = command) do
     if transformer.type == "merge" do
-      if command.collection and length(transformer.collections) <= 1 do
+      if command.collection != nil and length(transformer.collections) <= 1 do
         TransformerInputAdded.new(%{
           id: transformer.id,
           workspace: transformer.workspace,

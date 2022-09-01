@@ -84,7 +84,7 @@ defmodule Core.Types.WAL do
 
     Enum.reduce(artifacts, changeset, fn artifact, acc ->
       # Basic check
-      if not Regex.match?(~r/^[0-9\[\],]+$/, artifact) do
+      if not Regex.match?(~r/^[0-9\[\],|]+$/, artifact) do
         add_error(acc, :artifacts, "Invalid character in artifact")
       else
         acc

@@ -26,17 +26,25 @@ defimpl Core.Middleware.CommandEnrichment, for: Core.Commands.AssignTask do
     user = Landlord.Accounts.get_user!(user_id)
     transformer = MetaStore.get_transformer!(transformer_id)
 
-    # TODO: handle multiple collections and transitive transformers
-    collection_id = hd(transformer.collections)
+    # TODO: handle transitive transformers
+    fragments = Enum.map(transformer.collections, fn collection_id ->
+      collection = MetaStore.get_collection!(collection_id)
+      schema = MetaStore.get_schema!(collection.schema.id)
 
-    collection = MetaStore.get_collection!(collection_id)
-    schema = MetaStore.get_schema!(collection.schema.id)
+      get_fragments_by_schema(schema, user.email)
+    end)
 
-    if Enum.any?(schema.shares, fn share -> share.principal == user.email end) do
+    Enum.reduce_while(fragments, {:ok, []}, fn {left, right}, {:ok, acc} ->
+      if left == :ok, do: {:cont, {:ok, Enum.concat(acc, right)}}, else: {:halt, {:error, right}}
+    end)
+  end
+
+  defp get_fragments_by_schema(schema, email) do
+    if Enum.any?(schema.shares, fn share -> share.principal == email end) do
       fragments = Enum.filter(schema.columns, fn c ->
         column = MetaStore.get_column!(c.id)
 
-        Enum.any?(column.shares, fn share -> share.principal == user.email end)
+        Enum.any?(column.shares, fn share -> share.principal == email end)
       end)
 
       {:ok, Enum.map(fragments, fn fragment -> fragment.id end)}
@@ -44,4 +52,5 @@ defimpl Core.Middleware.CommandEnrichment, for: Core.Commands.AssignTask do
       {:error, :user_cannot_read_schema}
     end
   end
+
 end
