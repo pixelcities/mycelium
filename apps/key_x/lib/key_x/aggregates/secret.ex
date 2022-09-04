@@ -1,4 +1,10 @@
 defmodule KeyX.Aggregates.Secret do
+  @moduledoc """
+  Secret share aggregate
+
+  TODO: Add and track committed secret shares
+  """
+
   defstruct key_id: nil,
             owner: nil,
             receiver: nil,

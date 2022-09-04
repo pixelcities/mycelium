@@ -47,13 +47,13 @@ defmodule LiaisonServerWeb.UserChannel do
   # subscribed streams are often shared accross the workspace, with the exception of the secret shares.
 
   @impl true
-  def handle_in("init", %{"type" => "events"}, socket), do: handle_subscribe(LiaisonServer.Workflows.RelayEvents, socket)
+  def handle_in("init", %{"type" => "events", "payload" => event_number}, socket), do: handle_subscribe(LiaisonServer.Workflows.RelayEvents, socket, true, event_number)
 
   @impl true
-  def handle_in("init", %{"type" => "secrets"}, socket), do: handle_subscribe(LiaisonServer.Workflows.RelaySecrets, socket, false)
+  def handle_in("init", %{"type" => "secrets"}, socket), do: handle_subscribe(LiaisonServer.Workflows.RelaySecrets, socket)
 
   @impl true
-  def handle_in("init", %{"type" => "tasks"}, socket), do: handle_subscribe(LiaisonServer.Workflows.RelayTasks, socket, false)
+  def handle_in("init", %{"type" => "tasks"}, socket), do: handle_subscribe(LiaisonServer.Workflows.RelayTasks, socket)
 
 
   # Command handlers
@@ -132,13 +132,14 @@ defmodule LiaisonServerWeb.UserChannel do
     end
   end
 
-  defp handle_subscribe(module, socket, restart \\ true) do
+  # TODO: stop on leave channel
+  defp handle_subscribe(module, socket, restart \\ false, restart_from \\ 0) do
     user = socket.assigns.current_user
 
     app = Module.concat(LiaisonServer.App, socket.assigns.current_ds)
 
     # (Re)start an event handler that will broadcast all relevant events in history
-    {:ok, pid} = DynamicSupervisor.start_child(LiaisonServer.RelayEventSupervisor, {module, application: app, user_id: user.id, workspace: "default"})
+    {:ok, pid} = DynamicSupervisor.start_child(LiaisonServer.RelayEventSupervisor, {module, application: app, user_id: user.id, workspace: "default", restart_from: restart_from})
 
     if restart do
       send(pid, :reset)

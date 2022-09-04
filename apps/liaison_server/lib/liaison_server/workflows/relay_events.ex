@@ -29,9 +29,10 @@ defmodule LiaisonServer.Workflows.RelayEvents do
   def init(config) do
     {workspace, config} = Keyword.pop(config, :workspace)
     {user_id, config} = Keyword.pop(config, :user_id)
+    {restart_from, config} = Keyword.pop(config, :restart_from)
     name = Module.concat([__MODULE__, user_id])
 
-    config = Keyword.put_new(config, :state, %{user_id: user_id, workspace: workspace})
+    config = Keyword.put_new(config, :state, %{user_id: user_id, workspace: workspace, restart_from: restart_from})
     config = Keyword.put_new(config, :name, name)
 
     {:ok, config}
@@ -95,12 +96,13 @@ defmodule LiaisonServer.Workflows.RelayEvents do
   def handle(%TransformerWALUpdated{} = event, metadata), do: handle_event("TransformerWALUpdated", event, metadata)
 
 
+  # TODO: send event to a reducer, which can be called on startup to get old messages
   defp handle_event(type, event, metadata, all_workspaces \\ false) do
-    %{state: state} = metadata
+    %{state: state, event_number: event_number} = metadata
 
-    if all_workspaces || state.workspace == event.workspace do
+    if event_number >= state.restart_from && (all_workspaces || state.workspace == event.workspace) do
       if Map.has_key?(Enum.into(Phoenix.Tracker.list(LiaisonServerWeb.Tracker, "user:" <> state.user_id), %{}), state.user_id) do
-        LiaisonServerWeb.Endpoint.broadcast("user:" <> state.user_id, "event", %{"type" => type, "payload" => event})
+        LiaisonServerWeb.Endpoint.broadcast("user:" <> state.user_id, "event", %{"id" => event_number, "type" => type, "payload" => event})
 
         :ok
       else

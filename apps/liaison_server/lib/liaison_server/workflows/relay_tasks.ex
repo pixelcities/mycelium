@@ -9,6 +9,7 @@ defmodule LiaisonServer.Workflows.RelayTasks do
   def init(config) do
     {_workspace, config} = Keyword.pop(config, :workspace)
     {user_id, config} = Keyword.pop(config, :user_id)
+    {_restart_from, config} = Keyword.pop(config, :restart_from)
     name = Module.concat([__MODULE__, user_id])
 
     config = Keyword.put_new(config, :state, %{user_id: user_id})
