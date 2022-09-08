@@ -26,8 +26,7 @@ defmodule LiaisonServer.Application do
     children = [
       {Phoenix.PubSub, name: LiaisonServer.PubSub},
       {LiaisonServerWeb.Tracker, name: LiaisonServerWeb.Tracker, pubsub_server: LiaisonServer.PubSub},
-      LiaisonServerWeb.Endpoint,
-      {Registry, keys: :unique, name: LiaisonServerWeb.Registry.UserDataSpaces}
+      LiaisonServerWeb.Endpoint
     ]
 
     opts = [strategy: :one_for_one, name: LiaisonServer.Supervisor]

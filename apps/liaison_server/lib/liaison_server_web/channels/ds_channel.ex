@@ -5,7 +5,6 @@ defmodule LiaisonServerWeb.DataSpaceChannel do
 
   alias LiaisonServerWeb.Tracker
   alias Landlord.Tenants
-  alias LiaisonServerWeb.Registry.UserDataSpaces
 
 
   @impl true
@@ -16,10 +15,6 @@ defmodule LiaisonServerWeb.DataSpaceChannel do
     if authorized?(user, maybe_ds_id, payload) do
       {:ok, ds_id} = maybe_ds_id
       socket = assign(socket, :current_ds, ds_id)
-
-      # Notify the UserChannel about the ds
-      [{pid, _}] = Registry.lookup(UserDataSpaces, user.id)
-      send(pid, {:set_data_space, ds_id})
 
       send(self(), :after_join)
 
@@ -37,6 +32,118 @@ defmodule LiaisonServerWeb.DataSpaceChannel do
     })
 
     {:noreply, socket}
+  end
+
+
+  # Re(p)lay handlers
+  #
+  # These handlers subscribe the client to the appropiate streams, so that events are broadcasted when they occur.
+  #
+  # For most relays, the events are replayed from the beginning of time so that client side state can be restored. The
+  # subscribed streams are often shared accross the workspace, with the exception of the secret shares.
+
+  @impl true
+  def handle_in("init", %{"type" => "events", "payload" => event_number}, socket), do: handle_subscribe(LiaisonServer.Workflows.RelayEvents, socket, true, event_number)
+
+  @impl true
+  def handle_in("init", %{"type" => "secrets"}, socket), do: handle_subscribe(LiaisonServer.Workflows.RelaySecrets, socket)
+
+  @impl true
+  def handle_in("init", %{"type" => "tasks"}, socket), do: handle_subscribe(LiaisonServer.Workflows.RelayTasks, socket)
+
+
+  # Command handlers
+
+  @impl true
+  def handle_in("action", %{"type" => "ShareSecret"} = action, socket), do: handle_action(&KeyX.share_secret/2, action, socket)
+
+  @impl true
+  def handle_in("action", %{"type" => "CreateDataURI"} = action, socket), do: handle_action(&DataStore.request_data_uri/2, action, socket)
+
+  @impl true
+  def handle_in("action", %{"type" => "CreateSource"} = action, socket), do: handle_action(&MetaStore.create_source/2, action, socket)
+
+  @impl true
+  def handle_in("action", %{"type" => "UpdateSource"} = action, socket), do: handle_action(&MetaStore.update_source/2, action, socket)
+
+  @impl true
+  def handle_in("action", %{"type" => "CreateMetadata"} = action, socket), do: handle_action(&MetaStore.create_metadata/2, action, socket)
+
+  @impl true
+  def handle_in("action", %{"type" => "UpdateMetadata"} = action, socket), do: handle_action(&MetaStore.update_metadata/2, action, socket)
+
+  @impl true
+  def handle_in("action", %{"type" => "CreateCollection"} = action, socket), do: handle_action(&MetaStore.create_collection/2, action, socket)
+
+  @impl true
+  def handle_in("action", %{"type" => "UpdateCollection"} = action, socket), do: handle_action(&MetaStore.update_collection/2, action, socket)
+
+  @impl true
+  def handle_in("action", %{"type" => "UpdateCollectionSchema"} = action, socket), do: handle_action(&MetaStore.update_collection_schema/2, action, socket)
+
+  @impl true
+  def handle_in("action", %{"type" => "SetCollectionPosition"} = action, socket), do: handle_action(&MetaStore.set_collection_position/2, action, socket)
+
+  @impl true
+  def handle_in("action", %{"type" => "SetCollectionIsReady"} = action, socket), do: handle_action(&MetaStore.set_collection_is_ready/2, action, socket)
+
+  @impl true
+  def handle_in("action", %{"type" => "AddCollectionTarget"} = action, socket), do: handle_action(&MetaStore.add_collection_target/2, action, socket)
+
+  @impl true
+  def handle_in("action", %{"type" => "CreateTransformer"} = action, socket), do: handle_action(&MetaStore.create_transformer/2, action, socket)
+
+  @impl true
+  def handle_in("action", %{"type" => "UpdateTransformer"} = action, socket), do: handle_action(&MetaStore.update_transformer/2, action, socket)
+
+  @impl true
+  def handle_in("action", %{"type" => "SetTransformerPosition"} = action, socket), do: handle_action(&MetaStore.set_transformer_position/2, action, socket)
+
+  @impl true
+  def handle_in("action", %{"type" => "AddTransformerTarget"} = action, socket), do: handle_action(&MetaStore.add_transformer_target/2, action, socket)
+
+  @impl true
+  def handle_in("action", %{"type" => "AddTransformerInput"} = action, socket), do: handle_action(&MetaStore.add_transformer_input/2, action, socket)
+
+  @impl true
+  def handle_in("action", %{"type" => "UpdateTransformerWAL"} = action, socket), do: handle_action(&MetaStore.update_transformer_wal/2, action, socket)
+
+  @impl true
+  def handle_in("action", %{"type" => "CompleteTask"} = action, socket), do: handle_action(&Maestro.complete_task/2, action, socket)
+
+
+  defp handle_action(func, action, socket) do
+    user = socket.assigns.current_user
+    ds_id = socket.assigns.current_ds
+
+    with {:ok, :done} <- func.(Map.fetch!(action, "payload"), %{user_id: user.id, ds_id: ds_id}) do
+      {:noreply, socket}
+    else
+      err -> {:stop, err, socket}
+    end
+  end
+
+  # TODO: stop on leave channel
+  defp handle_subscribe(module, socket, restart \\ false, restart_from \\ 0) do
+    user = socket.assigns.current_user
+    ds_id = socket.assigns.current_ds
+
+    app = Module.concat(LiaisonServer.App, socket.assigns.current_ds)
+
+    # Start an event handler that will broadcast all relevant events
+    {:ok, pid} = DynamicSupervisor.start_child(LiaisonServer.RelayEventSupervisor, {module,
+      application: app,
+      ds_id: ds_id,
+      user_id: user.id,
+      workspace: "default",
+      socket_ref: socket_ref(socket)
+    })
+
+    if restart do
+      LiaisonServer.EventHistory.replay_from(restart_from, ds_id, socket_ref(socket))
+    end
+
+    {:reply, :ok, socket}
   end
 
 
