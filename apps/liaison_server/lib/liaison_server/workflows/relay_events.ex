@@ -31,10 +31,9 @@ defmodule LiaisonServer.Workflows.RelayEvents do
     {workspace, config} = Keyword.pop(config, :workspace)
     {user_id, config} = Keyword.pop(config, :user_id)
     {ds_id, config} = Keyword.pop(config, :ds_id)
-    {socket_ref, config} = Keyword.pop(config, :socket_ref)
     name = Module.concat([__MODULE__, ds_id])
 
-    config = Keyword.put_new(config, :state, %{ds_id: ds_id, user_id: user_id, workspace: workspace, socket_ref: socket_ref})
+    config = Keyword.put_new(config, :state, %{channel: "ds:" <> (ds_id |> to_string()), user_id: user_id, workspace: workspace})
     config = Keyword.put_new(config, :name, name)
 
     {:ok, config}
@@ -47,9 +46,9 @@ defmodule LiaisonServer.Workflows.RelayEvents do
       %{state: state, event_number: event_number} = metadata
       %type{} = event
 
-      LiaisonServerWeb.Endpoint.broadcast("ds:" <> state.ds_id, "event", %{
+      LiaisonServerWeb.Endpoint.broadcast(state.channel, "event", %{
         "id" => event_number,
-        "type" => type |> String.trim_leading("Elixir.Core.Events."),
+        "type" => type |> to_string() |> String.trim_leading("Elixir.Core.Events."),
         "payload" => event
       })
 

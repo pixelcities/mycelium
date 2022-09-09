@@ -131,16 +131,15 @@ defmodule LiaisonServerWeb.DataSpaceChannel do
     app = Module.concat(LiaisonServer.App, socket.assigns.current_ds)
 
     # Start an event handler that will broadcast all relevant events
-    {:ok, pid} = DynamicSupervisor.start_child(LiaisonServer.RelayEventSupervisor, {module,
+    {:ok, _pid} = DynamicSupervisor.start_child(LiaisonServer.RelayEventSupervisor, {module,
       application: app,
       ds_id: ds_id,
       user_id: user.id,
-      workspace: "default",
-      socket_ref: socket_ref(socket)
+      workspace: "default"
     })
 
     if restart do
-      LiaisonServer.EventHistory.replay_from(restart_from, ds_id, socket_ref(socket))
+      LiaisonServer.EventHistory.replay_from(restart_from, ds_id, user.id)
     end
 
     {:reply, :ok, socket}

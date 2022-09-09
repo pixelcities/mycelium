@@ -37,22 +37,23 @@ defmodule LiaisonServer.EventHistory do
 
   @events
   |> Enum.each(fn x ->
-    defp handle(%unquote(x){} = event, _metadata, socket_ref) do
+    defp handle(%unquote(x){} = event, _metadata, user_id) do
       %type{} = event
 
-      socket_ref.push("history", %{"type" => type |> String.trim_leading("Elixir.Core.Events."), "payload" => event})
+      LiaisonServerWeb.Endpoint.broadcast("user:" <> user_id, "history", %{"type" => type |> to_string() |> String.trim_leading("Elixir.Core.Events."), "payload" => event})
 
       :ok
     end
   end)
 
-  defp handle(_event, _metadata, _socket_ref), do: :ok
+  defp handle(_event, _metadata, _user_id), do: :ok
 
 
-  def replay_from(from, ds_id, socket_ref) do
+  def replay_from(from, ds_id, user_id) do
+    # TODO: Return event number as final message
     EventStore.stream_all_forward(from, name: Module.concat(EventStore, ds_id))
-    |> Enum.reduce_while(:ok, fn event, acc ->
-      case handle(event.data, event.metadata, socket_ref) do
+    |> Enum.reduce_while(:ok, fn event, _ ->
+      case handle(event.data, event.metadata, user_id) do
         :ok -> {:cont, :ok}
         :error -> {:halt, :error}
       end
