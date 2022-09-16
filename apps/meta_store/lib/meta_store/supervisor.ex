@@ -21,7 +21,15 @@ defmodule MetaStore.TenantSupervisor do
     Supervisor.init(children ++ dynamic, strategy: :one_for_one)
   end
 
-  def callback(tenant), do: start_children(tenant)
+  def callback(tenant) do
+    create_repo(tenant)
+    start_children(tenant)
+  end
+
+  defp create_repo(tenant) do
+    MetaStore.Repo.query('CREATE SCHEMA IF NOT EXISTS "#{tenant}"')
+    {:ok, _, _} = Ecto.Migrator.with_repo(MetaStore.Repo, &Ecto.Migrator.run(&1, :up, all: true, prefix: tenant))
+  end
 
   defp start_children(tenant) do
     Enum.each(get_children(tenant), fn spec ->
