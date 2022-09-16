@@ -9,6 +9,7 @@ defmodule Landlord.Tenants do
   """
 
   import Ecto.Query, warn: false
+  require Logger
 
   alias Landlord.Repo
   alias Landlord.Accounts.User
@@ -22,8 +23,23 @@ defmodule Landlord.Tenants do
   Note that a handle is expected to be an atom.
   """
   def get() do
-    Repo.all(from d in DataSpace, select: d.handle)
-    |> Enum.map(fn handle -> String.to_atom(handle) end)
+    try do
+      tenants = Repo.all(from d in DataSpace, select: d.handle)
+        |> Enum.map(fn handle -> String.to_atom(handle) end)
+      {:ok, tenants}
+    rescue
+      e in Postgrex.Error ->
+        Logger.error(Exception.format(:error, e, __STACKTRACE__))
+        {:error, e.postgres.code}
+      e ->
+        Logger.error(Exception.format(:error, e, __STACKTRACE__))
+        reraise e, __STACKTRACE__
+    end
+  end
+
+  def get!() do
+    {:ok, tenants} = __MODULE__.get()
+    tenants
   end
 
   @doc """

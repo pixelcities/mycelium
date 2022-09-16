@@ -14,13 +14,13 @@ defmodule MetaStore.Repo.Migrations.CreateSources do
     end
 
     # shares
-    execute """
-      CREATE TABLE shares (
+    execute("""
+      CREATE TABLE "#{prefix()}".shares (
         id text GENERATED ALWAYS AS ('share:' || principal || ':' || type) STORED PRIMARY KEY,
         principal text,
         type text
       );
-    """, "DROP TABLE shares"
+      """, 'DROP TABLE "#{prefix()}".shares')
 
     # schemas
     create table(:schemas, primary_key: false) do

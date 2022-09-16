@@ -8,7 +8,7 @@ defmodule KeyX.Application do
   @impl true
   def start(_type, _args) do
     app = get_app()
-    tenants = Landlord.Tenants.get()
+    tenants = Landlord.Tenants.get!()
 
     commanded = if app == @parent_module.App do
       Enum.flat_map(tenants, fn tenant ->

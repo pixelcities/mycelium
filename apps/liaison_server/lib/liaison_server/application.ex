@@ -4,7 +4,7 @@ defmodule LiaisonServer.Application do
   use Application
 
   def start(_type, _args) do
-    tenants = Landlord.Tenants.get()
+    tenants = Landlord.Tenants.get!()
     register(Landlord.Registry, 0)
 
     app = tenants

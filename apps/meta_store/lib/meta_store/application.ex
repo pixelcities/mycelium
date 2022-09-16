@@ -8,7 +8,7 @@ defmodule MetaStore.Application do
   @impl true
   def start(_type, _args) do
     app = get_app()
-    tenants = Landlord.Tenants.get()
+    tenants = Landlord.Tenants.get!()
 
     # Refrain from loading the local app when we have a central backend (e.g. LiaisonServer)
     commanded = if app == @parent_module.App do
