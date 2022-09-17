@@ -7,7 +7,9 @@ defmodule Maestro.Projectors.Task do
   alias Core.Events.{TaskCreated, TaskAssigned, TaskUnAssigned, TaskCancelled, TaskCompleted}
   alias Maestro.Projections.Task
 
-  project %TaskCreated{} = task, _metadata, fn multi ->
+  project %TaskCreated{} = task, metadata, fn multi ->
+    ds_id = Map.get(metadata, "ds_id")
+
     multi
     |> Ecto.Multi.insert(:insert, %Task{
       id: task.id,
@@ -17,43 +19,51 @@ defmodule Maestro.Projectors.Task do
       worker: task.worker,
       fragments: task.fragments,
       metadata: task.metadata
-    })
+    }, prefix: ds_id)
   end
 
-  project %TaskAssigned{} = task, _metadata, fn multi ->
+  project %TaskAssigned{} = task, metadata, fn multi ->
+    ds_id = Map.get(metadata, "ds_id")
+
     multi
     |> Ecto.Multi.run(:get_task, fn repo, _changes ->
-      {:ok, repo.get(Task, task.id) }
+      {:ok, repo.get(Task, task.id, prefix: ds_id) }
     end)
     |> Ecto.Multi.update(:update, fn %{get_task: t} ->
       Ecto.Changeset.change(t, worker: task.worker)
-    end)
+    end, prefix: ds_id)
   end
 
-  project %TaskUnAssigned{} = task, _metadata, fn multi ->
+  project %TaskUnAssigned{} = task, metadata, fn multi ->
+    ds_id = Map.get(metadata, "ds_id")
+
     multi
     |> Ecto.Multi.run(:get_task, fn repo, _changes ->
-      {:ok, repo.get(Task, task.id) }
+      {:ok, repo.get(Task, task.id, prefix: ds_id) }
     end)
     |> Ecto.Multi.update(:update, fn %{get_task: t} ->
       Ecto.Changeset.change(t, worker: nil)
-    end)
+    end, prefix: ds_id)
   end
 
-  project %TaskCancelled{} = task, _metadata, fn multi ->
+  project %TaskCancelled{} = task, metadata, fn multi ->
+    ds_id = Map.get(metadata, "ds_id")
+
     multi
     |> Ecto.Multi.run(:get_task, fn repo, _changes ->
-      {:ok, repo.get(Task, task.id) }
+      {:ok, repo.get(Task, task.id, prefix: ds_id) }
     end)
     |> Ecto.Multi.update(:update, fn %{get_task: t} ->
       Ecto.Changeset.change(t, is_cancelled: true)
-    end)
+    end, prefix: ds_id)
   end
 
-  project %TaskCompleted{} = task, _metadata, fn multi ->
+  project %TaskCompleted{} = task, metadata, fn multi ->
+    ds_id = Map.get(metadata, "ds_id")
+
     multi
     |> Ecto.Multi.run(:get_task, fn repo, _changes ->
-      {:ok, repo.get(Task, task.id) }
+      {:ok, repo.get(Task, task.id, prefix: ds_id) }
     end)
     |> Ecto.Multi.update(:update, fn %{get_task: t} ->
       Ecto.Changeset.change(t,
@@ -61,7 +71,7 @@ defmodule Maestro.Projectors.Task do
         metadata: task.metadata,
         worker: nil
       )
-    end)
+    end, prefix: ds_id)
   end
 
 end

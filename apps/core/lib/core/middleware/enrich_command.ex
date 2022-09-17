@@ -7,8 +7,8 @@ defmodule Core.Middleware.EnrichCommand do
   @doc """
   Enrich the command via the opt-in command enrichment protocol.
   """
-  def before_dispatch(%Pipeline{command: command} = pipeline) do
-    case CommandEnrichment.enrich(command) do
+  def before_dispatch(%Pipeline{command: command, metadata: metadata} = pipeline) do
+    case CommandEnrichment.enrich(command, metadata) do
       {:ok, command} ->
         %Pipeline{pipeline | command: command}
 

@@ -38,61 +38,79 @@ defmodule MetaStore do
 
   ## Database getters
 
-  def get_transformer!(id) do
-    Repo.one(from t in Transformer,
+  def get_transformer!(id, opts \\ []) do
+    tenant = Keyword.fetch!(opts, :tenant)
+
+    Repo.one((from t in Transformer,
       where: t.id == ^id
-    )
+    ), prefix: tenant)
   end
 
-  def get_collection!(id) do
-    Repo.one(from c in Collection,
+  def get_collection!(id, opts \\ []) do
+    tenant = Keyword.fetch!(opts, :tenant)
+
+    Repo.one((from c in Collection,
       where: c.id == ^id,
       preload: [:schema]
-    )
+    ), prefix: tenant)
   end
 
-  def get_schema!(id) do
-    Repo.one(from c in Schema,
+  def get_schema!(id, opts \\ []) do
+    tenant = Keyword.fetch!(opts, :tenant)
+
+    Repo.one((from c in Schema,
       where: c.id == ^id,
       preload: [:columns, :shares]
-    )
+    ), prefix: tenant)
   end
 
-  def get_column!(id) do
-    Repo.one(from c in Column,
+  def get_column!(id, opts \\ []) do
+    tenant = Keyword.fetch!(opts, :tenant)
+
+    Repo.one((from c in Column,
       where: c.id == ^id,
       preload: [:shares]
-    )
+    ), prefix: tenant)
   end
 
-  def get_share!(id) do
-    Repo.one(from c in Share,
+  def get_share!(id, opts \\ []) do
+    tenant = Keyword.fetch!(opts, :tenant)
+
+    Repo.one((from c in Share,
       where: c.id == ^id
-    )
+    ), prefix: tenant)
   end
 
-  def get_collections() do
-    Repo.all(from c in Collection)
+  def get_collections(opts \\ []) do
+    tenant = Keyword.fetch!(opts, :tenant)
+
+    Repo.all((from c in Collection), prefix: tenant)
   end
 
-  def get_collections_by_user(user) do
-    Repo.all(from c in Collection,
+  def get_collections_by_user(user, opts \\ []) do
+    tenant = Keyword.fetch!(opts, :tenant)
+
+    Repo.all((from c in Collection,
       join: s in Schema, on: c.id == s.collection_id,
       join: h in assoc(s, :shares),
       where: h.principal == ^user.email
-    )
+    ), prefix: tenant)
   end
 
-  def get_sources() do
-    Repo.all(from s in Source)
+  def get_sources(opts \\ []) do
+    tenant = Keyword.fetch!(opts, :tenant)
+
+    Repo.all((from s in Source), prefix: tenant)
   end
 
-  def get_sources_by_user(user) do
-    Repo.all(from s in Source,
+  def get_sources_by_user(user, opts \\ []) do
+    tenant = Keyword.fetch!(opts, :tenant)
+
+    Repo.all((from s in Source,
       join: c in Schema, on: s.id == c.source_id,
       join: h in assoc(c, :shares),
       where: h.principal == ^user.email
-    )
+    ), prefix: tenant)
   end
 
 

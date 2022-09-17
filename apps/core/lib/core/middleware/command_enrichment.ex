@@ -6,13 +6,13 @@ defprotocol Core.Middleware.CommandEnrichment do
   from the database to enrich the command's fields.
   """
   @fallback_to_any true
-  def enrich(command)
+  def enrich(command, metadata)
 end
 
 defimpl Core.Middleware.CommandEnrichment, for: Any do
   @doc """
   By default the command is not modified.
   """
-  def enrich(command), do: {:ok, command}
+  def enrich(command, metadata), do: {:ok, command}
 end
 

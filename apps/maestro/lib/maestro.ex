@@ -57,10 +57,12 @@ defmodule Maestro do
     end
   end
 
-  def get_tasks(_attrs \\ %{}) do
-    Repo.all(from t in Task,
+  def get_tasks(opts \\ []) do
+    tenant = Keyword.fetch!(opts, :tenant)
+
+    Repo.all((from t in Task,
       where: t.is_completed == false and t.is_cancelled == false
-    )
+    ), prefix: tenant)
   end
 
 end

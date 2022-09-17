@@ -104,37 +104,33 @@ defmodule DataStore.DataTokens do
   defp validate_mode(_mode), do: {:error, "invalid_mode"}
 
   defp validate_path(user, uri, "read") do
-    sources = MetaStore.get_sources_by_user(user)
-    collections = MetaStore.get_collections_by_user(user)
+    with {:ok, ds, _, _, _} <- parse_uri(uri),
+         :ok <- validate_data_space(ds, user)
+    do
+      sources = MetaStore.get_sources_by_user(user, tenant: ds)
+      collections = MetaStore.get_collections_by_user(user, tenant: ds)
 
-    uris = Enum.map(sources, fn s -> s.uri end) ++ Enum.map(collections, fn c -> c.uri end)
+      uris = Enum.map(sources, fn s -> s.uri end) ++ Enum.map(collections, fn c -> c.uri end)
 
-    if uri in uris do
-      :ok
+      if uri in uris do
+        :ok
+      else
+        {:error, "unauthorized"}
+      end
     else
-      {:error, "unauthorized"}
+      err -> err
     end
   end
 
   # TODO: validate dataset was requested beforehand
   defp validate_path(user, uri, "write") do
-    case Regex.named_captures(~r/^s3:\/\/(?<bucket>[a-z0-9-]+)\/(?<ds>[a-z0-9-]+)\/(?<workspace>[a-z0-9-]+)\/(?<dataset>[a-z0-9-]+)\/(?<fragment>[a-z0-9-]+).parquet$/, uri) do
-      nil -> {:error, "invalid_uri"}
-      %{
-        "bucket" => @bucket,
-        "ds" => ds,
-        "workspace" => workspace,
-        "dataset" => _dataset,
-        "fragment" => _fragment
-      } ->
-        with :ok <- validate_data_space(ds, user),
-             :ok <- validate_workspace(workspace, user)
-        do
-          :ok
-        else
-          err -> err
-        end
-      _ -> {:error, "unauthorized"}
+    with {:ok, ds, workspace, _, _} <- parse_uri(uri),
+         :ok <- validate_data_space(ds, user),
+         :ok <- validate_workspace(workspace, user)
+    do
+      :ok
+    else
+      err -> err
     end
   end
 
@@ -148,6 +144,20 @@ defmodule DataStore.DataTokens do
       :ok
     else
       {:error, "invalid_data_space"}
+    end
+  end
+
+  defp parse_uri(uri) do
+    case Regex.named_captures(~r/^s3:\/\/(?<bucket>[a-z0-9-]+)\/(?<ds>[a-z0-9_]+)\/(?<workspace>[a-z0-9-]+)\/(?<dataset>[a-z0-9-]+)\/(?<fragment>[a-z0-9-]+).parquet$/, uri) do
+      nil -> {:error, "invalid_uri"}
+      %{
+        "bucket" => @bucket,
+        "ds" => ds,
+        "workspace" => workspace,
+        "dataset" => dataset,
+        "fragment" => fragment
+      } -> {:ok, ds, workspace, dataset, fragment}
+      _ -> {:error, "unauthorized"}
     end
   end
 
