@@ -104,7 +104,7 @@ defmodule DataStore.DataTokens do
   defp validate_mode(_mode), do: {:error, "invalid_mode"}
 
   defp validate_path(user, uri, "read") do
-    with {:ok, ds, _, _, _} <- parse_uri(uri),
+    with {:ok, ds, _, _} <- parse_uri(uri, :read),
          :ok <- validate_data_space(ds, user)
     do
       sources = MetaStore.get_sources_by_user(user, tenant: ds)
@@ -124,7 +124,7 @@ defmodule DataStore.DataTokens do
 
   # TODO: validate dataset was requested beforehand
   defp validate_path(user, uri, "write") do
-    with {:ok, ds, workspace, _, _} <- parse_uri(uri),
+    with {:ok, ds, workspace, _, _} <- parse_uri(uri, :write),
          :ok <- validate_data_space(ds, user),
          :ok <- validate_workspace(workspace, user)
     do
@@ -147,7 +147,20 @@ defmodule DataStore.DataTokens do
     end
   end
 
-  defp parse_uri(uri) do
+  defp parse_uri(uri, :read) do
+    case Regex.named_captures(~r/^s3:\/\/(?<bucket>[a-z0-9-]+)\/(?<ds>[a-z0-9_]+)\/(?<workspace>[a-z0-9-]+)\/(?<dataset>[a-z0-9-]+)$/, uri) do
+      nil -> {:error, "invalid_uri"}
+      %{
+        "bucket" => @bucket,
+        "ds" => ds,
+        "workspace" => workspace,
+        "dataset" => dataset
+      } -> {:ok, ds, workspace, dataset}
+      _ -> {:error, "unauthorized"}
+    end
+  end
+
+  defp parse_uri(uri, :write) do
     case Regex.named_captures(~r/^s3:\/\/(?<bucket>[a-z0-9-]+)\/(?<ds>[a-z0-9_]+)\/(?<workspace>[a-z0-9-]+)\/(?<dataset>[a-z0-9-]+)\/(?<fragment>[a-z0-9-]+).parquet$/, uri) do
       nil -> {:error, "invalid_uri"}
       %{

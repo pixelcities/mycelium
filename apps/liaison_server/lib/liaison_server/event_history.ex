@@ -50,14 +50,26 @@ defmodule LiaisonServer.EventHistory do
 
 
   def replay_from(from, ds_id, user_id) do
-    # TODO: Return event number as final message
-    EventStore.stream_all_forward(from, name: Module.concat(EventStore, ds_id))
-    |> Enum.reduce_while(:ok, fn event, _ ->
-      case handle(event.data, event.metadata, user_id) do
-        :ok -> {:cont, :ok}
-        :error -> {:halt, :error}
-      end
-    end)
+    max_event_number =
+      EventStore.stream_all_backward(-1, name: Module.concat(EventStore, ds_id))
+      |> Enum.take(1)
+      |> Enum.at(0, %{})
+      |> Map.get(:event_number, 0)
+
+    if from <= max_event_number do
+      # TODO: Return event number as final message
+      EventStore.stream_all_forward(from, name: Module.concat(EventStore, ds_id))
+      |> Enum.reduce_while(:ok, fn event, _ ->
+        case handle(event.data, event.metadata, user_id) do
+          :ok -> {:cont, :ok}
+          :error -> {:halt, :error}
+        end
+      end)
+
+      :ok
+    else
+      :error
+    end
   end
 
 end

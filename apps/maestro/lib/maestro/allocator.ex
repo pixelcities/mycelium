@@ -129,7 +129,7 @@ defmodule Maestro.Allocator do
   end
 
   defp assign_transformer_tasks(user_id, ds_id) do
-    Enum.each(Maestro.get_tasks(prefix: ds_id), fn(task) ->
+    Enum.each(Maestro.get_tasks(tenant: ds_id), fn(task) ->
       if task.type == "transformer" do
         Maestro.assign_task(%{
           id: task.id,
@@ -146,7 +146,7 @@ defmodule Maestro.Allocator do
   end
 
   defp unassign_tasks(user_id, ds_id) do
-    Enum.each(Maestro.get_tasks(prefix: ds_id), fn task ->
+    Enum.each(Maestro.get_tasks(tenant: ds_id), fn task ->
       if task.worker == user_id do
         Maestro.unassign_task(%{
           id: task.id
@@ -156,7 +156,7 @@ defmodule Maestro.Allocator do
   end
 
   defp clean_tasks(workers, ds_id) do
-    Enum.each(Maestro.get_tasks(prefix: ds_id), fn task ->
+    Enum.each(Maestro.get_tasks(tenant: ds_id), fn task ->
       if task.worker not in workers do
         Maestro.unassign_task(%{
           id: task.id

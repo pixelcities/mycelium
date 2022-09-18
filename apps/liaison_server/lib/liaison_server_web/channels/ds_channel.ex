@@ -139,10 +139,13 @@ defmodule LiaisonServerWeb.DataSpaceChannel do
     })
 
     if restart do
-      LiaisonServer.EventHistory.replay_from(restart_from, ds_id, user.id)
+      case LiaisonServer.EventHistory.replay_from(restart_from, ds_id, user.id) do
+        :ok -> {:reply, :ok, socket}
+        :error -> {:reply, :error, socket}
+      end
+    else
+      {:reply, :ok, socket}
     end
-
-    {:reply, :ok, socket}
   end
 
 
