@@ -60,3 +60,15 @@ defmodule Core.Commands.UpdateSource do
     |> validate_schema()
   end
 end
+
+defmodule Core.Commands.DeleteSource do
+  use Commanded.Command,
+    id: :string,
+    workspace: :string
+
+  def handle_validate(changeset) do
+    changeset
+    |> validate_required([:id, :workspace])
+  end
+end
+

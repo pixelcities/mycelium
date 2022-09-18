@@ -1,3 +1,14 @@
+defmodule MetaStore.Aggregates.TransformerLifespan do
+  @behaviour Commanded.Aggregates.AggregateLifespan
+
+  alias Core.Events.TransformerDeleted
+
+  def after_event(%TransformerDeleted{}), do: :stop
+  def after_event(_event), do: :infinity
+  def after_command(_command), do: :infinity
+  def after_error(_error), do: :stop
+end
+
 defmodule MetaStore.Aggregates.Transformer do
   defstruct id: nil,
             workspace: nil,
@@ -12,8 +23,8 @@ defmodule MetaStore.Aggregates.Transformer do
             wal: nil
 
   alias MetaStore.Aggregates.Transformer
-  alias Core.Commands.{CreateTransformer, UpdateTransformer, SetTransformerPosition, AddTransformerTarget, AddTransformerInput, UpdateTransformerWAL}
-  alias Core.Events.{TransformerCreated, TransformerUpdated, TransformerPositionSet, TransformerTargetAdded, TransformerInputAdded, TransformerWALUpdated}
+  alias Core.Commands.{CreateTransformer, UpdateTransformer, SetTransformerPosition, AddTransformerTarget, RemoveTransformerTarget, AddTransformerInput, UpdateTransformerWAL, DeleteTransformer}
+  alias Core.Events.{TransformerCreated, TransformerUpdated, TransformerPositionSet, TransformerTargetAdded, TransformerTargetRemoved, TransformerInputAdded, TransformerWALUpdated, TransformerDeleted}
 
   @doc """
   Create a new transformer
@@ -39,6 +50,14 @@ defmodule MetaStore.Aggregates.Transformer do
       target: command.target,
       date: NaiveDateTime.utc_now()
     })
+  end
+
+  def execute(%Transformer{} = transformer, %RemoveTransformerTarget{} = command) do
+    if Enum.any?(Enum.map(transformer.targets, fn target -> target == command.target end)) do
+      TransformerTargetRemoved.new(command, date: NaiveDateTime.utc_now())
+    else
+      {:error, :no_such_target}
+    end
   end
 
   def execute(%Transformer{} = transformer, %AddTransformerInput{} = command) do
@@ -73,6 +92,10 @@ defmodule MetaStore.Aggregates.Transformer do
     when transformer.workspace == update.workspace
   do
     TransformerWALUpdated.new(update, date: NaiveDateTime.utc_now())
+  end
+
+  def execute(%Transformer{} = _transformer, %DeleteTransformer{} = command) do
+    TransformerDeleted.new(command, date: NaiveDateTime.utc_now())
   end
 
 
@@ -110,6 +133,13 @@ defmodule MetaStore.Aggregates.Transformer do
   def apply(%Transformer{} = transformer, %TransformerTargetAdded{} = event) do
     %Transformer{transformer |
       targets: transformer.targets ++ [event.target],
+      date: event.date
+    }
+  end
+
+  def apply(%Transformer{} = transformer, %TransformerTargetRemoved{} = event) do
+    %Transformer{transformer |
+      targets: Enum.filter(transformer.targets, fn target -> target == event.target end),
       date: event.date
     }
   end

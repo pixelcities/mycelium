@@ -19,6 +19,7 @@ defmodule MetaStore do
   alias Core.Commands.{
     CreateSource,
     UpdateSource,
+    DeleteSource,
     CreateMetadata,
     UpdateMetadata,
     CreateCollection,
@@ -27,12 +28,16 @@ defmodule MetaStore do
     SetCollectionPosition,
     SetCollectionIsReady,
     AddCollectionTarget,
+    RemoveCollectionTarget,
+    DeleteCollection,
     CreateTransformer,
     UpdateTransformer,
     SetTransformerPosition,
     AddTransformerTarget,
+    RemoveTransformerTarget,
     AddTransformerInput,
-    UpdateTransformerWAL
+    UpdateTransformerWAL,
+    DeleteTransformer
   }
 
 
@@ -142,6 +147,10 @@ defmodule MetaStore do
     handle_dispatch(UpdateSource.new(attrs), metadata)
   end
 
+  def delete_source(attrs, %{user_id: _user_id} = metadata) do
+    handle_dispatch(DeleteSource.new(attrs), metadata)
+  end
+
   @doc """
   Publish some metadata
 
@@ -183,6 +192,14 @@ defmodule MetaStore do
     handle_dispatch(AddCollectionTarget.new(attrs), metadata)
   end
 
+  def remove_collection_target(attrs, %{user_id: _user_id} = metadata) do
+    handle_dispatch(RemoveCollectionTarget.new(attrs), metadata)
+  end
+
+  def delete_collection(attrs, %{user_id: _user_id} = metadata) do
+    handle_dispatch(DeleteCollection.new(attrs), metadata)
+  end
+
   def create_transformer(attrs, %{user_id: _user_id} = metadata) do
     handle_dispatch(CreateTransformer.new(attrs), metadata)
   end
@@ -197,6 +214,10 @@ defmodule MetaStore do
 
   def add_transformer_target(attrs, %{user_id: _user_id} = metadata) do
     handle_dispatch(AddTransformerTarget.new(attrs), metadata)
+  end
+
+  def remove_transformer_target(attrs, %{user_id: _user_id} = metadata) do
+    handle_dispatch(RemoveTransformerTarget.new(attrs), metadata)
   end
 
   def add_transformer_input(attrs, metadata) do
@@ -215,6 +236,10 @@ defmodule MetaStore do
 
   def update_transformer_wal(attrs, %{user_id: _user_id} = metadata) do
     handle_dispatch(UpdateTransformerWAL.new(attrs), metadata)
+  end
+
+  def delete_transformer(attrs, %{user_id: _user_id} = metadata) do
+    handle_dispatch(DeleteTransformer.new(attrs), metadata)
   end
 
 

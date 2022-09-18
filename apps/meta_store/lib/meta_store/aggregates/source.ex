@@ -1,3 +1,14 @@
+defmodule MetaStore.Aggregates.SourceLifespan do
+  @behaviour Commanded.Aggregates.AggregateLifespan
+
+  alias Core.Events.SourceDeleted
+
+  def after_event(%SourceDeleted{}), do: :stop
+  def after_event(_event), do: :infinity
+  def after_command(_command), do: :infinity
+  def after_error(_error), do: :stop
+end
+
 defmodule MetaStore.Aggregates.Source do
   defstruct id: nil,
             workspace: nil,
@@ -8,8 +19,8 @@ defmodule MetaStore.Aggregates.Source do
             date: nil
 
   alias MetaStore.Aggregates.Source
-  alias Core.Commands.{CreateSource, UpdateSource}
-  alias Core.Events.{SourceCreated, SourceUpdated}
+  alias Core.Commands.{CreateSource, UpdateSource, DeleteSource}
+  alias Core.Events.{SourceCreated, SourceUpdated, SourceDeleted}
 
   @doc """
   Publish a source
@@ -22,6 +33,21 @@ defmodule MetaStore.Aggregates.Source do
     when source.workspace == update.workspace
   do
     SourceUpdated.new(update, date: NaiveDateTime.utc_now())
+  end
+
+  def execute(%Source{} = source, %DeleteSource{} = command, metadata) do
+    # Collections that are created from sources share the same id, so we can use
+    # this id to easily check if any collections are downstream from this source.
+    source_has_collection = MetaStore.get_collection!(source.id, tenant: Map.get(metadata, "ds_id")) != nil
+
+    if not source_has_collection do
+      SourceDeleted.new(command,
+        uri: source.uri,
+        date: NaiveDateTime.utc_now()
+      )
+    else
+      {:error, :source_must_not_be_in_use}
+    end
   end
 
 

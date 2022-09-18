@@ -9,3 +9,9 @@ defmodule Core.Events.SourceUpdated do
     from: Core.Commands.UpdateSource,
     with: [:date]
 end
+
+defmodule Core.Events.SourceDeleted do
+  use Commanded.Event,
+    from: Core.Commands.DeleteSource,
+    with: [:date, :uri]
+end

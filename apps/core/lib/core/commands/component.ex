@@ -73,6 +73,20 @@ defmodule Core.Commands.AddCollectionTarget do
   end
 end
 
+defmodule Core.Commands.RemoveCollectionTarget do
+  import Core.Types.Component
+
+  use Commanded.Command,
+    id: :binary_id,
+    workspace: :string,
+    target: :binary_id
+
+  def handle_validate(changeset) do
+    changeset
+    |> validate_required([:id, :workspace, :target])
+  end
+end
+
 defmodule Core.Commands.SetCollectionPosition do
   import Core.Types.Component
 
@@ -99,6 +113,19 @@ defmodule Core.Commands.SetCollectionIsReady do
   def handle_validate(changeset) do
     changeset
     |> validate_required([:id, :workspace, :is_ready])
+  end
+end
+
+defmodule Core.Commands.DeleteCollection do
+  import Core.Types.Component
+
+  use Commanded.Command,
+    id: :binary_id,
+    workspace: :string
+
+  def handle_validate(changeset) do
+    changeset
+    |> validate_required([:id, :workspace])
   end
 end
 
@@ -179,6 +206,20 @@ defmodule Core.Commands.AddTransformerTarget do
   end
 end
 
+defmodule Core.Commands.RemoveTransformerTarget do
+  import Core.Types.Component
+
+  use Commanded.Command,
+    id: :binary_id,
+    workspace: :string,
+    target: :binary_id
+
+  def handle_validate(changeset) do
+    changeset
+    |> validate_required([:id, :workspace, :target])
+  end
+end
+
 defmodule Core.Commands.AddTransformerInput do
   import Core.Types.Component
 
@@ -207,6 +248,19 @@ defmodule Core.Commands.UpdateTransformerWAL do
     changeset
     |> validate_required([:id, :workspace, :wal])
     |> validate_wal()
+  end
+end
+
+defmodule Core.Commands.DeleteTransformer do
+  import Core.Types.Component
+
+  use Commanded.Command,
+    id: :binary_id,
+    workspace: :string
+
+  def handle_validate(changeset) do
+    changeset
+    |> validate_required([:id, :workspace])
   end
 end
 

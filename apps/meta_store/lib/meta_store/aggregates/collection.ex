@@ -1,3 +1,14 @@
+defmodule MetaStore.Aggregates.CollectionLifespan do
+  @behaviour Commanded.Aggregates.AggregateLifespan
+
+  alias Core.Events.CollectionDeleted
+
+  def after_event(%CollectionDeleted{}), do: :stop
+  def after_event(_event), do: :infinity
+  def after_command(_command), do: :infinity
+  def after_error(_error), do: :stop
+end
+
 defmodule MetaStore.Aggregates.Collection do
   defstruct id: nil,
             workspace: nil,
@@ -11,12 +22,9 @@ defmodule MetaStore.Aggregates.Collection do
             date: nil
 
   alias MetaStore.Aggregates.Collection
-  alias Core.Commands.{CreateCollection, UpdateCollection, UpdateCollectionSchema, SetCollectionPosition, SetCollectionIsReady, AddCollectionTarget}
-  alias Core.Events.{CollectionCreated, CollectionUpdated, CollectionSchemaUpdated, CollectionPositionSet, CollectionIsReadySet, CollectionTargetAdded}
+  alias Core.Commands.{CreateCollection, UpdateCollection, UpdateCollectionSchema, SetCollectionPosition, SetCollectionIsReady, AddCollectionTarget, RemoveCollectionTarget, DeleteCollection}
+  alias Core.Events.{CollectionCreated, CollectionUpdated, CollectionSchemaUpdated, CollectionPositionSet, CollectionIsReadySet, CollectionTargetAdded, CollectionTargetRemoved, CollectionDeleted}
 
-  @doc """
-  Create a new collection
-  """
   def execute(%Collection{id: nil}, %CreateCollection{} = collection) do
     CollectionCreated.new(collection, date: NaiveDateTime.utc_now())
   end
@@ -46,6 +54,21 @@ defmodule MetaStore.Aggregates.Collection do
       target: command.target,
       date: NaiveDateTime.utc_now()
     })
+  end
+
+  def execute(%Collection{} = collection, %RemoveCollectionTarget{} = command) do
+    if Enum.any?(Enum.map(collection.targets, fn target -> target == command.target end)) do
+      CollectionTargetRemoved.new(command, date: NaiveDateTime.utc_now())
+    else
+      {:error, :no_such_target}
+    end
+  end
+
+  def execute(%Collection{} = collection, %DeleteCollection{} = command) do
+    CollectionDeleted.new(command,
+      uri: collection.uri,
+      date: NaiveDateTime.utc_now()
+    )
   end
 
 
@@ -97,6 +120,13 @@ defmodule MetaStore.Aggregates.Collection do
   def apply(%Collection{} = collection, %CollectionTargetAdded{} = event) do
     %Collection{collection |
       targets: collection.targets ++ [event.target],
+      date: event.date
+    }
+  end
+
+  def apply(%Collection{} = collection, %CollectionTargetRemoved{} = event) do
+    %Collection{collection |
+      targets: Enum.filter(collection.targets, fn target -> target == event.target end),
       date: event.date
     }
   end

@@ -22,6 +22,12 @@ defmodule Core.Events.CollectionTargetAdded do
     with: [:date]
 end
 
+defmodule Core.Events.CollectionTargetRemoved do
+  use Commanded.Event,
+    from: Core.Commands.RemoveCollectionTarget,
+    with: [:date]
+end
+
 defmodule Core.Events.CollectionPositionSet do
   use Commanded.Event,
     from: Core.Commands.SetCollectionPosition,
@@ -32,6 +38,12 @@ defmodule Core.Events.CollectionIsReadySet do
   use Commanded.Event,
     from: Core.Commands.SetCollectionIsReady,
     with: [:date]
+end
+
+defmodule Core.Events.CollectionDeleted do
+  use Commanded.Event,
+    from: Core.Commands.DeleteCollection,
+    with: [:date, :uri]
 end
 
 defmodule Core.Events.TransformerCreated do
@@ -52,6 +64,12 @@ defmodule Core.Events.TransformerTargetAdded do
     with: [:date]
 end
 
+defmodule Core.Events.TransformerTargetRemoved do
+  use Commanded.Event,
+    from: Core.Commands.RemoveTransformerTarget,
+    with: [:date]
+end
+
 defmodule Core.Events.TransformerPositionSet do
   use Commanded.Event,
     from: Core.Commands.SetTransformerPosition,
@@ -67,6 +85,12 @@ end
 defmodule Core.Events.TransformerWALUpdated do
   use Commanded.Event,
     from: Core.Commands.UpdateTransformerWAL,
+    with: [:date]
+end
+
+defmodule Core.Events.TransformerDeleted do
+  use Commanded.Event,
+    from: Core.Commands.DeleteTransformer,
     with: [:date]
 end
 
