@@ -67,6 +67,9 @@ defmodule LiaisonServerWeb.DataSpaceChannel do
   def handle_in("action", %{"type" => "UpdateSource"} = action, socket), do: handle_action(&MetaStore.update_source/2, action, socket)
 
   @impl true
+  def handle_in("action", %{"type" => "DeleteSource"} = action, socket), do: handle_action(&MetaStore.delete_source/2, action, socket)
+
+  @impl true
   def handle_in("action", %{"type" => "CreateMetadata"} = action, socket), do: handle_action(&MetaStore.create_metadata/2, action, socket)
 
   @impl true
@@ -91,6 +94,9 @@ defmodule LiaisonServerWeb.DataSpaceChannel do
   def handle_in("action", %{"type" => "AddCollectionTarget"} = action, socket), do: handle_action(&MetaStore.add_collection_target/2, action, socket)
 
   @impl true
+  def handle_in("action", %{"type" => "DeleteCollection"} = action, socket), do: handle_action(&MetaStore.delete_collection/2, action, socket)
+
+  @impl true
   def handle_in("action", %{"type" => "CreateTransformer"} = action, socket), do: handle_action(&MetaStore.create_transformer/2, action, socket)
 
   @impl true
@@ -107,6 +113,9 @@ defmodule LiaisonServerWeb.DataSpaceChannel do
 
   @impl true
   def handle_in("action", %{"type" => "UpdateTransformerWAL"} = action, socket), do: handle_action(&MetaStore.update_transformer_wal/2, action, socket)
+
+  @impl true
+  def handle_in("action", %{"type" => "DeleteTransformer"} = action, socket), do: handle_action(&MetaStore.delete_transformer/2, action, socket)
 
   @impl true
   def handle_in("action", %{"type" => "CompleteTask"} = action, socket), do: handle_action(&Maestro.complete_task/2, action, socket)

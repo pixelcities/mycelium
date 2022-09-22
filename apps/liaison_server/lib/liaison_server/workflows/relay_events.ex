@@ -6,6 +6,7 @@ defmodule LiaisonServer.Workflows.RelayEvents do
   @events [
     Core.Events.SourceCreated,
     Core.Events.SourceUpdated,
+    Core.Events.SourceDeleted,
     Core.Events.DataURICreated,
     Core.Events.MetadataCreated,
     Core.Events.MetadataUpdated,
@@ -17,12 +18,15 @@ defmodule LiaisonServer.Workflows.RelayEvents do
     Core.Events.CollectionPositionSet,
     Core.Events.CollectionIsReadySet,
     Core.Events.CollectionTargetAdded,
+    Core.Events.CollectionTargetRemoved,
+    Core.Events.CollectionDeleted,
     Core.Events.TransformerCreated,
     Core.Events.TransformerUpdated,
     Core.Events.TransformerPositionSet,
     Core.Events.TransformerTargetAdded,
     Core.Events.TransformerInputAdded,
-    Core.Events.TransformerWALUpdated
+    Core.Events.TransformerWALUpdated,
+    Core.Events.TransformerDeleted
   ]
 
 

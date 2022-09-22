@@ -35,6 +35,9 @@ defmodule MetaStore.Router do
     TransformerLifespan
   }
 
+  middleware Core.Middleware.TagCommand
+  middleware Core.Middleware.EnrichCommand
+
   identify(Source, by: :id, prefix: "sources-")
   identify(Metadata, by: :id, prefix: "metadata-")
   identify(Collection, by: :id, prefix: "collections-")

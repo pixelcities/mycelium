@@ -4,7 +4,16 @@ defmodule MetaStore.Projectors.Transformer do
     name: "Projectors.Transformer",
     consistency: :strong
 
-  alias Core.Events.{TransformerCreated, TransformerUpdated, TransformerInputAdded}
+  @impl Commanded.Projections.Ecto
+  def schema_prefix(_event, %{"ds_id" => ds_id} = _metadata), do: ds_id
+
+  alias Core.Events.{
+    TransformerCreated,
+    TransformerUpdated,
+    TransformerInputAdded,
+    TransformerTargetAdded,
+    TransformerDeleted
+  }
   alias MetaStore.Projections.Transformer
 
   project %TransformerCreated{} = transformer, metadata, fn multi ->
@@ -19,6 +28,20 @@ defmodule MetaStore.Projectors.Transformer do
     upsert_transformer(multi, transformer, ds_id)
   end
 
+  project %TransformerTargetAdded{} = transformer, metadata, fn multi ->
+    ds_id = Map.get(metadata, "ds_id")
+
+    multi
+    |> Ecto.Multi.run(:get_transformer, fn repo, _changes ->
+      {:ok, repo.get(Transformer, transformer.id, prefix: ds_id)}
+    end)
+    |> Ecto.Multi.update(:transformer, fn %{get_transformer: s} ->
+      Transformer.changeset(s, %{
+        targets: Enum.concat(s.targets || [], [transformer.target])
+      })
+    end, prefix: ds_id)
+  end
+
   project %TransformerInputAdded{} = transformer, metadata, fn multi ->
     ds_id = Map.get(metadata, "ds_id")
 
@@ -31,6 +54,14 @@ defmodule MetaStore.Projectors.Transformer do
         collections: Enum.concat(s.collections || [], [transformer.collection])
       })
     end, prefix: ds_id)
+  end
+
+  project %TransformerDeleted{} = transformer, %{"ds_id" => ds_id} = _metadata, fn multi ->
+    multi
+    |> Ecto.Multi.run(:get_transformer, fn repo, _changes ->
+      {:ok, repo.get(Transformer, transformer.id, prefix: ds_id)}
+    end)
+    |> Ecto.Multi.delete(:delete, fn %{get_transformer: s} -> s end)
   end
 
   defp upsert_transformer(multi, transformer, ds_id) do

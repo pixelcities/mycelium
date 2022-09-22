@@ -4,7 +4,14 @@ defmodule MetaStore.Projectors.Source do
     name: "Projectors.Source",
     consistency: :strong
 
-  alias Core.Events.{SourceCreated, SourceUpdated}
+  @impl Commanded.Projections.Ecto
+  def schema_prefix(_event, %{"ds_id" => ds_id} = _metadata), do: ds_id
+
+  alias Core.Events.{
+    SourceCreated,
+    SourceUpdated,
+    SourceDeleted
+  }
   alias MetaStore.Projections.Source
   alias MetaStore.Projectors
 
@@ -19,6 +26,14 @@ defmodule MetaStore.Projectors.Source do
     ds_id = Map.get(metadata, "ds_id")
 
     upsert_source(multi, source, ds_id)
+  end
+
+  project %SourceDeleted{} = source, %{"ds_id" => ds_id} = _metadata, fn multi ->
+    multi
+    |> Ecto.Multi.run(:get_source, fn repo, _changes ->
+      {:ok, repo.get(Source, source.id, prefix: ds_id)}
+    end)
+    |> Ecto.Multi.delete(:delete, fn %{get_source: s} -> s end)
   end
 
   defp upsert_source(multi, source, ds_id) do

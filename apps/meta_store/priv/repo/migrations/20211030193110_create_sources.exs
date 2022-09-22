@@ -33,7 +33,7 @@ defmodule MetaStore.Repo.Migrations.CreateSources do
     end
 
     create table(:schemas__shares) do
-      add :schema_id, references(:schemas, type: :uuid)
+      add :schema_id, references(:schemas, type: :uuid, on_delete: :delete_all)
       add :share_id, references(:shares, type: :text)
     end
 
@@ -47,7 +47,7 @@ defmodule MetaStore.Repo.Migrations.CreateSources do
     end
 
     create table(:columns__shares) do
-      add :column_id, references(:columns, type: :uuid)
+      add :column_id, references(:columns, type: :uuid, on_delete: :delete_all)
       add :share_id, references(:shares, type: :text)
     end
   end

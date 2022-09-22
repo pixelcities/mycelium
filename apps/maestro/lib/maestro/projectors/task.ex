@@ -4,6 +4,9 @@ defmodule Maestro.Projectors.Task do
     name: "Projectors.Task",
     consistency: :strong
 
+  @impl Commanded.Projections.Ecto
+  def schema_prefix(_event, %{"ds_id" => ds_id} = _metadata), do: ds_id
+
   alias Core.Events.{TaskCreated, TaskAssigned, TaskUnAssigned, TaskCancelled, TaskCompleted}
   alias Maestro.Projections.Task
 

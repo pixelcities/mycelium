@@ -2,7 +2,6 @@ defmodule Maestro.Router do
 
   use Commanded.Commands.Router
 
-  alias Core.Middleware.EnrichCommand
   alias Core.Commands.{
     CreateTask,
     AssignTask,
@@ -12,7 +11,8 @@ defmodule Maestro.Router do
   }
   alias Maestro.Aggregates.{Task, TaskLifespan}
 
-  middleware EnrichCommand
+  middleware Core.Middleware.TagCommand
+  middleware Core.Middleware.EnrichCommand
 
   identify(Task, by: :id, prefix: "tasks-")
 

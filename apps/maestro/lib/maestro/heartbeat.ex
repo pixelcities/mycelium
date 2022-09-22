@@ -25,6 +25,7 @@ defmodule Maestro.Heartbeat do
   end
 
   defp tick(_clock) do
+    Allocator.clean_workers()
     Allocator.assign_workers()
   end
 

@@ -1,7 +1,7 @@
 defmodule Core.Events.CollectionCreated do
   use Commanded.Event,
     from: Core.Commands.CreateCollection,
-    with: [:date]
+    with: [:date, :ds]
 end
 
 defmodule Core.Events.CollectionUpdated do
@@ -43,13 +43,13 @@ end
 defmodule Core.Events.CollectionDeleted do
   use Commanded.Event,
     from: Core.Commands.DeleteCollection,
-    with: [:date, :uri]
+    with: [:date, :type, :uri]
 end
 
 defmodule Core.Events.TransformerCreated do
   use Commanded.Event,
     from: Core.Commands.CreateTransformer,
-    with: [:date]
+    with: [:date, :ds]
 end
 
 defmodule Core.Events.TransformerUpdated do

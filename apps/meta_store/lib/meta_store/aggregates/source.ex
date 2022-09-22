@@ -35,12 +35,8 @@ defmodule MetaStore.Aggregates.Source do
     SourceUpdated.new(update, date: NaiveDateTime.utc_now())
   end
 
-  def execute(%Source{} = source, %DeleteSource{} = command, metadata) do
-    # Collections that are created from sources share the same id, so we can use
-    # this id to easily check if any collections are downstream from this source.
-    source_has_collection = MetaStore.get_collection!(source.id, tenant: Map.get(metadata, "ds_id")) != nil
-
-    if not source_has_collection do
+  def execute(%Source{} = source, %DeleteSource{} = command) do
+    unless command.source_has_collection do
       SourceDeleted.new(command,
         uri: source.uri,
         date: NaiveDateTime.utc_now()
@@ -72,5 +68,7 @@ defmodule MetaStore.Aggregates.Source do
       date: updated.date
     }
   end
+
+  def apply(%Source{} = source, %SourceDeleted{} = event), do: source
 
 end

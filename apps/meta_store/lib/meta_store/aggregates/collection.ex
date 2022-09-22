@@ -3,7 +3,12 @@ defmodule MetaStore.Aggregates.CollectionLifespan do
 
   alias Core.Events.CollectionDeleted
 
-  def after_event(%CollectionDeleted{}), do: :stop
+  # Source collections may be recreated with the same id, so we should
+  # come back to life if that happens. Normal collections can just
+  # shutdown normally.
+  def after_event(%CollectionDeleted{type: "source"}), do: :hibernate
+  def after_event(%CollectionDeleted{type: "collection"}), do: :stop
+
   def after_event(_event), do: :infinity
   def after_command(_command), do: :infinity
   def after_error(_error), do: :stop
@@ -66,6 +71,7 @@ defmodule MetaStore.Aggregates.Collection do
 
   def execute(%Collection{} = collection, %DeleteCollection{} = command) do
     CollectionDeleted.new(command,
+      type: collection.type,
       uri: collection.uri,
       date: NaiveDateTime.utc_now()
     )
@@ -130,5 +136,7 @@ defmodule MetaStore.Aggregates.Collection do
       date: event.date
     }
   end
+
+  def apply(%Collection{} = collection, %CollectionDeleted{} = event), do: __MODULE__.__struct__
 
 end

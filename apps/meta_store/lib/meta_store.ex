@@ -188,16 +188,38 @@ defmodule MetaStore do
     handle_dispatch(SetCollectionIsReady.new(attrs), metadata)
   end
 
-  def add_collection_target(attrs, %{user_id: _user_id} = metadata) do
-    handle_dispatch(AddCollectionTarget.new(attrs), metadata)
+  def add_collection_target(%{"id" => id, "workspace" => _workspace, "target" => target} = attrs, %{user_id: _user_id} = metadata) do
+    ds_id = Map.get(metadata, :ds_id, :ds1)
+    transformer = MetaStore.get_transformer!(target, tenant: ds_id)
+
+    max_inputs = if transformer.type == "merge", do: 2, else: 1
+
+    if length(transformer.collections) < max_inputs do
+      handle_dispatch(AddCollectionTarget.new(attrs), metadata)
+    else
+      {:error, :too_many_inputs}
+    end
   end
 
   def remove_collection_target(attrs, %{user_id: _user_id} = metadata) do
     handle_dispatch(RemoveCollectionTarget.new(attrs), metadata)
   end
 
-  def delete_collection(attrs, %{user_id: _user_id} = metadata) do
-    handle_dispatch(DeleteCollection.new(attrs), metadata)
+  @doc """
+  Delete collection
+
+  Can only delete source collections, as transformer collections are managed
+  by the transformer itself. See: delete_transformer/2
+  """
+  def delete_collection(%{"id" => id, "workspace" => _workspace} = attrs, %{user_id: _user_id} = metadata) do
+    ds_id = Map.get(metadata, :ds_id, :ds1)
+    collection = MetaStore.get_collection!(id, tenant: ds_id)
+
+    if collection.type == "source" and length(collection.targets) == 0 do
+      handle_dispatch(DeleteCollection.new(attrs), metadata)
+    else
+      {:error, :cannot_delete_collection}
+    end
   end
 
   def create_transformer(attrs, %{user_id: _user_id} = metadata) do
@@ -238,10 +260,34 @@ defmodule MetaStore do
     handle_dispatch(UpdateTransformerWAL.new(attrs), metadata)
   end
 
-  def delete_transformer(attrs, %{user_id: _user_id} = metadata) do
-    handle_dispatch(DeleteTransformer.new(attrs), metadata)
-  end
+  @doc """
+  Delete a transformer, including it's connectors
 
+  This will delete all the incoming and outgoing connectors, and also
+  the resulting collection. Finally the transformer itself is deleted.
+  """
+  def delete_transformer(%{"id" => id, "workspace" => workspace} = attrs, %{user_id: _user_id} = metadata) do
+    ds_id = Map.get(metadata, :ds_id, :ds1)
+
+    transformer = MetaStore.get_transformer!(id, tenant: ds_id)
+
+    incoming_collection_cmds = Enum.map(transformer.collections, fn c -> RemoveCollectionTarget.new(%{:id => c, :workspace => workspace, :target => id}) end)
+    incoming_transformer_cmds = Enum.map(transformer.transformers, fn t -> RemoveTransformerTarget.new(%{:id => t, :workspace => workspace, :target => id}) end)
+    outgoing_collection_cmds = Enum.map(transformer.targets, fn t -> DeleteCollection.new(%{:id => t, :workspace => workspace}) end)
+    delete_self_cmd = DeleteTransformer.new(attrs)
+
+    commands = incoming_collection_cmds ++ incoming_transformer_cmds ++ outgoing_collection_cmds ++ [ delete_self_cmd ]
+
+    Enum.reduce_while(commands, {:ok, :done}, fn command, _acc ->
+      reply = @app.validate_and_dispatch(command, consistency: :strong, application: Module.concat(@app, ds_id), metadata: metadata)
+
+      if reply == :ok do
+        {:cont, {:ok, :done}}
+      else
+        {:halt, reply}
+      end
+    end)
+  end
 
   defp handle_dispatch(command, metadata) do
     ds_id = Map.get(metadata, :ds_id, :ds1)

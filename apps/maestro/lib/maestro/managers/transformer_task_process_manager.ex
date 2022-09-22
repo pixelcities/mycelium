@@ -80,8 +80,8 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
     }
   end
 
-  def handle(%TransformerTaskProcessManager{has_collection: true} = pm, %TransformerWALUpdated{wal: wal} = _event, metadata) do
-    in_collections = Enum.map(pm.transformer.collections, fn collection_id -> MetaStore.get_collection!(collection_id, tenant: Map.get(metadata, "ds_id")) end)
+  def handle(%TransformerTaskProcessManager{has_collection: true} = pm, %TransformerWALUpdated{wal: wal} = _event) do
+    in_collections = Enum.map(pm.transformer.collections, fn collection_id -> MetaStore.get_collection!(collection_id, tenant: pm.transformer.ds) end)
 
     Enum.map(pm.created_tasks, fn task_id ->
       %CancelTask{
@@ -115,9 +115,9 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
     ]
   end
 
-  def handle(%TransformerTaskProcessManager{wants_collection: true, has_collection: false} = pm, %DataURICreated{uri: uri} = _event, metadata) do
+  def handle(%TransformerTaskProcessManager{wants_collection: true, has_collection: false} = pm, %DataURICreated{uri: uri} = _event) do
     collection_id = UUID.uuid4()
-    in_collections = Enum.map(pm.transformer.collections, fn collection_id -> MetaStore.get_collection!(collection_id, tenant: Map.get(metadata, "ds_id")) end)
+    in_collections = Enum.map(pm.transformer.collections, fn collection_id -> MetaStore.get_collection!(collection_id, tenant: pm.transformer.ds) end)
     collection_color = if length(in_collections) == 1, do: hd(in_collections).color, else: "#FFFFFF"
 
     [

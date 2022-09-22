@@ -165,4 +165,6 @@ defmodule MetaStore.Aggregates.Transformer do
     }
   end
 
+  def apply(%Transformer{} = transformer, %TransformerDeleted{} = event), do: transformer
+
 end

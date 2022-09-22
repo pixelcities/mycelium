@@ -1,7 +1,7 @@
 defmodule Core.Events.SourceCreated do
   use Commanded.Event,
     from: Core.Commands.CreateSource,
-    with: [:date]
+    with: [:date, :ds]
 end
 
 defmodule Core.Events.SourceUpdated do

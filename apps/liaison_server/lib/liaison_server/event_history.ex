@@ -14,6 +14,7 @@ defmodule LiaisonServer.EventHistory do
   @events [
     Events.SourceCreated,
     Events.SourceUpdated,
+    Events.SourceDeleted,
     Events.DataURICreated,
     Events.MetadataCreated,
     Events.MetadataUpdated,
@@ -25,12 +26,15 @@ defmodule LiaisonServer.EventHistory do
     Events.CollectionPositionSet,
     Events.CollectionIsReadySet,
     Events.CollectionTargetAdded,
+    Events.CollectionTargetRemoved,
+    Events.CollectionDeleted,
     Events.TransformerCreated,
     Events.TransformerUpdated,
     Events.TransformerPositionSet,
     Events.TransformerTargetAdded,
     Events.TransformerInputAdded,
-    Events.TransformerWALUpdated
+    Events.TransformerWALUpdated,
+    Events.TransformerDeleted
   ]
 
   @spec handle(binary, binary, binary) :: :ok | :error

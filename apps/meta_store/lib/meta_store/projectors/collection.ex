@@ -4,7 +4,18 @@ defmodule MetaStore.Projectors.Collection do
     name: "Projectors.Collection",
     consistency: :strong
 
-  alias Core.Events.{CollectionCreated, CollectionUpdated, CollectionSchemaUpdated, CollectionIsReadySet}
+  @impl Commanded.Projections.Ecto
+  def schema_prefix(_event, %{"ds_id" => ds_id} = _metadata), do: ds_id
+
+  alias Core.Events.{
+    CollectionCreated,
+    CollectionUpdated,
+    CollectionSchemaUpdated,
+    CollectionTargetAdded,
+    CollectionTargetRemoved,
+    CollectionIsReadySet,
+    CollectionDeleted
+  }
   alias MetaStore.Projections.Collection
   alias MetaStore.Projectors
 
@@ -27,6 +38,34 @@ defmodule MetaStore.Projectors.Collection do
     |> Projectors.Schema.upsert_schema(collection, [is_collection: true, tenant: ds_id])
   end
 
+  project %CollectionTargetAdded{} = collection, metadata, fn multi ->
+    ds_id = Map.get(metadata, "ds_id")
+
+    multi
+    |> Ecto.Multi.run(:get_collection, fn repo, _changes ->
+      {:ok, repo.get(Collection, collection.id, prefix: ds_id)}
+    end)
+    |> Ecto.Multi.update(:collection, fn %{get_collection: s} ->
+      Collection.changeset(s, %{
+        targets: Enum.concat(s.targets || [], [collection.target])
+      })
+    end, prefix: ds_id)
+  end
+
+  project %CollectionTargetRemoved{} = collection, metadata, fn multi ->
+    ds_id = Map.get(metadata, "ds_id")
+
+    multi
+    |> Ecto.Multi.run(:get_collection, fn repo, _changes ->
+      {:ok, repo.get(Collection, collection.id, prefix: ds_id)}
+    end)
+    |> Ecto.Multi.update(:collection, fn %{get_collection: s} ->
+      Collection.changeset(s, %{
+        targets: Enum.filter(s.targets || [], fn x -> x != collection.target end)
+      })
+    end, prefix: ds_id)
+  end
+
   project %CollectionIsReadySet{} = collection, metadata, fn multi ->
     ds_id = Map.get(metadata, "ds_id")
 
@@ -39,6 +78,14 @@ defmodule MetaStore.Projectors.Collection do
         is_ready: collection.is_ready
       })
     end, prefix: ds_id)
+  end
+
+  project %CollectionDeleted{} = collection, %{"ds_id" => ds_id} = _metadata, fn multi ->
+    multi
+    |> Ecto.Multi.run(:get_collection, fn repo, _changes ->
+      {:ok, repo.get(Collection, collection.id, prefix: ds_id)}
+    end)
+    |> Ecto.Multi.delete(:delete, fn %{get_collection: s} -> s end)
   end
 
   defp upsert_collection(multi, collection, ds_id) do
