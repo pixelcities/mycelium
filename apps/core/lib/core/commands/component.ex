@@ -60,8 +60,6 @@ defmodule Core.Commands.UpdateCollectionSchema do
 end
 
 defmodule Core.Commands.AddCollectionTarget do
-  import Core.Types.Component
-
   use Commanded.Command,
     id: :binary_id,
     workspace: :string,
@@ -74,8 +72,6 @@ defmodule Core.Commands.AddCollectionTarget do
 end
 
 defmodule Core.Commands.RemoveCollectionTarget do
-  import Core.Types.Component
-
   use Commanded.Command,
     id: :binary_id,
     workspace: :string,
@@ -147,7 +143,7 @@ defmodule Core.Commands.CreateTransformer do
   def handle_validate(changeset) do
     changeset
     |> validate_required([:id, :workspace, :type])
-    |> validate_inclusion(:type, ["merge", "function", "custom"])
+    |> validate_inclusion(:type, ["merge", "function", "filter", "aggregate", "custom"])
     |> validate_component()
     |> validate_wal([allow_nil: true])
   end
@@ -252,8 +248,6 @@ defmodule Core.Commands.UpdateTransformerWAL do
 end
 
 defmodule Core.Commands.DeleteTransformer do
-  import Core.Types.Component
-
   use Commanded.Command,
     id: :binary_id,
     workspace: :string
