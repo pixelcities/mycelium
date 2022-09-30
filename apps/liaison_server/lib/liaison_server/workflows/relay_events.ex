@@ -10,6 +10,8 @@ defmodule LiaisonServer.Workflows.RelayEvents do
     Core.Events.DataURICreated,
     Core.Events.MetadataCreated,
     Core.Events.MetadataUpdated,
+    Core.Events.ConceptCreated,
+    Core.Events.ConceptUpdated,
     Core.Events.UserCreated,
     Core.Events.UserUpdated,
     Core.Events.CollectionCreated,

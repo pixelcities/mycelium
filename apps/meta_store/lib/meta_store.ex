@@ -22,6 +22,8 @@ defmodule MetaStore do
     DeleteSource,
     CreateMetadata,
     UpdateMetadata,
+    CreateConcept,
+    UpdateConcept,
     CreateCollection,
     UpdateCollection,
     UpdateCollectionSchema,
@@ -166,6 +168,14 @@ defmodule MetaStore do
   """
   def update_metadata(attrs, %{user_id: _user_id} = metadata) do
     handle_dispatch(UpdateMetadata.new(attrs), metadata)
+  end
+
+  def create_concept(attrs, %{user_id: _user_id} = metadata) do
+    handle_dispatch(CreateConcept.new(attrs), metadata)
+  end
+
+  def update_concept(attrs, %{user_id: _user_id} = metadata) do
+    handle_dispatch(UpdateConcept.new(attrs), metadata)
   end
 
   def create_collection(attrs, %{user_id: _user_id} = metadata) do

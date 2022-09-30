@@ -8,6 +8,8 @@ defmodule MetaStore.Router do
     DeleteSource,
     CreateMetadata,
     UpdateMetadata,
+    CreateConcept,
+    UpdateConcept,
     CreateCollection,
     UpdateCollection,
     UpdateCollectionSchema,
@@ -29,6 +31,7 @@ defmodule MetaStore.Router do
     Source,
     SourceLifespan,
     Metadata,
+    Concept,
     Collection,
     CollectionLifespan,
     Transformer,
@@ -40,6 +43,7 @@ defmodule MetaStore.Router do
 
   identify(Source, by: :id, prefix: "sources-")
   identify(Metadata, by: :id, prefix: "metadata-")
+  identify(Concept, by: :id, prefix: "concepts-")
   identify(Collection, by: :id, prefix: "collections-")
   identify(Transformer, by: :id, prefix: "transformers-")
 
@@ -49,6 +53,9 @@ defmodule MetaStore.Router do
   )
   dispatch([ CreateMetadata, UpdateMetadata ],
     to: Metadata
+  )
+  dispatch([ CreateConcept, UpdateConcept ],
+    to: Concept
   )
   dispatch([ CreateCollection, UpdateCollection, UpdateCollectionSchema, SetCollectionPosition, SetCollectionIsReady, AddCollectionTarget, RemoveCollectionTarget, DeleteCollection ],
     to: Collection,

@@ -18,6 +18,8 @@ defmodule LiaisonServer.EventHistory do
     Events.DataURICreated,
     Events.MetadataCreated,
     Events.MetadataUpdated,
+    Events.ConceptCreated,
+    Events.ConceptUpdated,
     Events.UserCreated,
     Events.UserUpdated,
     Events.CollectionCreated,
