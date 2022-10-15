@@ -36,7 +36,12 @@ defmodule LiaisonServer.EventHistory do
     Events.TransformerTargetAdded,
     Events.TransformerInputAdded,
     Events.TransformerWALUpdated,
-    Events.TransformerDeleted
+    Events.TransformerDeleted,
+    Events.WidgetCreated,
+    Events.WidgetUpdated,
+    Events.WidgetPositionSet,
+    Events.WidgetInputAdded,
+    Events.WidgetDeleted
   ]
 
   @spec handle(binary, binary, binary) :: :ok | :error

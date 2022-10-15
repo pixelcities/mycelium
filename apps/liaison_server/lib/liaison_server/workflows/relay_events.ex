@@ -28,7 +28,12 @@ defmodule LiaisonServer.Workflows.RelayEvents do
     Core.Events.TransformerTargetAdded,
     Core.Events.TransformerInputAdded,
     Core.Events.TransformerWALUpdated,
-    Core.Events.TransformerDeleted
+    Core.Events.TransformerDeleted,
+    Core.Events.WidgetCreated,
+    Core.Events.WidgetUpdated,
+    Core.Events.WidgetPositionSet,
+    Core.Events.WidgetInputAdded,
+    Core.Events.WidgetDeleted
   ]
 
 

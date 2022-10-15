@@ -25,7 +25,12 @@ defmodule MetaStore.Router do
     RemoveTransformerTarget,
     AddTransformerInput,
     UpdateTransformerWAL,
-    DeleteTransformer
+    DeleteTransformer,
+    CreateWidget,
+    UpdateWidget,
+    SetWidgetPosition,
+    AddWidgetInput,
+    DeleteWidget
   }
   alias MetaStore.Aggregates.{
     Source,
@@ -35,7 +40,9 @@ defmodule MetaStore.Router do
     Collection,
     CollectionLifespan,
     Transformer,
-    TransformerLifespan
+    TransformerLifespan,
+    Widget,
+    WidgetLifespan
   }
 
   middleware Core.Middleware.TagCommand
@@ -46,6 +53,7 @@ defmodule MetaStore.Router do
   identify(Concept, by: :id, prefix: "concepts-")
   identify(Collection, by: :id, prefix: "collections-")
   identify(Transformer, by: :id, prefix: "transformers-")
+  identify(Widget, by: :id, prefix: "widgets-")
 
   dispatch([ CreateSource, UpdateSource, DeleteSource ],
     to: Source,
@@ -64,6 +72,10 @@ defmodule MetaStore.Router do
   dispatch([ CreateTransformer, UpdateTransformer, SetTransformerPosition, AddTransformerTarget, RemoveTransformerTarget, AddTransformerInput, UpdateTransformerWAL, DeleteTransformer ],
     to: Transformer,
     lifespan: TransformerLifespan
+  )
+  dispatch([ CreateWidget, UpdateWidget, SetWidgetPosition, AddWidgetInput, DeleteWidget ],
+    to: Widget,
+    lifespan: WidgetLifespan
   )
 
 end

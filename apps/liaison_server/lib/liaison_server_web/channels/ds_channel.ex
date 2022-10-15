@@ -124,6 +124,21 @@ defmodule LiaisonServerWeb.DataSpaceChannel do
   def handle_in("action", %{"type" => "DeleteTransformer"} = action, socket), do: handle_action(&MetaStore.delete_transformer/2, action, socket)
 
   @impl true
+  def handle_in("action", %{"type" => "CreateWidget"} = action, socket), do: handle_action(&MetaStore.create_widget/2, action, socket)
+
+  @impl true
+  def handle_in("action", %{"type" => "UpdateWidget"} = action, socket), do: handle_action(&MetaStore.update_widget/2, action, socket)
+
+  @impl true
+  def handle_in("action", %{"type" => "SetWidgetPosition"} = action, socket), do: handle_action(&MetaStore.set_widget_position/2, action, socket)
+
+  @impl true
+  def handle_in("action", %{"type" => "AddWidgetInput"} = action, socket), do: handle_action(&MetaStore.add_widget_input/2, action, socket)
+
+  @impl true
+  def handle_in("action", %{"type" => "DeleteWidget"} = action, socket), do: handle_action(&MetaStore.delete_widget/2, action, socket)
+
+  @impl true
   def handle_in("action", %{"type" => "CompleteTask"} = action, socket), do: handle_action(&Maestro.complete_task/2, action, socket)
 
 

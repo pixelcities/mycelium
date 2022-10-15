@@ -6,7 +6,14 @@ defmodule MetaStore.Workflows.AddCollectionInput do
   alias Core.Events.CollectionTargetAdded
 
   def handle(%CollectionTargetAdded{} = event, metadata) do
-    with {:ok, _data} <- MetaStore.add_transformer_input(%{
+    fun =
+      if MetaStore.get_transformer!(event.target, tenant: Map.get(metadata, "ds_id")) do
+        &MetaStore.add_transformer_input(&1, &2)
+      else
+        &MetaStore.add_widget_input(&1, &2)
+      end
+
+    with {:ok, _data} <- fun.(%{
       id: event.target,
       workspace: event.workspace,
       collection: event.id

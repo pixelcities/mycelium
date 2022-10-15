@@ -9,6 +9,7 @@ defmodule MetaStore do
 
   alias MetaStore.Repo
   alias MetaStore.Projections.{
+    Widget,
     Transformer,
     Collection,
     Source,
@@ -39,11 +40,24 @@ defmodule MetaStore do
     RemoveTransformerTarget,
     AddTransformerInput,
     UpdateTransformerWAL,
-    DeleteTransformer
+    DeleteTransformer,
+    CreateWidget,
+    UpdateWidget,
+    SetWidgetPosition,
+    AddWidgetInput,
+    DeleteWidget
   }
 
 
   ## Database getters
+
+  def get_widget!(id, opts \\ []) do
+    tenant = Keyword.fetch!(opts, :tenant)
+
+    Repo.one((from t in Widget,
+      where: t.id == ^id
+    ), prefix: tenant)
+  end
 
   def get_transformer!(id, opts \\ []) do
     tenant = Keyword.fetch!(opts, :tenant)
@@ -200,14 +214,30 @@ defmodule MetaStore do
 
   def add_collection_target(%{"id" => id, "workspace" => _workspace, "target" => target} = attrs, %{user_id: _user_id} = metadata) do
     ds_id = Map.get(metadata, :ds_id, :ds1)
+
     transformer = MetaStore.get_transformer!(target, tenant: ds_id)
 
-    max_inputs = if transformer.type == "merge", do: 2, else: 1
+    if transformer do
+      max_inputs = if transformer.type == "merge", do: 2, else: 1
 
-    if length(transformer.collections) < max_inputs do
-      handle_dispatch(AddCollectionTarget.new(attrs), metadata)
+      if length(transformer.collections) < max_inputs do
+        handle_dispatch(AddCollectionTarget.new(attrs), metadata)
+      else
+        {:error, :too_many_inputs}
+      end
+
     else
-      {:error, :too_many_inputs}
+      widget = MetaStore.get_widget!(target, tenant: ds_id)
+
+      if widget do
+        unless widget.collection do
+          handle_dispatch(AddCollectionTarget.new(attrs), metadata)
+        else
+          {:error, :target_already_has_input}
+        end
+      else
+        {:error, :target_does_not_exist}
+      end
     end
   end
 
@@ -298,6 +328,52 @@ defmodule MetaStore do
       end
     end)
   end
+
+  def create_widget(attrs, %{user_id: _user_id} = metadata) do
+    handle_dispatch(CreateWidget.new(attrs), metadata)
+  end
+
+  def update_widget(attrs, %{user_id: _user_id} = metadata) do
+    handle_dispatch(UpdateWidget.new(attrs), metadata)
+  end
+
+  def set_widget_position(attrs, %{user_id: _user_id} = metadata) do
+    handle_dispatch(SetWidgetPosition.new(attrs), metadata)
+  end
+
+  def add_widget_input(attrs, metadata) do
+    command = AddWidgetInput.new(attrs)
+
+    ds_id = Map.get(metadata, :ds_id, :ds1)
+    causation_id = Map.get(metadata, :causation_id, UUID.uuid4())
+    correlation_id = Map.get(metadata, :correlation_id, UUID.uuid4())
+
+    with :ok <- @app.validate_and_dispatch(command, consistency: :strong, application: Module.concat(@app, ds_id), causation_id: causation_id, correlation_id: correlation_id, metadata: metadata) do
+      {:ok, :done}
+    else
+      reply -> reply
+    end
+  end
+
+  def delete_widget(%{"id" => id, "workspace" => workspace} = attrs, %{user_id: _user_id} = metadata) do
+    ds_id = Map.get(metadata, :ds_id, :ds1)
+
+    widget = MetaStore.get_widget!(id, tenant: ds_id)
+
+    incoming_collection_cmd = RemoveCollectionTarget.new(%{:id => widget.collection, :workspace => workspace, :target => id})
+    delete_self_cmd = DeleteWidget.new(attrs)
+
+    Enum.reduce_while([incoming_collection_cmd, delete_self_cmd], {:ok, :done}, fn command, _acc ->
+      reply = @app.validate_and_dispatch(command, consistency: :strong, application: Module.concat(@app, ds_id), metadata: metadata)
+
+      if reply == :ok do
+        {:cont, {:ok, :done}}
+      else
+        {:halt, reply}
+      end
+    end)
+  end
+
 
   defp handle_dispatch(command, metadata) do
     ds_id = Map.get(metadata, :ds_id, :ds1)

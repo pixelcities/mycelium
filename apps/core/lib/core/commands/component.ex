@@ -258,3 +258,86 @@ defmodule Core.Commands.DeleteTransformer do
   end
 end
 
+defmodule Core.Commands.CreateWidget do
+  import Core.Types.Component
+
+  use Commanded.Command,
+    id: :binary_id,
+    workspace: :string,
+    type: :string,
+    position: {{:array, :float}, default: [0.0, 0.0]},
+    color: {:string, default: "#000000"},
+    is_ready: {:boolean, default: false},
+    collection: :binary_id
+
+  def handle_validate(changeset) do
+    changeset
+    |> validate_required([:id, :workspace, :type])
+    |> validate_inclusion(:type, ["graph"])
+    |> validate_format(:color, ~r/^#[0-9a-fA-F]{6}$/)
+    |> validate_position()
+
+  end
+end
+
+defmodule Core.Commands.UpdateWidget do
+  import Core.Types.Component
+
+  use Commanded.Command,
+    id: :binary_id,
+    workspace: :string,
+    type: :string,
+    position: {{:array, :float}, default: [0.0, 0.0]},
+    color: {:string, default: "#000000"},
+    is_ready: {:boolean, default: false},
+    collection: :binary_id
+
+  def handle_validate(changeset) do
+    changeset
+    |> validate_required([:id, :workspace, :type])
+    |> validate_inclusion(:type, ["graph"])
+    |> validate_format(:color, ~r/^#[0-9a-fA-F]{6}$/)
+    |> validate_position()
+  end
+end
+
+defmodule Core.Commands.SetWidgetPosition do
+  import Core.Types.Component
+
+  use Commanded.Command,
+    id: :binary_id,
+    workspace: :string,
+    position: {{:array, :float}, default: [0.0, 0.0]}
+
+  def handle_validate(changeset) do
+    changeset
+    |> validate_required([:id, :workspace, :position])
+    |> validate_position()
+  end
+end
+
+defmodule Core.Commands.AddWidgetInput do
+  import Core.Types.Component
+
+  use Commanded.Command,
+    id: :binary_id,
+    workspace: :string,
+    collection: :binary_id
+
+  def handle_validate(changeset) do
+    changeset
+    |> validate_required([:id, :workspace, :collection])
+  end
+end
+
+defmodule Core.Commands.DeleteWidget do
+  use Commanded.Command,
+    id: :binary_id,
+    workspace: :string
+
+  def handle_validate(changeset) do
+    changeset
+    |> validate_required([:id, :workspace])
+  end
+end
+

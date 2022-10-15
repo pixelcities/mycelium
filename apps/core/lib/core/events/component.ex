@@ -94,3 +94,33 @@ defmodule Core.Events.TransformerDeleted do
     with: [:date]
 end
 
+defmodule Core.Events.WidgetCreated do
+  use Commanded.Event,
+    from: Core.Commands.CreateWidget,
+    with: [:date, :ds]
+end
+
+defmodule Core.Events.WidgetUpdated do
+  use Commanded.Event,
+    from: Core.Commands.UpdateWidget,
+    with: [:date]
+end
+
+defmodule Core.Events.WidgetPositionSet do
+  use Commanded.Event,
+    from: Core.Commands.SetWidgetPosition,
+    with: [:date]
+end
+
+defmodule Core.Events.WidgetInputAdded do
+  use Commanded.Event,
+    from: Core.Commands.AddWidgetInput,
+    with: [:date]
+end
+
+defmodule Core.Events.WidgetDeleted do
+  use Commanded.Event,
+    from: Core.Commands.DeleteWidget,
+    with: [:date]
+end
+

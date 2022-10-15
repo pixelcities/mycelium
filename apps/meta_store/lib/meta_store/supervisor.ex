@@ -44,7 +44,8 @@ defmodule MetaStore.TenantSupervisor do
       {MetaStore.Workflows.AddCollectionInput, application: Module.concat(backend, tenant)},
       {MetaStore.Projectors.Source, application: Module.concat(backend, tenant)},
       {MetaStore.Projectors.Collection, application: Module.concat(backend, tenant)},
-      {MetaStore.Projectors.Transformer, application: Module.concat(backend, tenant)}
+      {MetaStore.Projectors.Transformer, application: Module.concat(backend, tenant)},
+      {MetaStore.Projectors.Widget, application: Module.concat(backend, tenant)}
     ]
   end
 
