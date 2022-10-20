@@ -1,4 +1,4 @@
-defmodule Mix.Tasks.Migrations do
+defmodule Mix.Tasks.MetaStore.Migrations do
   @moduledoc """
   Call the release migration from mix
   """
@@ -9,7 +9,6 @@ defmodule Mix.Tasks.Migrations do
 
   @doc false
   def run(_args) do
-    Landlord.Release.migrate()
+    MetaStore.Release.migrate()
   end
 end
-

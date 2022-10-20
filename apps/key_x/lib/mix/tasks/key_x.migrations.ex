@@ -1,4 +1,4 @@
-defmodule Mix.Tasks.Migrations do
+defmodule Mix.Tasks.KeyX.Migrations do
   @moduledoc """
   Call the release migration from mix
   """
@@ -9,6 +9,7 @@ defmodule Mix.Tasks.Migrations do
 
   @doc false
   def run(_args) do
-    MetaStore.Release.migrate()
+    KeyX.Release.migrate()
   end
 end
+

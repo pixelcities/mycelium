@@ -1,4 +1,4 @@
-defmodule Mix.Tasks.Migrations do
+defmodule Mix.Tasks.Maestro.Migrations do
   @moduledoc """
   Call the release migration from mix
   """
@@ -9,7 +9,7 @@ defmodule Mix.Tasks.Migrations do
 
   @doc false
   def run(_args) do
-    KeyX.Release.migrate()
+    Maestro.Release.migrate()
   end
 end
 

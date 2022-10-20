@@ -136,6 +136,9 @@ defmodule LiaisonServerWeb.DataSpaceChannel do
   def handle_in("action", %{"type" => "AddWidgetInput"} = action, socket), do: handle_action(&MetaStore.add_widget_input/2, action, socket)
 
   @impl true
+  def handle_in("action", %{"type" => "PutWidgetSetting"} = action, socket), do: handle_action(&MetaStore.put_widget_setting/2, action, socket)
+
+  @impl true
   def handle_in("action", %{"type" => "DeleteWidget"} = action, socket), do: handle_action(&MetaStore.delete_widget/2, action, socket)
 
   @impl true

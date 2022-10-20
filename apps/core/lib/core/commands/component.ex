@@ -268,7 +268,8 @@ defmodule Core.Commands.CreateWidget do
     position: {{:array, :float}, default: [0.0, 0.0]},
     color: {:string, default: "#000000"},
     is_ready: {:boolean, default: false},
-    collection: :binary_id
+    collection: :binary_id,
+    settings: {:map, default: %{}}
 
   def handle_validate(changeset) do
     changeset
@@ -290,7 +291,8 @@ defmodule Core.Commands.UpdateWidget do
     position: {{:array, :float}, default: [0.0, 0.0]},
     color: {:string, default: "#000000"},
     is_ready: {:boolean, default: false},
-    collection: :binary_id
+    collection: :binary_id,
+    settings: {:map, default: %{}}
 
   def handle_validate(changeset) do
     changeset
@@ -317,8 +319,6 @@ defmodule Core.Commands.SetWidgetPosition do
 end
 
 defmodule Core.Commands.AddWidgetInput do
-  import Core.Types.Component
-
   use Commanded.Command,
     id: :binary_id,
     workspace: :string,
@@ -327,6 +327,19 @@ defmodule Core.Commands.AddWidgetInput do
   def handle_validate(changeset) do
     changeset
     |> validate_required([:id, :workspace, :collection])
+  end
+end
+
+defmodule Core.Commands.PutWidgetSetting do
+  use Commanded.Command,
+    id: :binary_id,
+    workspace: :string,
+    key: :string,
+    value: :string
+
+  def handle_validate(changeset) do
+    changeset
+    |> validate_required([:id, :workspace, :key, :value])
   end
 end
 

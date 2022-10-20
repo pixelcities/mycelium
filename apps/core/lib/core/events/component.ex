@@ -118,6 +118,12 @@ defmodule Core.Events.WidgetInputAdded do
     with: [:date]
 end
 
+defmodule Core.Events.WidgetSettingPut do
+  use Commanded.Event,
+    from: Core.Commands.PutWidgetSetting,
+    with: [:date]
+end
+
 defmodule Core.Events.WidgetDeleted do
   use Commanded.Event,
     from: Core.Commands.DeleteWidget,

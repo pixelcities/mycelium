@@ -10,6 +10,7 @@ defmodule MetaStore.Projections.Widget do
     field :position, {:array, :float}, default: [0.0, 0.0]
     field :color, :string, default: "#000000"
     field :is_ready, :boolean, default: false
+    field :settings, :map, default: %{}
     field :collection, :binary_id
 
     timestamps()
@@ -17,7 +18,7 @@ defmodule MetaStore.Projections.Widget do
 
   def changeset(transformer, attrs) do
     transformer
-    |> cast(attrs, [:workspace, :type, :position, :color, :is_ready, :collection])
+    |> cast(attrs, [:workspace, :type, :position, :color, :is_ready, :settings, :collection])
   end
 end
 

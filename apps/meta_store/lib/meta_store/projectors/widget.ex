@@ -11,6 +11,7 @@ defmodule MetaStore.Projectors.Widget do
     WidgetCreated,
     WidgetUpdated,
     WidgetInputAdded,
+    WidgetSettingPut,
     WidgetDeleted
   }
   alias MetaStore.Projections.Widget
@@ -37,6 +38,20 @@ defmodule MetaStore.Projectors.Widget do
     |> Ecto.Multi.update(:widget, fn %{get_widget: s} ->
       Widget.changeset(s, %{
         collection: widget.collection
+      })
+    end, prefix: ds_id)
+  end
+
+  project %WidgetSettingPut{} = widget, metadata, fn multi ->
+    ds_id = Map.get(metadata, "ds_id")
+
+    multi
+    |> Ecto.Multi.run(:get_widget, fn repo, _changes ->
+      {:ok, repo.get(Widget, widget.id, prefix: ds_id)}
+    end)
+    |> Ecto.Multi.update(:widget, fn %{get_widget: s} ->
+      Widget.changeset(s, %{
+        settings: Map.put(s.settings, widget.key, widget.value)
       })
     end, prefix: ds_id)
   end
