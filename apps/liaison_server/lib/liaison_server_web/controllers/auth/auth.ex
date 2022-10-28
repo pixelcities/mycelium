@@ -7,7 +7,10 @@ defmodule LiaisonServerWeb.Auth do
 
   @max_age 60 * 60 * 24 * 30 # 30 days
   @remember_me_cookie "_mycelium_web_user_remember_me"
-  @remember_me_options [sign: true, max_age: @max_age, same_site: "Strict"]
+  @remember_me_options [sign: true, max_age: @max_age, same_site: "Strict", secure: true]
+
+  @csrf_cookie "_mycelium_csrf_token"
+  @csrf_options [http_only: false, secure: true, same_site: "Strict"]
 
   @doc """
   Logs the user in.
@@ -22,6 +25,7 @@ defmodule LiaisonServerWeb.Auth do
     conn
     |> renew_session()
     |> put_session(:user_token, token)
+    |> write_csrf_token()
     |> maybe_write_remember_me_cookie(token, params)
     |> json(resp)
   end
@@ -41,6 +45,7 @@ defmodule LiaisonServerWeb.Auth do
     conn
     |> renew_session()
     |> delete_resp_cookie(@remember_me_cookie)
+    |> delete_csrf_token()
     |> json(resp)
   end
 
@@ -53,6 +58,27 @@ defmodule LiaisonServerWeb.Auth do
     user = user_token && Accounts.get_user_by_session_token(user_token)
 
     assign(conn, :current_user, user)
+  end
+
+  @doc """
+  Verify the X-CSRF-Token from a double submit cookie
+
+  This is only used for the authentication routes, as no session
+  is yet established for those.
+  """
+  def verify_double_submit(conn, _opts) do
+    conn = fetch_cookies(conn)
+
+    cookie = conn.cookies[@csrf_cookie]
+    header = hd(get_req_header(conn, "x-csrf-token"))
+
+    unless cookie == header do
+      conn
+      |> resp(403, "Forbidden")
+      |> halt()
+    else
+      conn
+    end
   end
 
   @doc """
@@ -83,6 +109,19 @@ defmodule LiaisonServerWeb.Auth do
       |> redirect(external: URI.to_string(get_external_host()) <> "/login")
       |> halt()
     end
+  end
+
+  def write_csrf_token(conn) do
+    token = get_csrf_token()
+
+    conn
+    |> put_session("_csrf_token", Process.get(:plug_unmasked_csrf_token))
+    |> put_resp_cookie(@csrf_cookie, token, @csrf_options)
+  end
+
+  def delete_csrf_token(conn) do
+    delete_csrf_token()
+    delete_resp_cookie(conn, @csrf_cookie)
   end
 
   defp ensure_user_token(conn) do

@@ -3,14 +3,23 @@ defmodule LiaisonServerWeb.Router do
 
   import LiaisonServerWeb.Auth
 
-  pipeline :api do
+  pipeline :common do
     plug RemoteIp,
       headers: ~w[x-real-ip]
-    plug :accepts, ["json"]
     plug :fetch_session
-    # plug :protect_from_forgery
     plug :put_secure_browser_headers
     plug :fetch_current_user
+  end
+
+  pipeline :auth do
+    plug :common
+    plug :accepts, ["json"]
+  end
+
+  pipeline :api do
+    plug :common
+    plug :accepts, ["json"]
+    plug :protect_from_forgery
   end
 
   pipeline :gatekeeper do
@@ -22,7 +31,7 @@ defmodule LiaisonServerWeb.Router do
   ## Authentication routes
 
   scope "/auth/local", LiaisonServerWeb.Auth.Local do
-    pipe_through [:api, :gatekeeper, :redirect_if_user_is_authenticated]
+    pipe_through [:auth, :gatekeeper, :verify_double_submit, :redirect_if_user_is_authenticated]
 
     post "/register", UserRegistrationController, :register_user
     post "/login", UserSessionController, :login_user
@@ -41,7 +50,7 @@ defmodule LiaisonServerWeb.Router do
   scope "/users", LiaisonServerWeb.Users do
     pipe_through [:api, :require_authenticated_user]
 
-    get "/token", UserProfileController, :token
+    post "/token", UserProfileController, :token
     post "/datatokens", UserProfileController, :datatokens
     get "/:id", UserProfileController, :get_user
     put "/profile", UserProfileController, :update_user

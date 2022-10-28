@@ -15,7 +15,9 @@ defmodule LiaisonServerWeb.Users.UserProfileController do
   def get_user(conn, %{"id" => "me"}) do
     user = conn.assigns.current_user
 
-    json(conn, user)
+    conn
+    |> Auth.write_csrf_token()
+    |> json(user)
   end
 
   @doc """

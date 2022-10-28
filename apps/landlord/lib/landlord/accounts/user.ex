@@ -98,8 +98,14 @@ defmodule Landlord.Accounts.User do
 
     user
     |> cast(attrs, changes)
+    |> validate_picture()
   end
 
+  defp validate_picture(changeset) do
+    changeset
+    |> validate_format(:picture, ~r/^data:image\/(?:png|jpe?g);base64,[a-zA-Z0-9+\/=]+$/, message: "must be an image data url")
+    |> validate_length(:picture, max: 349554) # 24 + (1024 * 256) / 3 * 4 + padding
+  end
 
   @doc """
   A user changeset for changing the email.

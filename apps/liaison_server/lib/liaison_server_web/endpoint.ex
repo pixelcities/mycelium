@@ -4,6 +4,8 @@ defmodule LiaisonServerWeb.Endpoint do
   @session_options [
     store: :cookie,
     key: "_mycelium_key",
+    same_site: "Strict",
+    secure: true,
     signing_salt: "NczsXZX+"
   ]
 
