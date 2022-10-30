@@ -11,6 +11,7 @@ defmodule Mycelium.MixProject do
         mycelium: [
           include_executables_for: [:unix],
           applications: [
+            content_server: :permanent,
             data_store: :permanent,
             key_x: :permanent,
             landlord: :permanent,

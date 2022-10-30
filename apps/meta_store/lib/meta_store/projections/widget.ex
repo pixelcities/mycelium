@@ -12,13 +12,16 @@ defmodule MetaStore.Projections.Widget do
     field :is_ready, :boolean, default: false
     field :settings, :map, default: %{}
     field :collection, :binary_id
+    field :access, :string, default: "internal"
+    field :content, :string
+    field :is_published, :boolean, default: false
 
     timestamps()
   end
 
   def changeset(transformer, attrs) do
     transformer
-    |> cast(attrs, [:workspace, :type, :position, :color, :is_ready, :settings, :collection])
+    |> cast(attrs, [:workspace, :type, :position, :color, :is_ready, :settings, :collection, :access, :content, :is_published])
   end
 end
 

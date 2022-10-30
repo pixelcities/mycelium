@@ -20,7 +20,8 @@ defmodule LiaisonServer.Application do
       {MetaStore.TenantSupervisor, registry: Landlord.Registry, tenants: tenants},
       {DataStore.TenantSupervisor, registry: Landlord.Registry, tenants: tenants},
       {KeyX.TenantSupervisor, registry: Landlord.Registry, tenants: tenants},
-      {Maestro.TenantSupervisor, registry: Landlord.Registry, tenants: tenants}
+      {Maestro.TenantSupervisor, registry: Landlord.Registry, tenants: tenants},
+      {ContentServer.TenantSupervisor, registry: Landlord.Registry, tenants: tenants}
     ]
 
     children = [

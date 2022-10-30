@@ -46,6 +46,7 @@ defmodule MetaStore do
     SetWidgetPosition,
     AddWidgetInput,
     PutWidgetSetting,
+    PublishWidget,
     DeleteWidget
   }
 
@@ -358,6 +359,10 @@ defmodule MetaStore do
 
   def put_widget_setting(attrs, %{user_id: _user_id} = metadata) do
     handle_dispatch(PutWidgetSetting.new(attrs), metadata)
+  end
+
+  def publish_widget(attrs, %{user_id: _user_id} = metadata) do
+    handle_dispatch(PublishWidget.new(attrs), metadata)
   end
 
   def delete_widget(%{"id" => id, "workspace" => workspace} = attrs, %{user_id: _user_id} = metadata) do

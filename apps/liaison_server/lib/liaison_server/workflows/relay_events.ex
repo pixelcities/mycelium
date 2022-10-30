@@ -34,6 +34,7 @@ defmodule LiaisonServer.Workflows.RelayEvents do
     Core.Events.WidgetPositionSet,
     Core.Events.WidgetInputAdded,
     Core.Events.WidgetSettingPut,
+    Core.Events.WidgetPublished,
     Core.Events.WidgetDeleted
   ]
 

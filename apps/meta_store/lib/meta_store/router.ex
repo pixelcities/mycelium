@@ -31,6 +31,7 @@ defmodule MetaStore.Router do
     SetWidgetPosition,
     AddWidgetInput,
     PutWidgetSetting,
+    PublishWidget,
     DeleteWidget
   }
   alias MetaStore.Aggregates.{
@@ -74,7 +75,7 @@ defmodule MetaStore.Router do
     to: Transformer,
     lifespan: TransformerLifespan
   )
-  dispatch([ CreateWidget, UpdateWidget, SetWidgetPosition, AddWidgetInput, PutWidgetSetting, DeleteWidget ],
+  dispatch([ CreateWidget, UpdateWidget, SetWidgetPosition, AddWidgetInput, PutWidgetSetting, PublishWidget, DeleteWidget ],
     to: Widget,
     lifespan: WidgetLifespan
   )

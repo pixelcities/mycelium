@@ -12,6 +12,15 @@ if config_env() == :prod do
   host = System.get_env("HOST") || "datagarden.app"
   port = String.to_integer(System.get_env("PORT") || "5000")
 
+  content_secret_key_base =
+    System.get_env("CONTENT_SECRET_KEY_BASE") ||
+      raise """
+      environment variable CONTENT_SECRET_KEY_BASE is missing.
+      """
+
+  content_host = System.get_env("CONTENT_HOST") || "datagarden.page"
+  content_port = String.to_integer(System.get_env("CONTENT_PORT") || "5001")
+
   secret_key =
     System.get_env("SECRET_KEY") ||
       raise """
@@ -42,6 +51,17 @@ if config_env() == :prod do
     secret_key: secret_key
 
   config :liaison_server, LiaisonServer.EventStore,
+    hostname: pg_host,
+    port: pg_port,
+    username: pg_user,
+    password: pg_password
+
+  config :content_server, ContentServerWeb.Endpoint,
+    url: [host: content_host, port: 443, scheme: "https"],
+    http: [ip: {0, 0, 0, 0, 0, 0, 0, 0}, port: content_port],
+    secret_key_base: content_secret_key_base
+
+  config :content_server, ContentServer.Repo,
     hostname: pg_host,
     port: pg_port,
     username: pg_user,

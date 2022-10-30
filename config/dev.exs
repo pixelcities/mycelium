@@ -35,6 +35,33 @@ config :liaison_server, LiaisonServerWeb,
     port: 3000
   ]
 
+
+# ContentServer
+config :content_server, ContentServerWeb.Endpoint,
+  http: [port: 5001],
+  debug_errors: true,
+  code_reloader: false,
+  check_origin: false,
+  watchers: [
+    esbuild: {Esbuild, :install_and_run, [:content_server, ~w(--sourcemap=inline --watch)]}
+  ],
+  server: true
+
+config :content_server, ContentServer.App,
+  event_store: [
+    adapter: Commanded.EventStore.Adapters.InMemory,
+    serializer: Commanded.Serialization.JsonSerializer
+  ]
+
+config :content_server, ContentServer.Repo,
+  database: "content_server",
+  username: "postgres",
+  hostname: "localhost"
+
+config :content_server, :backend_config,
+  backend_app: LiaisonServer.App
+
+
 # MetaStore
 config :meta_store, MetaStore.App,
   event_store: [

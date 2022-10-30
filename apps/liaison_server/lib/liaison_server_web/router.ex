@@ -22,6 +22,10 @@ defmodule LiaisonServerWeb.Router do
     plug :protect_from_forgery
   end
 
+  pipeline :browser do
+    plug :common
+  end
+
   pipeline :gatekeeper do
     plug Hammer.Plug, [
       rate_limit: {"default", 60_000, 10},

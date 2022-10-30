@@ -6,4 +6,5 @@ defmodule LiaisonServer.Router do
   router KeyX.Router
   router Landlord.Router
   router Maestro.Router
+  router ContentServer.Router
 end

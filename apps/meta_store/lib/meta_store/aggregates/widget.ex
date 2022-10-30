@@ -18,11 +18,14 @@ defmodule MetaStore.Aggregates.Widget do
             is_ready: false,
             collection: nil,
             settings: %{},
+            access: "internal",
+            content: nil,
+            is_published: false,
             date: nil
 
   alias MetaStore.Aggregates.Widget
-  alias Core.Commands.{CreateWidget, UpdateWidget, SetWidgetPosition, AddWidgetInput, PutWidgetSetting, DeleteWidget}
-  alias Core.Events.{WidgetCreated, WidgetUpdated, WidgetPositionSet, WidgetInputAdded, WidgetSettingPut, WidgetDeleted}
+  alias Core.Commands.{CreateWidget, UpdateWidget, SetWidgetPosition, AddWidgetInput, PutWidgetSetting, PublishWidget, DeleteWidget}
+  alias Core.Events.{WidgetCreated, WidgetUpdated, WidgetPositionSet, WidgetInputAdded, WidgetSettingPut, WidgetPublished, WidgetDeleted}
 
 
   def execute(%Widget{id: nil}, %CreateWidget{} = widget) do
@@ -49,6 +52,10 @@ defmodule MetaStore.Aggregates.Widget do
 
   def execute(%Widget{} = _widget, %PutWidgetSetting{} = command) do
     WidgetSettingPut.new(command, date: NaiveDateTime.utc_now())
+  end
+
+  def execute(%Widget{} = _widget, %PublishWidget{} = command) do
+    WidgetPublished.new(command, date: NaiveDateTime.utc_now())
   end
 
   def execute(%Widget{} = _widget, %DeleteWidget{} = command) do
@@ -95,6 +102,15 @@ defmodule MetaStore.Aggregates.Widget do
   def apply(%Widget{} = widget, %WidgetSettingPut{} = event) do
     %Widget{widget |
       settings: Map.put(widget.settings, event.key, event.value),
+      date: event.date
+    }
+  end
+
+  def apply(%Widget{} = widget, %WidgetPublished{} = event) do
+    %Widget{widget |
+      access: event.access,
+      content: event.content,
+      is_published: event.is_published,
       date: event.date
     }
   end

@@ -32,6 +32,27 @@ config :liaison_server, LiaisonServerWeb,
   ]
 
 
+# ContentServer
+config :content_server, ContentServerWeb.Endpoint,
+  debug_errors: false,
+  code_reloader: false,
+  check_origin: true,
+  watchers: [],
+  server: true
+
+config :content_server, ContentServer.App,
+  event_store: [
+    adapter: Commanded.EventStore.Adapters.InMemory,
+    serializer: Commanded.Serialization.JsonSerializer
+  ]
+
+config :content_server, ContentServer.Repo,
+  database: "content_server"
+
+config :content_server, :backend_config,
+  backend_app: LiaisonServer.App
+
+
 # MetaStore
 config :meta_store, MetaStore.App,
   event_store: [

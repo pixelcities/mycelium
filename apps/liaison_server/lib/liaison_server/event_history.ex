@@ -42,6 +42,7 @@ defmodule LiaisonServer.EventHistory do
     Events.WidgetPositionSet,
     Events.WidgetInputAdded,
     Events.WidgetSettingPut,
+    Events.WidgetPublished,
     Events.WidgetDeleted
   ]
 
