@@ -41,6 +41,9 @@ RUN mkdir config
 # copy compile-time config files before we compile dependencies
 COPY config/config.exs config/${MIX_ENV}.exs config/
 
+# compile assets
+RUN cd apps/content_server && mix assets.deploy
+
 RUN mix compile
 
 # Changes to config/runtime.exs don't require recompiling the code

@@ -26,3 +26,4 @@ content_server-*.tar
 /tmp/
 
 /priv/static/assets
+/assets/node_modules

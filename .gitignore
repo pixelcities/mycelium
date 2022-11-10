@@ -34,3 +34,4 @@ erl_crash.dump
 ### Custom ###
 config/*.secret.exs
 */priv/static/assets/
+*/assets/node_modules/

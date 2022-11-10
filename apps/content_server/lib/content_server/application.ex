@@ -26,6 +26,7 @@ defmodule ContentServer.Application do
     children = [
       ContentServer.Repo,
       {Phoenix.PubSub, name: ContentServer.PubSub},
+      {Registry, keys: :duplicate, name: ContentServerWeb.Registry},
       ContentServerWeb.Endpoint
     ]
 

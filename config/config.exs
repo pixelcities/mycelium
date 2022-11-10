@@ -34,14 +34,5 @@ config :key_x, KeyX.TrialAgent,
 config :maestro, event_stores: [Maestro.EventStore]
 config :maestro, ecto_repos: [Maestro.Repo]
 
-config :esbuild,
-  version: "0.14.29",
-  content_server: [
-    args:
-      ~w(js/app.js --bundle --target=es2017 --outdir=../priv/static/assets --external:/fonts/* --external:/images/*),
-    cd: Path.expand("../apps/content_server/assets", __DIR__),
-    env: %{"NODE_PATH" => Path.expand("../deps", __DIR__)}
-  ]
-
 import_config "#{Mix.env()}.exs"
 

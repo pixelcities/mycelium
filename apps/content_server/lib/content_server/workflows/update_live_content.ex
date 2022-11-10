@@ -8,12 +8,19 @@ defmodule ContentServer.Workflows.UpdateLiveContent do
     WidgetPublished
   }
 
-  # TODO: Call live process
   def handle(%ContentUpdated{} = _event, _metadata) do
+    Enum.each(Registry.lookup(ContentServerWeb.Registry, "Content"), fn {pid, _} ->
+      send(pid, :update)
+    end)
+
     :ok
   end
 
   def handle(%WidgetPublished{} = _event, _metadata) do
+    Enum.each(Registry.lookup(ContentServerWeb.Registry, "Content"), fn {pid, _} ->
+      send(pid, :update)
+    end)
+
     :ok
   end
 end

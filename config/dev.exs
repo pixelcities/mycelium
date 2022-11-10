@@ -43,7 +43,7 @@ config :content_server, ContentServerWeb.Endpoint,
   code_reloader: false,
   check_origin: false,
   watchers: [
-    esbuild: {Esbuild, :install_and_run, [:content_server, ~w(--sourcemap=inline --watch)]}
+    node: ["build.js", "--watch", cd: Path.expand("../apps/content_server/assets", __DIR__)]
   ],
   server: true
 

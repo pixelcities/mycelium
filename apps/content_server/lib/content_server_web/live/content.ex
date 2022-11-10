@@ -2,7 +2,18 @@ defmodule ContentServerWeb.Live.Content do
   use ContentServerWeb, :live_view
   on_mount ContentServerWeb.Live.UserAuth
 
+  def render(assigns) do
+    ~H"""
+    <div>
+      <iframe id={@content_id} sandbox frameborder="0" data={@content} public="0" phx-hook="Render" />
+      <script type="module" src="/assets/render.js" ></script>
+    </div>
+    """
+  end
+
   def mount(%{"ds" => ds_id, "id" => id}, _session, socket) do
+    Registry.register(ContentServerWeb.Registry, "Content", nil)
+
     if authorized?(socket.assigns.token) do
       content = ContentServer.get_content!(id, tenant: ds_id)
 
@@ -24,7 +35,7 @@ defmodule ContentServerWeb.Live.Content do
     content = ContentServer.get_content!(socket.assigns.content_id, tenant: socket.assigns.ds_id)
 
     if content do
-      {:noreply, assign(socket, :content, content)}
+      {:noreply, assign(socket, :content, content.content)}
     else
       {:noreply, socket}
     end
