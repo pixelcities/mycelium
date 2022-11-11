@@ -270,7 +270,7 @@ defmodule Core.Commands.CreateWidget do
     is_ready: {:boolean, default: false},
     collection: :binary_id,
     settings: {:map, default: %{}},
-    access: {:string, default: "internal"},
+    access: {{:array, :map}, default: [%{type: "internal"}]},
     content: :string,
     is_published: {:boolean, default: false}
 
@@ -280,7 +280,7 @@ defmodule Core.Commands.CreateWidget do
     |> validate_inclusion(:type, ["graph"])
     |> validate_format(:color, ~r/^#[0-9a-fA-F]{6}$/)
     |> validate_position()
-    |> validate_inclusion(:access, ["public", "internal"])
+    |> validate_shares(:access)
   end
 end
 
@@ -296,7 +296,7 @@ defmodule Core.Commands.UpdateWidget do
     is_ready: {:boolean, default: false},
     collection: :binary_id,
     settings: {:map, default: %{}},
-    access: {:string, default: "internal"},
+    access: {{:array, :map}, default: [%{type: "internal"}]},
     content: :string,
     is_published: {:boolean, default: false}
 
@@ -306,7 +306,7 @@ defmodule Core.Commands.UpdateWidget do
     |> validate_inclusion(:type, ["graph"])
     |> validate_format(:color, ~r/^#[0-9a-fA-F]{6}$/)
     |> validate_position()
-    |> validate_inclusion(:access, ["public", "internal"])
+    |> validate_shares(:access)
   end
 end
 
@@ -351,17 +351,19 @@ defmodule Core.Commands.PutWidgetSetting do
 end
 
 defmodule Core.Commands.PublishWidget do
+  import Core.Types.Component
+
   use Commanded.Command,
     id: :binary_id,
     workspace: :string,
-    access: {:string, default: "internal"},
+    access: {{:array, :map}, default: [%{type: "internal"}]},
     content: :string,
     is_published: {:boolean, default: false}
 
   def handle_validate(changeset) do
     changeset
     |> validate_required([:id, :workspace, :access, :content, :is_published])
-    |> validate_inclusion(:access, ["public", "internal"])
+    |> validate_shares(:access)
   end
 end
 

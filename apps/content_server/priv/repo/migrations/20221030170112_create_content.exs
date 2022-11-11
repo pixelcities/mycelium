@@ -6,7 +6,7 @@ defmodule ContentServer.Repo.Migrations.CreateContent do
       add :id, :uuid, primary_key: true
       add :workspace, :string, null: false
       add :type, :text
-      add :access, :string
+      add :access, {:array, :map}
       add :content, :text
       add :widget_id, :uuid
 

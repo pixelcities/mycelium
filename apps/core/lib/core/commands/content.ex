@@ -5,7 +5,7 @@ defmodule Core.Commands.CreateContent do
     id: :binary_id,
     workspace: :string,
     type: :string,
-    access: {:string, default: "internal"},
+    access: {{:array, :map}, default: [%{type: "internal"}]},
     widget_id: :binary_id,
     content: :string
 
@@ -13,7 +13,7 @@ defmodule Core.Commands.CreateContent do
     changeset
     |> validate_required([:id, :workspace, :type, :access])
     |> validate_inclusion(:type, ["static", "widget"])
-    |> validate_inclusion(:access, ["public", "internal"])
+    |> validate_shares(:access)
     |> validate_one_of([:widget_id, :content])
   end
 end
@@ -25,7 +25,7 @@ defmodule Core.Commands.UpdateContent do
     id: :binary_id,
     workspace: :string,
     type: :string,
-    access: {:string, default: "internal"},
+    access: {{:array, :map}, default: [%{type: "internal"}]},
     widget_id: :binary_id,
     content: :string
 
@@ -33,7 +33,7 @@ defmodule Core.Commands.UpdateContent do
     changeset
     |> validate_required([:id, :workspace, :type, :access])
     |> validate_inclusion(:type, ["static", "widget"])
-    |> validate_inclusion(:access, ["public", "internal"])
+    |> validate_shares(:access)
     |> validate_one_of([:widget_id, :content])
   end
 end

@@ -13,6 +13,10 @@ defmodule Core.Types.Share do
     |> cast(attrs, [:type, :principal])
     |> validate_required([:type])
   end
+
+  def new(attrs) do
+    changeset(%__MODULE__{}, attrs)
+  end
 end
 
 defmodule Core.Types.Column do

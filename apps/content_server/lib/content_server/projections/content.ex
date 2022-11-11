@@ -7,7 +7,7 @@ defmodule ContentServer.Projections.Content do
   schema "content" do
     field :workspace, :string
     field :type, :string
-    field :access, :string, default: "internal"
+    field :access, {:array, :map}
     field :content, :string
     field :widget_id, :binary_id
 

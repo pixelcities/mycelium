@@ -13,7 +13,7 @@ defmodule ContentServer.Aggregates.Content do
   defstruct id: nil,
             workspace: nil,
             type: nil,
-            access: "internal",
+            access: [],
             content: nil,
             widget_id: nil,
             date: nil

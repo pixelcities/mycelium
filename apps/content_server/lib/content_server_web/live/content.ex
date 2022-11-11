@@ -2,10 +2,12 @@ defmodule ContentServerWeb.Live.Content do
   use ContentServerWeb, :live_view
   on_mount ContentServerWeb.Live.UserAuth
 
+  import Core.Auth.Authorizer
+
   def render(assigns) do
     ~H"""
     <div>
-      <iframe id={@content_id} sandbox frameborder="0" data={@content} public="0" phx-hook="Render" />
+      <iframe id={@content_id} sandbox frameborder="0" data={@content} public={@is_public} phx-hook="Render" />
       <script type="module" src="/assets/render.js" ></script>
     </div>
     """
@@ -17,8 +19,10 @@ defmodule ContentServerWeb.Live.Content do
     if authorized?(socket.assigns.token) do
       content = ContentServer.get_content!(id, tenant: ds_id)
 
-      if content.access == "public" do
+      # TODO: Get some session info from token
+      if authorized?(nil, content.access) do
         socket = assign(socket, :ds_id, ds_id)
+        socket = assign(socket, :is_public, (if is_public?(content.access), do: "1", else: "0"))
         socket = assign(socket, :content_id, content.id)
         socket = assign(socket, :content, content.content)
 

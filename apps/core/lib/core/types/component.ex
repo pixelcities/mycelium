@@ -1,7 +1,7 @@
 defmodule Core.Types.Component do
   import Ecto.Changeset
 
-  alias Core.Types.{Schema, WAL}
+  alias Core.Types.{Schema, Share, WAL}
 
   defp validate_targets(changeset) do
     changeset
@@ -50,6 +50,16 @@ defmodule Core.Types.Component do
     |> Schema.new()
 
     Enum.reduce(schema.errors, changeset, fn {err, {message, additional}}, changeset -> add_error(changeset, err, message, additional) end)
+  end
+
+  def validate_shares(changeset, field \\ :shares) do
+    shares = fetch_field!(changeset, field)
+
+    Enum.reduce(shares, changeset, fn attrs, changeset ->
+      share = Share.new(attrs)
+
+      Enum.reduce(share.errors, changeset, fn {err, {message, additional}}, changeset -> add_error(changeset, err, message, additional) end)
+    end)
   end
 
   def validate_uri_namespace(changeset, data_space, workspace) do
