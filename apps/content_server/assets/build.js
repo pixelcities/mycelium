@@ -17,7 +17,7 @@ const plugins = [
 ]
 
 let opts = {
-  entryPoints: ['js/app.js', 'js/render.js'],
+  entryPoints: ['js/app.js', 'js/vendor.js', 'js/worker.js'],
   bundle: true,
   target: 'esnext',
   format: 'esm',

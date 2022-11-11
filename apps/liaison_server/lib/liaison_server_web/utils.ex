@@ -5,8 +5,6 @@ defmodule LiaisonServerWeb.Utils do
 
   import Ecto.Changeset
 
-  @config Application.get_env(:liaison_server, LiaisonServerWeb)[:from]
-
   @doc """
   Translate a changeset to a map with error messages
   """
@@ -23,11 +21,7 @@ defmodule LiaisonServerWeb.Utils do
   Returns a URL with the host pointing to the front-end
   """
   def get_external_host() do
-    %URI{
-      scheme: @config[:scheme],
-      host: @config[:host],
-      port: @config[:port]
-    }
+    Core.Utils.Web.get_external_host()
   end
 end
 

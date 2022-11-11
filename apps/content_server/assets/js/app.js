@@ -16,14 +16,10 @@ class InMemoryStorage {
 const Hooks = {
   Render: {
     mounted() {
-      if (this.el.getAttribute("public") === "1") {
-        render(this.el.id)
-      }
+      render(this.el.id)
     },
     updated() {
-      if (this.el.getAttribute("public") === "1") {
-        render(this.el.id)
-      }
+      render(this.el.id)
     }
   }
 }

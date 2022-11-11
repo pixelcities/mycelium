@@ -12,6 +12,13 @@ config :cors_plug,
   origin: ["https://datagarden.app"]
 
 
+config :core, Core,
+  from: [
+    scheme: "https",
+    host: "datagarden.app"
+  ]
+
+
 # LiaisonServer
 config :liaison_server, LiaisonServer.EventStore,
   serializer: Commanded.Serialization.JsonSerializer,
@@ -24,12 +31,6 @@ config :liaison_server, LiaisonServerWeb.Endpoint,
   check_origin: true,
   watchers: [],
   server: true
-
-config :liaison_server, LiaisonServerWeb,
-  from: [
-    scheme: "https",
-    host: "datagarden.app"
-  ]
 
 
 # ContentServer

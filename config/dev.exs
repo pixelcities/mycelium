@@ -12,6 +12,14 @@ config :cors_plug,
   origin: ["http://localhost:3000"]
 
 
+config :core, Core,
+  from: [
+    scheme: "http",
+    host: "localhost",
+    port: 3000
+  ]
+
+
 # LiaisonServer
 config :liaison_server, LiaisonServer.EventStore,
   serializer: Commanded.Serialization.JsonSerializer,
@@ -27,13 +35,6 @@ config :liaison_server, LiaisonServerWeb.Endpoint,
   check_origin: false,
   watchers: [],
   server: true
-
-config :liaison_server, LiaisonServerWeb,
-  from: [
-    scheme: "http",
-    host: "localhost",
-    port: 3000
-  ]
 
 
 # ContentServer
