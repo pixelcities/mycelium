@@ -42,6 +42,7 @@ defmodule ContentServer.TenantSupervisor do
 
     [
       {ContentServer.Workflows.UpdateLiveContent, application: Module.concat(backend, tenant)},
+      {ContentServer.Projectors.Page, application: Module.concat(backend, tenant)},
       {ContentServer.Projectors.Content, application: Module.concat(backend, tenant)}
     ]
   end

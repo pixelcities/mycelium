@@ -19,7 +19,7 @@ onmessage = ({ data: { action, payload }}) => {
       postMessage({
         action: "render",
         id: payload.id,
-        data: atob(data)
+        data: atob(payload.data)
       })
 
     } else if (!!local.key && payload.data.indexOf(":") !== -1) {

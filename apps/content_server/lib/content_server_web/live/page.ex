@@ -1,4 +1,4 @@
-defmodule ContentServerWeb.Live.Content do
+defmodule ContentServerWeb.Live.Page do
   use ContentServerWeb, :live_view
   on_mount ContentServerWeb.Live.UserAuth
 
@@ -11,20 +11,22 @@ defmodule ContentServerWeb.Live.Content do
     ~H"""
     <div>
       <.script external_host={@external_host} />
-      <.live_component module={Components.Content} id={@content_id} ds={@ds_id} is_public={@is_public} />
+      <%= for content_id <- @content_ids do %>
+        <.live_component module={Components.Content} id={content_id} ds={@ds_id} is_public={@is_public} />
+      <% end %>
     </div>
     """
   end
 
   def mount(%{"ds" => ds_id, "id" => id}, _session, socket) do
-    content = ContentServer.get_content!(id, tenant: ds_id)
+    page = ContentServer.get_page!(id, tenant: ds_id)
 
     # TODO: Get some session info
-    if authorized?(nil, content.access) do
+    if authorized?(nil, page.access) do
       socket = assign(socket, :ds_id, ds_id)
       socket = assign(socket, :external_host, URI.to_string(Core.Utils.Web.get_external_host()))
-      socket = assign(socket, :is_public, (if is_public?(content.access), do: "1", else: "0"))
-      socket = assign(socket, :content_id, id)
+      socket = assign(socket, :is_public, (if is_public?(page.access), do: "1", else: "0"))
+      socket = assign(socket, :content_ids, Enum.map(page.content, fn content -> content.id end))
 
       {:ok, socket}
     else

@@ -43,6 +43,7 @@ defmodule ContentServer.Projectors.Content do
       Content.changeset(s, %{
         workspace: content.workspace,
         type: content.type,
+        page_id: content.page_id,
         access: content.access,
         content: content.content,
         widget_id: content.widget_id

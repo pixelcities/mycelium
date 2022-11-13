@@ -43,7 +43,13 @@ defmodule LiaisonServer.EventHistory do
     Events.WidgetInputAdded,
     Events.WidgetSettingPut,
     Events.WidgetPublished,
-    Events.WidgetDeleted
+    Events.WidgetDeleted,
+    Events.ContentCreated,
+    Events.ContentUpdated,
+    Events.ContentDeleted,
+    Events.PageCreated,
+    Events.PageUpdated,
+    Events.PageDeleted
   ]
 
   @spec handle(binary, binary, binary) :: :ok | :error

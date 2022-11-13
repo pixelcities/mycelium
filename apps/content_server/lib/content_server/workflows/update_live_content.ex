@@ -7,18 +7,23 @@ defmodule ContentServer.Workflows.UpdateLiveContent do
     ContentUpdated,
     WidgetPublished
   }
+  alias ContentServerWeb.Live.Components
 
-  def handle(%ContentUpdated{} = _event, _metadata) do
-    Enum.each(Registry.lookup(ContentServerWeb.Registry, "Content"), fn {pid, _} ->
-      send(pid, :update)
+  def handle(%ContentUpdated{} = event, _metadata) do
+    Enum.each(Registry.lookup(ContentServerWeb.Registry, event.id), fn {pid, _} ->
+      Phoenix.LiveView.send_update(pid, Components.Content, id: event.id, content: event.content)
     end)
 
     :ok
   end
 
-  def handle(%WidgetPublished{} = _event, _metadata) do
-    Enum.each(Registry.lookup(ContentServerWeb.Registry, "Content"), fn {pid, _} ->
-      send(pid, :update)
+  def handle(%WidgetPublished{} = event, metadata) do
+    content = ContentServer.get_content_by_widget_id(event.id, tenant: metadata.ds_id)
+
+    Enum.each(content, fn c ->
+      Enum.each(Registry.lookup(ContentServerWeb.Registry, c.id), fn {pid, _} ->
+        Phoenix.LiveView.send_update(pid, Components.Content, id: event.id, content: event.content)
+      end)
     end)
 
     :ok
