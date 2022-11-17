@@ -18,7 +18,8 @@ defmodule ContentServer.Workflows.UpdateLiveContent do
   end
 
   def handle(%WidgetPublished{} = event, metadata) do
-    content = ContentServer.get_content_by_widget_id(event.id, tenant: metadata.ds_id)
+    ds_id = Map.get(metadata, "ds_id")
+    content = ContentServer.get_content_by_widget_id(event.id, tenant: ds_id)
 
     Enum.each(content, fn c ->
       Enum.each(Registry.lookup(ContentServerWeb.Registry, c.id), fn {pid, _} ->

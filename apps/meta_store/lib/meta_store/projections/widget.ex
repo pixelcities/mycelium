@@ -12,7 +12,7 @@ defmodule MetaStore.Projections.Widget do
     field :is_ready, :boolean, default: false
     field :settings, :map, default: %{}
     field :collection, :binary_id
-    field :access, :string, default: "internal"
+    field :access, {:array, :map}, default: [%{type: "internal"}]
     field :content, :string
     field :is_published, :boolean, default: false
 
