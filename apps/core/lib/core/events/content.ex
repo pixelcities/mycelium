@@ -10,6 +10,12 @@ defmodule Core.Events.ContentUpdated do
     with: [:date]
 end
 
+defmodule Core.Events.ContentDraftUpdated do
+  use Commanded.Event,
+    from: Core.Commands.UpdateContentDraft,
+    with: [:date]
+end
+
 defmodule Core.Events.ContentDeleted do
   use Commanded.Event,
     from: Core.Commands.DeleteContent,

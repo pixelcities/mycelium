@@ -5,6 +5,7 @@ defmodule ContentServer.Router do
   alias Core.Commands.{
     CreateContent,
     UpdateContent,
+    UpdateContentDraft,
     DeleteContent,
     CreatePage,
     UpdatePage,
@@ -23,7 +24,7 @@ defmodule ContentServer.Router do
   identify(Content, by: :id, prefix: "content-")
   identify(Page, by: :id, prefix: "pages-")
 
-  dispatch([ CreateContent, UpdateContent, DeleteContent ],
+  dispatch([ CreateContent, UpdateContent, UpdateContentDraft, DeleteContent ],
     to: Content,
     lifespan: ContentLifespan
   )

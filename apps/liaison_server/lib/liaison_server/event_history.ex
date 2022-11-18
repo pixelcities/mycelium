@@ -46,6 +46,7 @@ defmodule LiaisonServer.EventHistory do
     Events.WidgetDeleted,
     Events.ContentCreated,
     Events.ContentUpdated,
+    Events.ContentDraftUpdated,
     Events.ContentDeleted,
     Events.PageCreated,
     Events.PageUpdated,

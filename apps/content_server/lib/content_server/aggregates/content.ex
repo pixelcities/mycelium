@@ -15,12 +15,13 @@ defmodule ContentServer.Aggregates.Content do
             type: nil,
             access: [],
             content: nil,
+            draft: nil,
             widget_id: nil,
             date: nil
 
   alias ContentServer.Aggregates.Content
-  alias Core.Commands.{CreateContent, UpdateContent, DeleteContent}
-  alias Core.Events.{ContentCreated, ContentUpdated, ContentDeleted}
+  alias Core.Commands.{CreateContent, UpdateContent, UpdateContentDraft, DeleteContent}
+  alias Core.Events.{ContentCreated, ContentUpdated, ContentDraftUpdated, ContentDeleted}
 
 
   def execute(%Content{id: nil}, %CreateContent{} = content) do
@@ -31,6 +32,12 @@ defmodule ContentServer.Aggregates.Content do
     when content.workspace == update.workspace
   do
     ContentUpdated.new(update, date: NaiveDateTime.utc_now())
+  end
+
+  def execute(%Content{} = content, %UpdateContentDraft{} = update)
+    when content.workspace == update.workspace
+  do
+    ContentDraftUpdated.new(update, date: NaiveDateTime.utc_now())
   end
 
   def execute(%Content{} = _content, %DeleteContent{} = command) do
@@ -55,6 +62,13 @@ defmodule ContentServer.Aggregates.Content do
   def apply(%Content{} = content, %ContentUpdated{} = updated) do
     %Content{content |
       content: updated.content,
+      date: updated.date
+    }
+  end
+
+  def apply(%Content{} = content, %ContentDraftUpdated{} = updated) do
+    %Content{content |
+      draft: updated.draft,
       date: updated.date
     }
   end

@@ -51,7 +51,8 @@ defmodule Core.Commands.CreateContent do
     page_id: :binary_id,
     access: {{:array, :map}, default: [%{type: "internal"}]},
     widget_id: :binary_id,
-    content: :string
+    content: :string,
+    draft: :string
 
   def handle_validate(changeset) do
     changeset
@@ -72,7 +73,8 @@ defmodule Core.Commands.UpdateContent do
     page_id: :binary_id,
     access: {{:array, :map}, default: [%{type: "internal"}]},
     widget_id: :binary_id,
-    content: :string
+    content: :string,
+    draft: :string
 
   def handle_validate(changeset) do
     changeset
@@ -80,6 +82,18 @@ defmodule Core.Commands.UpdateContent do
     |> validate_inclusion(:type, ["static", "widget"])
     |> validate_shares(:access)
     |> validate_one_of([:widget_id, :content])
+  end
+end
+
+defmodule Core.Commands.UpdateContentDraft do
+  use Commanded.Command,
+    id: :binary_id,
+    workspace: :string,
+    draft: :string
+
+  def handle_validate(changeset) do
+    changeset
+    |> validate_required([:id, :workspace, :draft])
   end
 end
 

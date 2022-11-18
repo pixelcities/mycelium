@@ -147,6 +147,27 @@ defmodule LiaisonServerWeb.DataSpaceChannel do
   @impl true
   def handle_in("action", %{"type" => "CompleteTask"} = action, socket), do: handle_action(&Maestro.complete_task/2, action, socket)
 
+  @impl true
+  def handle_in("action", %{"type" => "CreatePage"} = action, socket), do: handle_action(&ContentServer.create_page/2, action, socket)
+
+  @impl true
+  def handle_in("action", %{"type" => "UpdatePage"} = action, socket), do: handle_action(&ContentServer.update_page/2, action, socket)
+
+  @impl true
+  def handle_in("action", %{"type" => "DeletePage"} = action, socket), do: handle_action(&ContentServer.delete_page/2, action, socket)
+
+  @impl true
+  def handle_in("action", %{"type" => "CreateContent"} = action, socket), do: handle_action(&ContentServer.create_content/2, action, socket)
+
+  @impl true
+  def handle_in("action", %{"type" => "UpdateContent"} = action, socket), do: handle_action(&ContentServer.update_content/2, action, socket)
+
+  @impl true
+  def handle_in("action", %{"type" => "UpdateContentDraft"} = action, socket), do: handle_action(&ContentServer.update_content_draft/2, action, socket)
+
+  @impl true
+  def handle_in("action", %{"type" => "DeleteContent"} = action, socket), do: handle_action(&ContentServer.delete_content/2, action, socket)
+
 
   defp handle_action(func, action, socket) do
     user = socket.assigns.current_user

@@ -6,7 +6,7 @@ defmodule ContentServer.Repo.Migrations.CreatePageProjection do
       add :id, :uuid, primary_key: true
       add :workspace, :string, null: false
       add :access, {:array, :map}
-      add :key_id, :string, null: true
+      add :key_id, :uuid, null: true
 
       timestamps()
     end

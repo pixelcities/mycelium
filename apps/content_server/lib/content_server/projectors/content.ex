@@ -10,6 +10,7 @@ defmodule ContentServer.Projectors.Content do
   alias Core.Events.{
     ContentCreated,
     ContentUpdated,
+    ContentDraftUpdated,
     ContentDeleted
   }
   alias ContentServer.Projections.Content
@@ -24,6 +25,20 @@ defmodule ContentServer.Projectors.Content do
     ds_id = Map.get(metadata, "ds_id")
 
     upsert_content(multi, content, ds_id)
+  end
+
+  project %ContentDraftUpdated{} = content, metadata, fn multi ->
+    ds_id = Map.get(metadata, "ds_id")
+
+    multi
+    |> Ecto.Multi.run(:get_content, fn repo, _changes ->
+      {:ok, repo.get(Content, content.id, prefix: ds_id)}
+    end)
+    |> Ecto.Multi.update(:content, fn %{get_content: s} ->
+      Content.changeset(s, %{
+        draft: content.draft
+      })
+    end, prefix: ds_id)
   end
 
   project %ContentDeleted{} = content, %{"ds_id" => ds_id} = _metadata, fn multi ->

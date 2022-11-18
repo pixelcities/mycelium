@@ -15,6 +15,7 @@ defmodule ContentServer do
   alias Core.Commands.{
     CreateContent,
     UpdateContent,
+    UpdateContentDraft,
     DeleteContent,
     CreatePage,
     UpdatePage,
@@ -91,6 +92,10 @@ defmodule ContentServer do
 
   def update_content(attrs, %{user_id: _user_id} = metadata) do
     handle_dispatch(UpdateContent.new(attrs), metadata)
+  end
+
+  def update_content_draft(attrs, %{user_id: _user_id} = metadata) do
+    handle_dispatch(UpdateContentDraft.new(attrs), metadata)
   end
 
   def delete_content(attrs, %{user_id: _user_id} = metadata) do
