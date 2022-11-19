@@ -24,6 +24,7 @@ defmodule ContentServer.Aggregates.Content do
   alias Core.Events.{ContentCreated, ContentUpdated, ContentDraftUpdated, ContentDeleted}
 
 
+  # TODO: validate type consistency
   def execute(%Content{id: nil}, %CreateContent{} = content) do
     ContentCreated.new(content, date: NaiveDateTime.utc_now())
   end

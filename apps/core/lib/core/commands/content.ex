@@ -59,7 +59,6 @@ defmodule Core.Commands.CreateContent do
     |> validate_required([:id, :workspace, :type, :page_id, :access])
     |> validate_inclusion(:type, ["static", "widget"])
     |> validate_shares(:access)
-    |> validate_one_of([:widget_id, :content])
   end
 end
 
@@ -81,7 +80,6 @@ defmodule Core.Commands.UpdateContent do
     |> validate_required([:id, :workspace, :type, :page_id, :access])
     |> validate_inclusion(:type, ["static", "widget"])
     |> validate_shares(:access)
-    |> validate_one_of([:widget_id, :content])
   end
 end
 
