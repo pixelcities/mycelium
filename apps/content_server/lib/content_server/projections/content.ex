@@ -14,6 +14,7 @@ defmodule ContentServer.Projections.Content do
     field :content, :string
     field :draft, :string
     field :widget_id, :binary_id
+    field :height, :integer
 
     belongs_to :page, Page
 
@@ -22,7 +23,7 @@ defmodule ContentServer.Projections.Content do
 
   def changeset(transformer, attrs) do
     transformer
-    |> cast(attrs, [:workspace, :type, :page_id, :access, :content, :draft, :widget_id])
+    |> cast(attrs, [:workspace, :type, :page_id, :access, :content, :draft, :widget_id, :height])
   end
 end
 

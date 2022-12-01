@@ -11,7 +11,7 @@ defmodule ContentServer.Workflows.UpdateLiveContent do
 
   def handle(%ContentUpdated{} = event, _metadata) do
     Enum.each(Registry.lookup(ContentServerWeb.Registry, event.id), fn {pid, _} ->
-      Phoenix.LiveView.send_update(pid, Components.Content, id: event.id, content: event.content)
+      Phoenix.LiveView.send_update(pid, Components.Content, id: event.id, content: event.content, height: event.height)
     end)
 
     :ok
@@ -23,7 +23,7 @@ defmodule ContentServer.Workflows.UpdateLiveContent do
 
     Enum.each(content, fn c ->
       Enum.each(Registry.lookup(ContentServerWeb.Registry, c.id), fn {pid, _} ->
-        Phoenix.LiveView.send_update(pid, Components.Content, id: event.id, content: event.content)
+        Phoenix.LiveView.send_update(pid, Components.Content, id: c.id, content: c.content, height: c.height)
       end)
     end)
 

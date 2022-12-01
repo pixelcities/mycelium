@@ -61,6 +61,8 @@ defmodule ContentServer.Projectors.Content do
         page_id: content.page_id,
         access: content.access,
         content: content.content,
+        draft: content.draft,
+        height: content.height,
         widget_id: content.widget_id
       })
     end, prefix: ds_id)

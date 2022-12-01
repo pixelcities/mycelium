@@ -52,7 +52,8 @@ defmodule Core.Commands.CreateContent do
     access: {{:array, :map}, default: [%{type: "internal"}]},
     widget_id: :binary_id,
     content: :string,
-    draft: :string
+    draft: :string,
+    height: :integer
 
   def handle_validate(changeset) do
     changeset
@@ -73,7 +74,8 @@ defmodule Core.Commands.UpdateContent do
     access: {{:array, :map}, default: [%{type: "internal"}]},
     widget_id: :binary_id,
     content: :string,
-    draft: :string
+    draft: :string,
+    height: :integer
 
   def handle_validate(changeset) do
     changeset

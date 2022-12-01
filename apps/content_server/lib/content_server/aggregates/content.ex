@@ -17,6 +17,7 @@ defmodule ContentServer.Aggregates.Content do
             content: nil,
             draft: nil,
             widget_id: nil,
+            height: nil,
             date: nil
 
   alias ContentServer.Aggregates.Content
@@ -56,6 +57,8 @@ defmodule ContentServer.Aggregates.Content do
       access: created.access,
       widget_id: created.widget_id,
       content: created.content,
+      draft: created.draft,
+      height: created.height,
       date: created.date
     }
   end
@@ -63,6 +66,8 @@ defmodule ContentServer.Aggregates.Content do
   def apply(%Content{} = content, %ContentUpdated{} = updated) do
     %Content{content |
       content: updated.content,
+      draft: updated.draft,
+      height: updated.height,
       date: updated.date
     }
   end
