@@ -38,6 +38,7 @@ defmodule ContentServer.MixProject do
       {:phoenix, "~> 1.6"},
       {:phoenix_html, "~> 3.0"},
       {:phoenix_live_view, "~> 0.17.5"},
+      {:dart_sass, "~> 0.5", runtime: Mix.env() == :dev},
       {:gettext, "~> 0.18"},
       {:plug_cowboy, "~> 2.5"},
       {:cors_plug, "~> 2.0"},
@@ -51,7 +52,11 @@ defmodule ContentServer.MixProject do
   defp aliases do
     [
       setup: ["deps.get", "ecto.setup", "cmd --cd assets npm install"],
-      "assets.deploy": ["cmd --cd assets node build.js --deploy", "phx.digest"]
+      "assets.deploy": [
+        "cmd --cd assets node build.js --deploy",
+        "sass default --no-source-map --style=compressed",
+        "phx.digest"
+      ]
     ]
   end
 end

@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "bulma": "^0.9.4",
     "dompurify": "^2.4.0",
     "key-x-wasm": "file:../../../../key-x-wasm/pkg",
     "phoenix": "file:../../../deps/phoenix",

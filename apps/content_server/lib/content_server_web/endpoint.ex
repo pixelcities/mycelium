@@ -13,7 +13,12 @@ defmodule ContentServerWeb.Endpoint do
     at: "/",
     from: :content_server,
     gzip: false,
-    only: ~w(assets fonts images favicon.ico robots.txt)
+    only: ~w(assets images favicon.ico robots.txt)
+
+  plug Plug.Static,
+    at: "/", from: :content_server, gzip: false,
+    only: ~w(fonts),
+    headers: %{"Access-Control-Allow-Origin" => "*"}
 
   plug Plug.RequestId
   plug Plug.MethodOverride

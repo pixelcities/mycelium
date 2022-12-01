@@ -34,5 +34,12 @@ config :key_x, KeyX.TrialAgent,
 config :maestro, event_stores: [Maestro.EventStore]
 config :maestro, ecto_repos: [Maestro.Repo]
 
+config :dart_sass,
+  version: "1.54.5",
+  default: [
+    args: ~w(css/index.sass ../priv/static/assets/app.css),
+    cd: Path.expand("../apps/content_server/assets", __DIR__)
+  ]
+
 import_config "#{Mix.env()}.exs"
 

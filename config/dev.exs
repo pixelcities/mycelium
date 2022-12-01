@@ -44,7 +44,12 @@ config :content_server, ContentServerWeb.Endpoint,
   code_reloader: false,
   check_origin: false,
   watchers: [
-    node: ["build.js", "--watch", cd: Path.expand("../apps/content_server/assets", __DIR__)]
+    node: ["build.js", "--watch", cd: Path.expand("../apps/content_server/assets", __DIR__)],
+    sass: {
+      DartSass,
+      :install_and_run,
+      [:default, ~w(--no-source-map --watch)]
+    }
   ],
   server: true
 

@@ -17,7 +17,18 @@ defmodule ContentServerWeb.Live.Components.Script do
         } else if (e.data.action === "render") {
           const { id, data } = e.data
           const iframe = document.getElementById(id)
-          iframe.srcdoc = DOMPurify.sanitize(data)
+          iframe.srcdoc = `
+            <html>
+              <head>
+                <link rel="stylesheet" href="/assets/app.css">
+              </head>
+              <body>
+                <div class="content">
+                  ${DOMPurify.sanitize(data)}
+                </div>
+              </body>
+            </html>
+          `
         }
       }
 
