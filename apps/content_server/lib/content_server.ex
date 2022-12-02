@@ -50,6 +50,14 @@ defmodule ContentServer do
     ), prefix: tenant)
   end
 
+  def get_content_by_page_id(id, opts \\ []) do
+    tenant = Keyword.fetch!(opts, :tenant)
+
+    Repo.all((from t in Content,
+      where: t.page_id == ^id
+    ), prefix: tenant)
+  end
+
 
   ## Commands
 

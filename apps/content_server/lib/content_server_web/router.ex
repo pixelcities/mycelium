@@ -10,11 +10,19 @@ defmodule ContentServerWeb.Router do
     plug :protect_from_forgery
   end
 
+  pipeline :api do
+    plug :accepts, ["json"]
+  end
+
   scope "/", ContentServerWeb do
     get "/error", ErrorController, :index
   end
 
   ## User content routes
+
+  scope "/info", ContentServerWeb do
+    get "/:ds/:id", PageController, :get_info
+  end
 
   scope "/pages", ContentServerWeb.Live do
     pipe_through [:browser]
