@@ -14,6 +14,7 @@ defmodule MetaStore.Projections.Widget do
     field :collection, :binary_id
     field :access, {:array, :map}, default: [%{type: "internal"}]
     field :content, :string
+    field :height, :integer
     field :is_published, :boolean, default: false
 
     timestamps()
@@ -21,7 +22,7 @@ defmodule MetaStore.Projections.Widget do
 
   def changeset(transformer, attrs) do
     transformer
-    |> cast(attrs, [:workspace, :type, :position, :color, :is_ready, :settings, :collection, :access, :content, :is_published])
+    |> cast(attrs, [:workspace, :type, :position, :color, :is_ready, :settings, :collection, :access, :content, :height, :is_published])
   end
 end
 

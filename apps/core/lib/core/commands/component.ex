@@ -272,6 +272,7 @@ defmodule Core.Commands.CreateWidget do
     settings: {:map, default: %{}},
     access: {{:array, :map}, default: [%{type: "internal"}]},
     content: :string,
+    height: :integer,
     is_published: {:boolean, default: false}
 
   def handle_validate(changeset) do
@@ -298,6 +299,7 @@ defmodule Core.Commands.UpdateWidget do
     settings: {:map, default: %{}},
     access: {{:array, :map}, default: [%{type: "internal"}]},
     content: :string,
+    height: :integer,
     is_published: {:boolean, default: false}
 
   def handle_validate(changeset) do
@@ -358,11 +360,12 @@ defmodule Core.Commands.PublishWidget do
     workspace: :string,
     access: {{:array, :map}, default: [%{type: "internal"}]},
     content: :string,
+    height: :integer,
     is_published: {:boolean, default: false}
 
   def handle_validate(changeset) do
     changeset
-    |> validate_required([:id, :workspace, :access, :content, :is_published])
+    |> validate_required([:id, :workspace, :access, :content, :height, :is_published])
     |> validate_shares(:access)
   end
 end

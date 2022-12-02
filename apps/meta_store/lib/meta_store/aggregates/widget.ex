@@ -20,6 +20,7 @@ defmodule MetaStore.Aggregates.Widget do
             settings: %{},
             access: "internal",
             content: nil,
+            height: nil,
             is_published: false,
             date: nil
 
@@ -110,6 +111,7 @@ defmodule MetaStore.Aggregates.Widget do
     %Widget{widget |
       access: event.access,
       content: event.content,
+      height: event.height,
       is_published: event.is_published,
       date: event.date
     }

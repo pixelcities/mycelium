@@ -68,6 +68,7 @@ defmodule MetaStore.Projectors.Widget do
       Widget.changeset(s, %{
         access: s.access,
         content: s.content,
+        height: s.height,
         is_published: s.is_published
       })
     end, prefix: ds_id)
@@ -97,6 +98,7 @@ defmodule MetaStore.Projectors.Widget do
         settings: widget.settings,
         access: widget.access,
         content: widget.content,
+        height: widget.height,
         is_published: widget.is_published
       })
     end, prefix: ds_id)
