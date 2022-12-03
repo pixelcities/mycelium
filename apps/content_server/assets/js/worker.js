@@ -1,7 +1,7 @@
 const local = {}
 
 const decrypt = async (data, key) => {
-  const { aes_gcm_siv_decrypt } = await import("key-x-wasm")
+  const { aes_gcm_siv_decrypt } = await import("@pixelcities/key-x-wasm")
 
   return aes_gcm_siv_decrypt(data, key)
 }

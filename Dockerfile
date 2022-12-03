@@ -10,7 +10,7 @@ FROM rust:slim-${DEBIAN_VERSION} as RUST
 FROM ${BUILDER_IMAGE} as BUILDER
 
 # install build dependencies
-RUN apt-get update -y && apt-get install -y build-essential git \
+RUN apt-get update -y && apt-get install -y build-essential git nodejs \
     && apt-get clean && rm -f /var/lib/apt/lists/*_*
 
 # prepare build dir

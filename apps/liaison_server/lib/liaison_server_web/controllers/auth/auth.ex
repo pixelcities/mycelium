@@ -5,12 +5,14 @@ defmodule LiaisonServerWeb.Auth do
 
   alias Landlord.Accounts
 
+  @host get_external_host().host
+
   @max_age 60 * 60 * 24 * 30 # 30 days
   @remember_me_cookie "_mycelium_web_user_remember_me"
   @remember_me_options [sign: true, max_age: @max_age, same_site: "Strict", secure: true]
 
   @csrf_cookie "_mycelium_csrf_token"
-  @csrf_options [http_only: false, secure: true, same_site: "Strict"]
+  @csrf_options [http_only: false, domain: ".#{@host}", secure: true, same_site: "Strict"]
 
   @doc """
   Logs the user in.
@@ -45,7 +47,7 @@ defmodule LiaisonServerWeb.Auth do
     conn
     |> renew_session()
     |> delete_resp_cookie(@remember_me_cookie)
-    |> delete_csrf_token()
+    |> delete_csrf_cookie()
     |> json(resp)
   end
 
@@ -119,7 +121,7 @@ defmodule LiaisonServerWeb.Auth do
     |> put_resp_cookie(@csrf_cookie, token, @csrf_options)
   end
 
-  def delete_csrf_token(conn) do
+  def delete_csrf_cookie(conn) do
     delete_csrf_token()
     delete_resp_cookie(conn, @csrf_cookie)
   end
