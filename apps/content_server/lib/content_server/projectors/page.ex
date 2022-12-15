@@ -10,6 +10,7 @@ defmodule ContentServer.Projectors.Page do
   alias Core.Events.{
     PageCreated,
     PageUpdated,
+    PageOrderSet,
     PageDeleted
   }
   alias ContentServer.Projections.Page
@@ -24,6 +25,20 @@ defmodule ContentServer.Projectors.Page do
     ds_id = Map.get(metadata, "ds_id")
 
     upsert_page(multi, page, ds_id)
+  end
+
+  project %PageOrderSet{} = page, metadata, fn multi ->
+    ds_id = Map.get(metadata, "ds_id")
+
+    multi
+    |> Ecto.Multi.run(:get_page, fn repo, _changes ->
+      {:ok, repo.get(Page, page.id, prefix: ds_id)}
+    end)
+    |> Ecto.Multi.update(:page, fn %{get_page: s} ->
+      Page.changeset(s, %{
+        content_order: page.content_order
+      })
+    end, prefix: ds_id)
   end
 
   project %PageDeleted{} = page, %{"ds_id" => ds_id} = _metadata, fn multi ->

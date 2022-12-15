@@ -5,7 +5,8 @@ defmodule Core.Commands.CreatePage do
     id: :binary_id,
     workspace: :string,
     access: {{:array, :map}, default: [%{type: "internal"}]},
-    key_id: :binary_id
+    key_id: :binary_id,
+    content_order: {{:array, :binary_id}, default: []}
 
   def handle_validate(changeset) do
     changeset
@@ -21,12 +22,27 @@ defmodule Core.Commands.UpdatePage do
     id: :binary_id,
     workspace: :string,
     access: {{:array, :map}, default: [%{type: "internal"}]},
-    key_id: :binary_id
+    key_id: :binary_id,
+    content_order: {{:array, :binary_id}, default: []}
 
   def handle_validate(changeset) do
     changeset
     |> validate_required([:id, :workspace, :access])
     |> validate_shares(:access)
+  end
+end
+
+defmodule Core.Commands.SetPageOrder do
+  import Core.Types.Component
+
+  use Commanded.Command,
+    id: :binary_id,
+    workspace: :string,
+    content_order: {{:array, :binary_id}, default: []}
+
+  def handle_validate(changeset) do
+    changeset
+    |> validate_required([:id, :workspace, :content_order])
   end
 end
 

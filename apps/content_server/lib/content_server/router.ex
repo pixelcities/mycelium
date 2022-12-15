@@ -9,6 +9,7 @@ defmodule ContentServer.Router do
     DeleteContent,
     CreatePage,
     UpdatePage,
+    SetPageOrder,
     DeletePage
   }
   alias ContentServer.Aggregates.{
@@ -29,7 +30,7 @@ defmodule ContentServer.Router do
     lifespan: ContentLifespan
   )
 
-  dispatch([ CreatePage, UpdatePage, DeletePage ],
+  dispatch([ CreatePage, UpdatePage, SetPageOrder, DeletePage ],
     to: Page,
     lifespan: PageLifespan
   )

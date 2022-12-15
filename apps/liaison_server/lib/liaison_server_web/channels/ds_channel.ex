@@ -154,6 +154,9 @@ defmodule LiaisonServerWeb.DataSpaceChannel do
   def handle_in("action", %{"type" => "UpdatePage"} = action, socket), do: handle_action(&ContentServer.update_page/2, action, socket)
 
   @impl true
+  def handle_in("action", %{"type" => "SetPageOrder"} = action, socket), do: handle_action(&ContentServer.set_page_order/2, action, socket)
+
+  @impl true
   def handle_in("action", %{"type" => "DeletePage"} = action, socket), do: handle_action(&ContentServer.delete_page/2, action, socket)
 
   @impl true

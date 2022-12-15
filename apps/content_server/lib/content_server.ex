@@ -19,6 +19,7 @@ defmodule ContentServer do
     DeleteContent,
     CreatePage,
     UpdatePage,
+    SetPageOrder,
     DeletePage
   }
 
@@ -69,6 +70,10 @@ defmodule ContentServer do
     handle_dispatch(UpdatePage.new(attrs), metadata)
   end
 
+  def set_page_order(attrs, %{user_id: _user_id} = metadata) do
+    handle_dispatch(SetPageOrder.new(attrs), metadata)
+  end
+
   def delete_page(%{"id" => id} = attrs, %{user_id: _user_id} = metadata) do
     ds_id = Map.get(metadata, :ds_id, :ds1)
 
@@ -106,7 +111,16 @@ defmodule ContentServer do
     handle_dispatch(UpdateContentDraft.new(attrs), metadata)
   end
 
-  def delete_content(attrs, %{user_id: _user_id} = metadata) do
+  def delete_content(%{"id" => id} = attrs, %{user_id: _user_id} = metadata) do
+    ds_id = Map.get(metadata, :ds_id, :ds1)
+    content = get_content!(id, tenant: ds_id)
+    page = get_page!(content.page_id, tenant: ds_id)
+
+    # Make sure the deleted content id is removed from the content_order field in the parent
+    # page as well. It staying behind is nonfatal, but a bit messy.
+    content_order = Enum.reject(page.content_order, &(&1 == id))
+
+    handle_dispatch(SetPageOrder.new(%{:id => page.id, :workspace => page.workspace, :content_order => content_order}), metadata)
     handle_dispatch(DeleteContent.new(attrs), metadata)
   end
 

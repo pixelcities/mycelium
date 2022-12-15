@@ -11,6 +11,7 @@ defmodule ContentServer.Projections.Page do
     field :workspace, :string
     field :access, {:array, :map}
     field :key_id, :binary_id
+    field :content_order, {:array, :binary_id}
 
     has_many :content, Content
 
@@ -19,7 +20,7 @@ defmodule ContentServer.Projections.Page do
 
   def changeset(transformer, attrs) do
     transformer
-    |> cast(attrs, [:workspace, :access, :key_id])
+    |> cast(attrs, [:workspace, :access, :key_id, :content_order])
   end
 end
 

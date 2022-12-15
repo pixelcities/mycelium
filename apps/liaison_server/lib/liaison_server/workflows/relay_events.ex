@@ -42,6 +42,7 @@ defmodule LiaisonServer.Workflows.RelayEvents do
     Core.Events.ContentDeleted,
     Core.Events.PageCreated,
     Core.Events.PageUpdated,
+    Core.Events.PageOrderSet,
     Core.Events.PageDeleted
   ]
 

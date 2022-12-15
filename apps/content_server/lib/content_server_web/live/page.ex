@@ -19,18 +19,36 @@ defmodule ContentServerWeb.Live.Page do
   end
 
   def mount(%{"ds" => ds_id, "id" => id}, _session, socket) do
+    Registry.register(ContentServerWeb.Registry, id, nil)
+
     page = ContentServer.get_page!(id, tenant: ds_id)
+    content_ids = get_content_ids(page)
 
     # TODO: Get some session info
     if authorized?(nil, page.access) do
+      socket = assign(socket, :id, id)
       socket = assign(socket, :ds_id, ds_id)
       socket = assign(socket, :external_host, URI.to_string(Core.Utils.Web.get_external_host()))
       socket = assign(socket, :is_public, (if is_public?(page.access), do: "1", else: "0"))
-      socket = assign(socket, :content_ids, Enum.map(page.content, fn content -> content.id end))
+      socket = assign(socket, :content_ids, content_ids)
 
       {:ok, socket}
     else
       {:ok, redirect(socket, to: "/error")}
     end
+  end
+
+  def handle_info(:update, socket) do
+    page = ContentServer.get_page!(socket.assigns.id, tenant: socket.assigns.ds_id)
+    content_ids = get_content_ids(page)
+
+    {:noreply, assign(socket, :content_ids, content_ids)}
+  end
+
+  defp get_content_ids(page) do
+    page.content
+      |> Enum.sort_by(fn c -> c.inserted_at end)
+      |> Enum.sort_by(fn c -> Enum.find_index(page.content_order || [], &(&1 == c.id)) end)
+      |> Enum.map(fn c -> c.id end)
   end
 end

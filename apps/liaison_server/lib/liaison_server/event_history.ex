@@ -50,6 +50,7 @@ defmodule LiaisonServer.EventHistory do
     Events.ContentDeleted,
     Events.PageCreated,
     Events.PageUpdated,
+    Events.PageOrderSet,
     Events.PageDeleted
   ]
 

@@ -4,12 +4,21 @@ defmodule ContentServer.Workflows.UpdateLiveContent do
     consistency: :strong
 
   alias Core.Events.{
+    PageOrderSet,
     ContentUpdated,
     WidgetPublished
   }
   alias ContentServerWeb.Live.Components
 
   import Core.Auth.Authorizer
+
+  def handle(%PageOrderSet{} = event, _metadata) do
+    Enum.each(Registry.lookup(ContentServerWeb.Registry, event.id), fn {pid, _} ->
+      send(pid, :update)
+    end)
+
+    :ok
+  end
 
   def handle(%ContentUpdated{} = event, _metadata) do
     Enum.each(Registry.lookup(ContentServerWeb.Registry, event.id), fn {pid, _} ->

@@ -10,10 +10,11 @@ defmodule ContentServerWeb.PageController do
   """
   def get_info(conn, %{"ds" => ds_id, "id" => id}) do
     page = ContentServer.get_page!(id, tenant: ds_id)
+    padding = 7
 
     if page != nil and authorized?(nil, page.access) do
       content = ContentServer.get_content_by_page_id(id, tenant: ds_id)
-      height = Enum.sum(Enum.map(content, fn c -> c.height || 0 end))
+      height = Enum.sum(Enum.map(content, fn c -> (c.height || 0) + padding end))
 
       json(conn, %{
         "height" => height

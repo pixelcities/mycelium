@@ -34,6 +34,12 @@ defmodule Core.Events.PageUpdated do
     with: [:date]
 end
 
+defmodule Core.Events.PageOrderSet do
+  use Commanded.Event,
+    from: Core.Commands.SetPageOrder,
+    with: [:date]
+end
+
 defmodule Core.Events.PageDeleted do
   use Commanded.Event,
     from: Core.Commands.DeletePage,
