@@ -4,6 +4,8 @@ defmodule MetaStore.Aggregates.Metadata do
             metadata: nil,
             date: nil
 
+  require Logger
+
   alias MetaStore.Aggregates.Metadata
   alias Core.Commands.{CreateMetadata, UpdateMetadata}
   alias Core.Events.{MetadataCreated, MetadataUpdated}
@@ -13,6 +15,16 @@ defmodule MetaStore.Aggregates.Metadata do
   """
   def execute(%Metadata{id: nil}, %CreateMetadata{} = metadata) do
     MetadataCreated.new(metadata, date: NaiveDateTime.utc_now())
+  end
+
+  def execute(%Metadata{id: _id}, %CreateMetadata{} = metadata) do
+    Logger.warning(
+      "Received command to create metadata, but it already exists. " <>
+      "Updating existing metadata instead. This is a noop, but may " <>
+      "indicate a problem in the client."
+    )
+
+    MetadataUpdated.new(metadata, date: NaiveDateTime.utc_now())
   end
 
   def execute(%Metadata{} = metadata, %UpdateMetadata{} = update)

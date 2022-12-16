@@ -23,7 +23,7 @@ defmodule DataStore.Aggregates.Dataset do
   Generate and track data URIs
 
   There can be any number of fragments stored in a dataset. A truncate request
-  will be handled by a workflow that will simply delete all the child objects.
+  will be handled by a process manager that will simply delete all the child objects.
 
   A delete request will also delete the `/dataset_id` path itself.
   """

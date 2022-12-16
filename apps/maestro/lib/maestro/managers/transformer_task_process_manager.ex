@@ -36,6 +36,7 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
   }
   alias Core.Events.{
     DataURICreated,
+    DatasetTruncated,
     TaskCreated,
     TaskCancelled,
     TaskCompleted,
@@ -54,6 +55,7 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
   def interested?(%TaskCreated{causation_id: id}) when id != nil, do: {:continue, id}
   def interested?(%TaskCompleted{causation_id: id}) when id != nil, do: {:continue, id}
   def interested?(%DataURICreated{id: id}), do: {:continue, id}
+  def interested?(%DatasetTruncated{id: id}), do: {:continue, id}
   def interested?(_event), do: false
 
   # Command dispatch
@@ -81,8 +83,6 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
   end
 
   def handle(%TransformerTaskProcessManager{has_collection: true} = pm, %TransformerWALUpdated{wal: wal} = _event) do
-    in_collections = Enum.map(pm.transformer.collections, fn collection_id -> MetaStore.get_collection!(collection_id, tenant: pm.transformer.ds) end)
-
     Enum.map(pm.created_tasks, fn task_id ->
       %CancelTask{
         id: task_id,
@@ -98,21 +98,29 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
       },
       %RequestTruncateDataset{
         id: pm.id
-      },
-      %CreateTask{
-        id: UUID.uuid4(),
-        causation_id: pm.id,
-        type: "transformer",
-        task: %{
-          "instruction" => "compute_fragment",
-          "collection_id" => pm.target,
-          "transformer_id" => pm.id,
-          "uri" => pm.uri,
-          "wal" => wal
-        },
-        fragments: Enum.flat_map(in_collections, fn collection -> collection.schema.column_order end)
       }
     ]
+  end
+
+  # TODO: Handle bad fragments that are the result of a failed task. Because the truncation has already happened,
+  # but a task may be assigned multiple times (retries, multiple shares, etc) a bad upload from the client side
+  # will corrupt the dataset.
+  def handle(%TransformerTaskProcessManager{has_collection: true} = pm, %DatasetTruncated{} = _event) do
+    in_collections = Enum.map(pm.transformer.collections, fn collection_id -> MetaStore.get_collection!(collection_id, tenant: pm.transformer.ds) end)
+
+    %CreateTask{
+      id: UUID.uuid4(),
+      causation_id: pm.id,
+      type: "transformer",
+      task: %{
+        "instruction" => "compute_fragment",
+        "collection_id" => pm.target,
+        "transformer_id" => pm.id,
+        "uri" => pm.uri,
+        "wal" => pm.transformer.wal
+      },
+      fragments: Enum.flat_map(in_collections, fn collection -> collection.schema.column_order end)
+    }
   end
 
   def handle(%TransformerTaskProcessManager{wants_collection: true, has_collection: false} = pm, %DataURICreated{uri: uri} = _event) do

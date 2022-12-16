@@ -24,10 +24,7 @@ defmodule LiaisonServer.Workflows.RelayTasks do
 
     if state.user_id == event.worker do
       if Map.has_key?(Enum.into(Phoenix.Tracker.list(LiaisonServerWeb.Tracker, state.channel), %{}), state.user_id) do
-
         LiaisonServerWeb.Endpoint.broadcast("user:" <> state.user_id, "event", %{"type" => "TaskAssigned", "payload" => event})
-
-        :ok
       else
         DynamicSupervisor.terminate_child(LiaisonServer.RelayEventSupervisor, self())
 
@@ -45,8 +42,6 @@ defmodule LiaisonServer.Workflows.RelayTasks do
     if state.user_id == Map.get(metadata, "user_id") do
       if Map.has_key?(Enum.into(Phoenix.Tracker.list(LiaisonServerWeb.Tracker, state.channel), %{}), state.user_id) do
         LiaisonServerWeb.Endpoint.broadcast("user:" <> state.user_id, "event", %{"type" => "TaskAssigned", "payload" => event})
-
-        :ok
       else
         DynamicSupervisor.terminate_child(LiaisonServer.RelayEventSupervisor, self())
 
