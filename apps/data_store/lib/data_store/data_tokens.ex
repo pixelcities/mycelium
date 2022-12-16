@@ -4,13 +4,14 @@ defmodule DataStore.DataTokens do
 
   """
 
-  @config Application.get_env(:data_store, DataStore.DataTokens)
+  @config Application.get_env(:data_store, DataStore.Data)
   @bucket @config[:bucket]
   @role_arn @config[:role_arn]
   @restrict_source_ip @config[:restrict_source_ip]
 
   alias MetaStore
   alias Landlord.Tenants
+  alias DataStore.Data
 
   @doc """
   Generate access credentials for the given URI
@@ -148,16 +149,7 @@ defmodule DataStore.DataTokens do
   end
 
   defp parse_uri(uri, :read) do
-    case Regex.named_captures(~r/^s3:\/\/(?<bucket>[a-z0-9-]+)\/(?<ds>[a-z0-9_]+)\/(?<workspace>[a-z0-9-]+)\/(?<dataset>[a-z0-9-]+)$/, uri) do
-      nil -> {:error, "invalid_uri"}
-      %{
-        "bucket" => @bucket,
-        "ds" => ds,
-        "workspace" => workspace,
-        "dataset" => dataset
-      } -> {:ok, ds, workspace, dataset}
-      _ -> {:error, "unauthorized"}
-    end
+    Data.validate_uri(uri)
   end
 
   defp parse_uri(uri, :write) do

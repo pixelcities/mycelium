@@ -41,6 +41,7 @@ defmodule DataStore.MixProject do
 
       {:ex_aws, "~> 2.3"},
       {:ex_aws_sts, "~> 2.3"},
+      {:ex_aws_s3, "~> 2.3"},
       {:configparser_ex, "~> 4.0"},
       {:hackney, "~> 1.18"},
       {:sweet_xml, "~> 0.7"},

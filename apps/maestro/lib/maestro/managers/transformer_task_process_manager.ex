@@ -27,7 +27,7 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
   alias Maestro.Managers.TransformerTaskProcessManager
   alias Core.Commands.{
     CreateDataURI,
-    TruncateDataset,
+    RequestTruncateDataset,
     CreateCollection,
     SetCollectionIsReady,
     AddTransformerTarget,
@@ -96,7 +96,7 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
         workspace: pm.transformer.workspace,
         is_ready: false
       },
-      %TruncateDataset{
+      %RequestTruncateDataset{
         id: pm.id
       },
       %CreateTask{

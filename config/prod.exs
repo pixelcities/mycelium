@@ -75,7 +75,7 @@ config :data_store, DataStore.App,
     serializer: Commanded.Serialization.JsonSerializer
   ]
 
-config :data_store, DataStore.DataTokens,
+config :data_store, DataStore.Data,
   bucket: "pxc-collection-store",
   role_arn: "arn:aws:iam::120183265440:role/mycelium-s3-collection-manager",
   restrict_source_ip: true

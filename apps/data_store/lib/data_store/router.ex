@@ -2,17 +2,30 @@ defmodule DataStore.Router do
 
   use Commanded.Commands.Router
 
-  alias Core.Commands.{CreateDataURI, TruncateDataset}
-  alias DataStore.Aggregates.Dataset
+  alias Core.Commands.{
+    CreateDataURI,
+    RequestTruncateDataset,
+    TruncateDataset,
+    RequestDeleteDataset,
+    DeleteDataset
+  }
+  alias DataStore.Aggregates.{
+    Dataset,
+    DatasetLifespan
+  }
 
   identify(Dataset, by: :id, prefix: "datasets-")
 
   dispatch(
     [
       CreateDataURI,
-      TruncateDataset
+      RequestTruncateDataset,
+      TruncateDataset,
+      RequestDeleteDataset,
+      DeleteDataset
     ],
-    to: Dataset
+    to: Dataset,
+    lifespan: DatasetLifespan
   )
 
 end
