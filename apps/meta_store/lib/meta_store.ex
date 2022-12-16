@@ -83,7 +83,7 @@ defmodule MetaStore do
 
     Repo.one((from c in Schema,
       where: c.id == ^id,
-      preload: [:columns, :shares]
+      preload: [columns: [shares: []], shares: []]
     ), prefix: tenant)
   end
 

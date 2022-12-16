@@ -21,7 +21,8 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
     :has_collection,
     :uri,
     :target,
-    :created_tasks
+    :created_tasks,
+    :is_deleted
   ]
 
   alias Maestro.Managers.TransformerTaskProcessManager
@@ -43,7 +44,8 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
     TransformerCreated,
     TransformerInputAdded,
     TransformerWALUpdated,
-    TransformerTargetAdded
+    TransformerTargetAdded,
+    TransformerDeleted
   }
 
   # Process routing
@@ -56,6 +58,7 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
   def interested?(%TaskCompleted{causation_id: id}) when id != nil, do: {:continue, id}
   def interested?(%DataURICreated{id: id}), do: {:continue, id}
   def interested?(%DatasetTruncated{id: id}), do: {:continue, id}
+  def interested?(%TransformerDeleted{id: id}), do: {:continue, id}
   def interested?(_event), do: false
 
   # Command dispatch
@@ -82,7 +85,7 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
     }
   end
 
-  def handle(%TransformerTaskProcessManager{has_collection: true} = pm, %TransformerWALUpdated{wal: wal} = _event) do
+  def handle(%TransformerTaskProcessManager{has_collection: true} = pm, %TransformerWALUpdated{wal: _wal} = _event) do
     Enum.map(pm.created_tasks, fn task_id ->
       %CancelTask{
         id: task_id,
@@ -107,6 +110,8 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
   # will corrupt the dataset.
   def handle(%TransformerTaskProcessManager{has_collection: true} = pm, %DatasetTruncated{} = _event) do
     in_collections = Enum.map(pm.transformer.collections, fn collection_id -> MetaStore.get_collection!(collection_id, tenant: pm.transformer.ds) end)
+    schema_id = MetaStore.get_collection!(pm.target, tenant: pm.transformer.ds).schema.id
+    schema = MetaStore.get_schema!(schema_id, tenant: pm.transformer.ds)
 
     %CreateTask{
       id: UUID.uuid4(),
@@ -119,7 +124,10 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
         "uri" => pm.uri,
         "wal" => pm.transformer.wal
       },
-      fragments: Enum.flat_map(in_collections, fn collection -> collection.schema.column_order end)
+      fragments: Enum.flat_map(in_collections, fn collection -> collection.schema.column_order end),
+      metadata: %{
+        "schema" => schema
+      }
     }
   end
 
@@ -167,6 +175,20 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
       workspace: pm.transformer.workspace,
       is_ready: true
     }
+  end
+
+  # TODO: Handle shutdown when there are no more open tasks (currently handled by after_command/2)
+  def handle(%TransformerTaskProcessManager{has_collection: true} = pm, %TransformerDeleted{} = _event) do
+    Enum.map(pm.created_tasks, fn task_id ->
+      %CancelTask{
+        id: task_id,
+        is_cancelled: true
+      }
+    end)
+  end
+
+  def after_command(%TransformerTaskProcessManager{is_deleted: true} = _pm, %CancelTask{}) do
+    :stop
   end
 
 
@@ -221,6 +243,12 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
     %TransformerTaskProcessManager{pm |
       has_collection: true,
       target: event.target
+    }
+  end
+
+  def apply(%TransformerTaskProcessManager{} = pm, %TransformerDeleted{} = _event) do
+    %TransformerTaskProcessManager{pm |
+      is_deleted: true
     }
   end
 

@@ -1,7 +1,7 @@
 defmodule Maestro.Workflows.AssignTransformerTask do
   use Commanded.Event.Handler,
     name: __MODULE__,
-    consistency: :strong
+    consistency: :eventual
 
   alias Maestro.Allocator
   alias Core.Events.{TaskCreated, TaskUnAssigned, TaskCompleted}

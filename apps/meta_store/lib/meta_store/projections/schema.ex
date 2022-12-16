@@ -4,6 +4,7 @@ defmodule MetaStore.Projections.Schema do
 
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
+  @derive {Jason.Encoder, only: [:id, :key_id, :column_order, :columns, :shares]}
 
   schema "schemas" do
     field :key_id, :binary_id
@@ -31,6 +32,7 @@ defmodule MetaStore.Projections.Column do
 
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
+  @derive {Jason.Encoder, only: [:id, :key_id, :concept_id, :shares]}
 
   schema "columns" do
     field :concept_id, :binary_id
@@ -53,6 +55,7 @@ defmodule MetaStore.Projections.Share do
 
   @primary_key {:id, :string, read_after_writes: true}
   @foreign_key_type :string
+  @derive {Jason.Encoder, only: [:principal, :type]}
 
   schema "shares" do
     field :principal, :string
