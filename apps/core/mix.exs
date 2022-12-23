@@ -25,7 +25,7 @@ defmodule Core.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:commanded, "~> 1.3"},
+      {:commanded, "~> 1.4"},
       {:commanded_messaging, "~> 0.2"},
       {:elixir_uuid, "~> 1.2"},
       {:jason, "~> 1.3"}

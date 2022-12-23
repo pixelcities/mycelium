@@ -28,7 +28,7 @@ defmodule ContentServer.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:commanded, "~> 1.3"},
+      {:commanded, "~> 1.4"},
       {:commanded_ecto_projections, "~> 1.2"},
       {:commanded_eventstore_adapter, "~> 1.2"},
       {:eventstore, "~> 1.3"},

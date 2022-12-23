@@ -11,7 +11,8 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
   """
 
   use Commanded.ProcessManagers.ProcessManager,
-    name: __MODULE__
+    name: __MODULE__,
+    consistency: :strong
 
   @derive Jason.Encoder
   defstruct [

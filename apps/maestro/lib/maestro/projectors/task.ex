@@ -77,4 +77,33 @@ defmodule Maestro.Projectors.Task do
     end, prefix: ds_id)
   end
 
+
+  # Issue commands after the read model is guaranteed to be updated
+
+  @impl Commanded.Projections.Ecto
+  def after_update(%TaskCreated{type: "transformer"}, _metadata, _changes) do
+    Maestro.Allocator.assign_workers()
+
+    :ok
+  end
+
+  @impl Commanded.Projections.Ecto
+  def after_update(%TaskUnAssigned{}, _metadata, _changes) do
+    Maestro.Allocator.assign_workers()
+
+    :ok
+  end
+
+  @impl Commanded.Projections.Ecto
+  def after_update(%TaskCompleted{} = event, _metadata, _changes)
+    when length(event.fragments) > 0
+  do
+    Maestro.Allocator.assign_workers()
+
+    :ok
+  end
+
+  @impl Commanded.Projections.Ecto
+  def after_update(_event, _metadata, _changes), do: :ok
+
 end
