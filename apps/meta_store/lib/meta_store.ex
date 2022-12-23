@@ -116,7 +116,7 @@ defmodule MetaStore do
     Repo.all((from c in Collection,
       join: s in Schema, on: c.id == s.collection_id,
       join: h in assoc(s, :shares),
-      where: h.principal == ^user.email
+      where: h.principal == ^user.id
     ), prefix: tenant)
   end
 
@@ -132,7 +132,7 @@ defmodule MetaStore do
     Repo.all((from s in Source,
       join: c in Schema, on: s.id == c.source_id,
       join: h in assoc(c, :shares),
-      where: h.principal == ^user.email
+      where: h.principal == ^user.id
     ), prefix: tenant)
   end
 

@@ -108,7 +108,6 @@ defmodule Maestro.Allocator do
     {:noreply, workers}
   end
 
-
   defp assign_bundle_tasks(user_id, ds_id) do
     nr_bundles = Protocol.get_nr_bundles_by_user_id!(user_id)
 

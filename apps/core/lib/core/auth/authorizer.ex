@@ -9,7 +9,7 @@ defmodule Core.Auth.Authorizer do
         true
 
       else
-        !!user && user.email == Map.get(share, "principal")
+        !!user && user.id == Map.get(share, "principal")
       end
     end)
   end

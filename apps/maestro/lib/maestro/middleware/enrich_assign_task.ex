@@ -33,7 +33,7 @@ defimpl Core.Middleware.CommandEnrichment, for: Core.Commands.AssignTask do
       collection = MetaStore.get_collection!(collection_id, tenant: ds_id)
       schema = MetaStore.get_schema!(collection.schema.id, tenant: ds_id)
 
-      get_fragments_by_schema(schema, user.email, ds_id)
+      get_fragments_by_schema(schema, user.id, ds_id)
     end)
 
     Enum.reduce_while(fragments, {:ok, []}, fn {left, right}, {:ok, acc} ->
@@ -41,12 +41,12 @@ defimpl Core.Middleware.CommandEnrichment, for: Core.Commands.AssignTask do
     end)
   end
 
-  defp get_fragments_by_schema(schema, email, ds_id) do
-    if Enum.any?(schema.shares, fn share -> share.principal == email end) do
+  defp get_fragments_by_schema(schema, user_id, ds_id) do
+    if Enum.any?(schema.shares, fn share -> share.principal == user_id end) do
       fragments = Enum.filter(schema.columns, fn c ->
         column = MetaStore.get_column!(c.id, tenant: ds_id)
 
-        Enum.any?(column.shares, fn share -> share.principal == email end)
+        Enum.any?(column.shares, fn share -> share.principal == user_id end)
       end)
 
       {:ok, Enum.map(fragments, fn fragment -> fragment.id end)}
