@@ -4,11 +4,12 @@ defmodule MetaStore.Projections.Schema do
 
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
-  @derive {Jason.Encoder, only: [:id, :key_id, :column_order, :columns, :shares]}
+  @derive {Jason.Encoder, only: [:id, :key_id, :tag, :column_order, :columns, :shares]}
 
   schema "schemas" do
     field :key_id, :binary_id
     field :column_order, {:array, :string}
+    field :tag, :string
     belongs_to :source, MetaStore.Projections.Source,
       where: [collection: nil]
     belongs_to :collection, MetaStore.Projections.Collection,
@@ -21,7 +22,7 @@ defmodule MetaStore.Projections.Schema do
 
   def changeset(schema, attrs) do
     schema
-    |> cast(attrs, [:key_id, :column_order, :source_id, :collection_id])
+    |> cast(attrs, [:key_id, :column_order, :tag, :source_id, :collection_id])
   end
 
 end

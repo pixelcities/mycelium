@@ -55,18 +55,19 @@ defmodule Core.Types.Schema do
     field :column_order, {:array, :string}
     embeds_many :columns, Column
     embeds_many :shares, Share
+    field :tag, :string
   end
 
   def changeset(schema, attrs) do
     schema
-    |> cast(attrs, [:id, :key_id])
+    |> cast(attrs, [:id, :key_id, :tag])
     |> cast_embed(:columns)
     |> cast_embed(:shares)
   end
 
   def new(attrs) do
     changeset(%__MODULE__{}, attrs)
-    |> validate_required([:id, :key_id])
+    |> validate_required([:id, :key_id, :tag])
   end
 end
 

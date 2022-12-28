@@ -19,7 +19,7 @@ defmodule MetaStore.Projectors.Schema do
               nil -> %Schema{id: input.schema.id}
               schema -> schema
             end
-            |> schema_changeset(input.schema.key_id, input.schema.column_order, input.id, is_source)
+            |> schema_changeset(input.schema.key_id, input.schema.column_order, input.schema.tag, input.id, is_source)
             |> repo.insert_or_update!(prefix: tenant)
 
           shares = Enum.map(input.schema.shares, fn share ->
@@ -60,11 +60,11 @@ defmodule MetaStore.Projectors.Schema do
     end
   end
 
-  defp schema_changeset(schema, key_id, column_order, input_id, is_source) do
+  defp schema_changeset(schema, key_id, column_order, tag, input_id, is_source) do
     if is_source do
-      Schema.changeset(schema, %{key_id: key_id, column_order: column_order, source_id: input_id, collection_id: nil})
+      Schema.changeset(schema, %{key_id: key_id, column_order: column_order, tag: tag, source_id: input_id, collection_id: nil})
     else
-      Schema.changeset(schema, %{key_id: key_id, column_order: column_order, collection_id: input_id, source_id: nil})
+      Schema.changeset(schema, %{key_id: key_id, column_order: column_order, tag: tag, collection_id: input_id, source_id: nil})
     end
   end
 
