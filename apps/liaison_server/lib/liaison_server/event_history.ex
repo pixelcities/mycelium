@@ -25,6 +25,7 @@ defmodule LiaisonServer.EventHistory do
     Events.CollectionCreated,
     Events.CollectionUpdated,
     Events.CollectionSchemaUpdated,
+    Events.CollectionColorSet,
     Events.CollectionPositionSet,
     Events.CollectionIsReadySet,
     Events.CollectionTargetAdded,

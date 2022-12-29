@@ -91,6 +91,9 @@ defmodule LiaisonServerWeb.DataSpaceChannel do
   def handle_in("action", %{"type" => "UpdateCollectionSchema"} = action, socket), do: handle_action(&MetaStore.update_collection_schema/2, action, socket)
 
   @impl true
+  def handle_in("action", %{"type" => "SetCollectionColor"} = action, socket), do: handle_action(&MetaStore.set_collection_color/2, action, socket)
+
+  @impl true
   def handle_in("action", %{"type" => "SetCollectionPosition"} = action, socket), do: handle_action(&MetaStore.set_collection_position/2, action, socket)
 
   @impl true

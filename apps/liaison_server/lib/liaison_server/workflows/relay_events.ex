@@ -17,6 +17,7 @@ defmodule LiaisonServer.Workflows.RelayEvents do
     Core.Events.CollectionCreated,
     Core.Events.CollectionUpdated,
     Core.Events.CollectionSchemaUpdated,
+    Core.Events.CollectionColorSet,
     Core.Events.CollectionPositionSet,
     Core.Events.CollectionIsReadySet,
     Core.Events.CollectionTargetAdded,

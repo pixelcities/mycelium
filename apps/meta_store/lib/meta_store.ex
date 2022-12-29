@@ -28,6 +28,7 @@ defmodule MetaStore do
     CreateCollection,
     UpdateCollection,
     UpdateCollectionSchema,
+    SetCollectionColor,
     SetCollectionPosition,
     SetCollectionIsReady,
     AddCollectionTarget,
@@ -204,6 +205,10 @@ defmodule MetaStore do
 
   def update_collection_schema(attrs, %{user_id: _user_id} = metadata) do
     handle_dispatch(UpdateCollectionSchema.new(attrs), metadata)
+  end
+
+  def set_collection_color(attrs, %{user_id: _user_id} = metadata) do
+    handle_dispatch(SetCollectionColor.new(attrs), metadata)
   end
 
   def set_collection_position(attrs, %{user_id: _user_id} = metadata) do

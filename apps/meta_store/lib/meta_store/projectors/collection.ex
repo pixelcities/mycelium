@@ -10,6 +10,7 @@ defmodule MetaStore.Projectors.Collection do
   alias Core.Events.{
     CollectionCreated,
     CollectionUpdated,
+    CollectionColorSet,
     CollectionSchemaUpdated,
     CollectionTargetAdded,
     CollectionTargetRemoved,
@@ -62,6 +63,20 @@ defmodule MetaStore.Projectors.Collection do
     |> Ecto.Multi.update(:collection, fn %{get_collection: s} ->
       Collection.changeset(s, %{
         targets: Enum.filter(s.targets || [], fn x -> x != collection.target end)
+      })
+    end, prefix: ds_id)
+  end
+
+  project %CollectionColorSet{} = collection, metadata, fn multi ->
+    ds_id = Map.get(metadata, "ds_id")
+
+    multi
+    |> Ecto.Multi.run(:get_collection, fn repo, _changes ->
+      {:ok, repo.get(Collection, collection.id, prefix: ds_id)}
+    end)
+    |> Ecto.Multi.update(:collection, fn %{get_collection: s} ->
+      Collection.changeset(s, %{
+        color: collection.color
       })
     end, prefix: ds_id)
   end

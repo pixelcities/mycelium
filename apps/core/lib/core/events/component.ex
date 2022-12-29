@@ -28,6 +28,12 @@ defmodule Core.Events.CollectionTargetRemoved do
     with: [:date]
 end
 
+defmodule Core.Events.CollectionColorSet do
+  use Commanded.Event,
+    from: Core.Commands.SetCollectionColor,
+    with: [:date]
+end
+
 defmodule Core.Events.CollectionPositionSet do
   use Commanded.Event,
     from: Core.Commands.SetCollectionPosition,

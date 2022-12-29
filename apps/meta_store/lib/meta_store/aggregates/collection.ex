@@ -27,8 +27,8 @@ defmodule MetaStore.Aggregates.Collection do
             date: nil
 
   alias MetaStore.Aggregates.Collection
-  alias Core.Commands.{CreateCollection, UpdateCollection, UpdateCollectionSchema, SetCollectionPosition, SetCollectionIsReady, AddCollectionTarget, RemoveCollectionTarget, DeleteCollection}
-  alias Core.Events.{CollectionCreated, CollectionUpdated, CollectionSchemaUpdated, CollectionPositionSet, CollectionIsReadySet, CollectionTargetAdded, CollectionTargetRemoved, CollectionDeleted}
+  alias Core.Commands.{CreateCollection, UpdateCollection, UpdateCollectionSchema, SetCollectionColor, SetCollectionPosition, SetCollectionIsReady, AddCollectionTarget, RemoveCollectionTarget, DeleteCollection}
+  alias Core.Events.{CollectionCreated, CollectionUpdated, CollectionSchemaUpdated, CollectionColorSet, CollectionPositionSet, CollectionIsReadySet, CollectionTargetAdded, CollectionTargetRemoved, CollectionDeleted}
 
   def execute(%Collection{id: nil}, %CreateCollection{} = collection) do
     CollectionCreated.new(collection, date: NaiveDateTime.utc_now())
@@ -42,6 +42,10 @@ defmodule MetaStore.Aggregates.Collection do
 
   def execute(%Collection{} = _collection, %UpdateCollectionSchema{} = update) do
     CollectionSchemaUpdated.new(update, date: NaiveDateTime.utc_now())
+  end
+
+  def execute(%Collection{} = _collection, %SetCollectionColor{} = command) do
+    CollectionColorSet.new(command, date: NaiveDateTime.utc_now())
   end
 
   def execute(%Collection{} = _collection, %SetCollectionPosition{} = position) do
@@ -106,6 +110,13 @@ defmodule MetaStore.Aggregates.Collection do
     %Collection{collection |
       schema: updated.schema,
       date: updated.date
+    }
+  end
+
+  def apply(%Collection{} = collection, %CollectionColorSet{} = event) do
+    %Collection{collection |
+      color: event.color,
+      date: event.date
     }
   end
 

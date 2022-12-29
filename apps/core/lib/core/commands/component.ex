@@ -83,6 +83,20 @@ defmodule Core.Commands.RemoveCollectionTarget do
   end
 end
 
+defmodule Core.Commands.SetCollectionColor do
+  import Core.Types.Component
+
+  use Commanded.Command,
+    id: :binary_id,
+    workspace: :string,
+    color: :string
+
+  def handle_validate(changeset) do
+    changeset
+    |> validate_required([:id, :workspace, :color])
+  end
+end
+
 defmodule Core.Commands.SetCollectionPosition do
   import Core.Types.Component
 
