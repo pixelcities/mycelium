@@ -109,27 +109,33 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
   # TODO: Handle bad fragments that are the result of a failed task. Because the truncation has already happened,
   # but a task may be assigned multiple times (retries, multiple shares, etc) a bad upload from the client side
   # will corrupt the dataset.
-  def handle(%TransformerTaskProcessManager{has_collection: true} = pm, %DatasetTruncated{} = _event) do
+  def handle(%TransformerTaskProcessManager{has_collection: true, target: _target} = pm, %DatasetTruncated{} = _event) do
     in_collections = Enum.map(pm.transformer.collections, fn collection_id -> MetaStore.get_collection!(collection_id, tenant: pm.transformer.ds) end)
-    schema_id = MetaStore.get_collection!(pm.target, tenant: pm.transformer.ds).schema.id
-    schema = MetaStore.get_schema!(schema_id, tenant: pm.transformer.ds)
+    collection = MetaStore.get_collection!(pm.target, tenant: pm.transformer.ds)
 
-    %CreateTask{
-      id: UUID.uuid4(),
-      causation_id: pm.id,
-      type: "transformer",
-      task: %{
-        "instruction" => "compute_fragment",
-        "collection_id" => pm.target,
-        "transformer_id" => pm.id,
-        "uri" => pm.uri,
-        "wal" => pm.transformer.wal
-      },
-      fragments: Enum.flat_map(in_collections, fn collection -> collection.schema.column_order end),
-      metadata: %{
-        "schema" => schema
+    if (collection != nil) and (collection.schema != nil) do
+      schema_id = MetaStore.get_collection!(pm.target, tenant: pm.transformer.ds).schema.id
+      schema = MetaStore.get_schema!(schema_id, tenant: pm.transformer.ds)
+
+      %CreateTask{
+        id: UUID.uuid4(),
+        causation_id: pm.id,
+        type: "transformer",
+        task: %{
+          "instruction" => "compute_fragment",
+          "collection_id" => pm.target,
+          "transformer_id" => pm.id,
+          "uri" => pm.uri,
+          "wal" => pm.transformer.wal
+        },
+        fragments: Enum.flat_map(in_collections, fn collection -> collection.schema.column_order end),
+        metadata: %{
+          "schema" => schema
+        }
       }
-    }
+    else
+      {:error, :bad_state}
+    end
   end
 
   def handle(%TransformerTaskProcessManager{wants_collection: true, has_collection: false} = pm, %DataURICreated{uri: uri} = _event) do
@@ -192,6 +198,20 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
     :stop
   end
 
+
+  # Error handlers
+
+  def error({:error, _failure}, _failed_command, %{context: %{failures: failures}})
+    when failures >= 2
+  do
+    :skip
+  end
+
+  def error({:error, _failure}, _failed_command, %{context: context}) do
+    context = Map.update(context, :failures, 1, fn failures -> failures + 1 end)
+
+    {:retry, context}
+  end
 
   # State mutators
 
