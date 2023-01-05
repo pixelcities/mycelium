@@ -94,6 +94,12 @@ defmodule Core.Events.TransformerWALUpdated do
     with: [:date]
 end
 
+defmodule Core.Events.TransformerIsReadySet do
+  use Commanded.Event,
+    from: Core.Commands.SetTransformerIsReady,
+    with: [:date]
+end
+
 defmodule Core.Events.TransformerDeleted do
   use Commanded.Event,
     from: Core.Commands.DeleteTransformer,

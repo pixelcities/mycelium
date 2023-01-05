@@ -36,15 +36,32 @@ defimpl Core.Middleware.CommandEnrichment, for: Core.Commands.AssignTask do
       get_fragments_by_schema(schema, user.id, ds_id)
     end)
 
-    Enum.reduce_while(fragments, {:ok, []}, fn {left, right}, {:ok, acc} ->
+    # Concat the owned fragments from each schema
+    case Enum.reduce_while(fragments, {:ok, []}, fn {left, right}, {:ok, acc} ->
       if left == :ok, do: {:cont, {:ok, Enum.concat(acc, right)}}, else: {:halt, {:error, right}}
-    end)
+    end) do
+      {:ok, owned_fragments} ->
+        # Collect column identifiers required for the transaction by filtering out collections / transformers
+        identifiers = Enum.filter(Map.values(Map.get(transformer.wal, "identifiers")), fn i ->
+          (i != transformer_id) and (i not in transformer.collections) and (i not in transformer.transformers)
+        end)
+
+        # If there are transaction identifers that are not owned, we cannot guarantee that the entire transaction
+        # can be run. Better to strip out all fragments related to the transaction and have another worker handle it.
+        if Enum.any?(identifiers, fn i -> i not in owned_fragments end) do
+          {:ok, Enum.reject(owned_fragments, fn f -> f in identifiers end)}
+        else
+          {:ok, owned_fragments}
+        end
+
+      {:error, error} -> {:error, error}
+    end
   end
 
   defp get_fragments_by_schema(schema, user_id, ds_id) do
     if Enum.any?(schema.shares, fn share -> share.principal == user_id end) do
       fragments = Enum.filter(schema.columns, fn c ->
-        column = MetaStore.get_column!(c.id, tenant: ds_id)
+        column = if match?(%Ecto.Association.NotLoaded{}, c.shares), do: MetaStore.get_column!(c.id, tenant: ds_id), else: c
 
         Enum.any?(column.shares, fn share -> share.principal == user_id end)
       end)

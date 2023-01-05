@@ -41,6 +41,7 @@ defmodule MetaStore do
     RemoveTransformerTarget,
     AddTransformerInput,
     UpdateTransformerWAL,
+    SetTransformerIsReady,
     DeleteTransformer,
     CreateWidget,
     UpdateWidget,
@@ -67,6 +68,14 @@ defmodule MetaStore do
 
     Repo.one((from t in Transformer,
       where: t.id == ^id
+    ), prefix: tenant)
+  end
+
+  def get_transformers_by_collection(id, opts \\ []) do
+    tenant = Keyword.fetch!(opts, :tenant)
+
+    Repo.all((from t in Transformer,
+      where: ^id in t.collections
     ), prefix: tenant)
   end
 
@@ -318,6 +327,10 @@ defmodule MetaStore do
 
   def update_transformer_wal(attrs, %{user_id: _user_id} = metadata) do
     handle_dispatch(UpdateTransformerWAL.new(attrs), metadata)
+  end
+
+  def set_transformer_is_ready(attrs, %{user_id: _user_id} = metadata) do
+    handle_dispatch(SetTransformerIsReady.new(attrs), metadata)
   end
 
   @doc """

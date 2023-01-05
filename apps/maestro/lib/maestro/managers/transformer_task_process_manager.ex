@@ -6,8 +6,6 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
   needs to be generated. This process manager will listen for such events
   and ensure that tasks are scheduled that will compute the fragments of
   these collections.
-
-  TODO: handle downstream transformers
   """
 
   use Commanded.ProcessManagers.ProcessManager,
@@ -32,6 +30,7 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
     RequestTruncateDataset,
     CreateCollection,
     SetCollectionIsReady,
+    SetTransformerIsReady,
     AddTransformerTarget,
     CreateTask,
     CancelTask
@@ -46,6 +45,7 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
     TransformerInputAdded,
     TransformerWALUpdated,
     TransformerTargetAdded,
+    TransformerIsReadySet,
     TransformerDeleted
   }
 
@@ -55,6 +55,7 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
   def interested?(%TransformerInputAdded{id: id}), do: {:continue, id}
   def interested?(%TransformerTargetAdded{id: id}), do: {:continue, id}
   def interested?(%TransformerWALUpdated{id: id}), do: {:continue, id}
+  def interested?(%TransformerIsReadySet{id: id}), do: {:continue, id}
   def interested?(%TaskCreated{causation_id: id}) when id != nil, do: {:continue, id}
   def interested?(%TaskCompleted{causation_id: id}) when id != nil, do: {:continue, id}
   def interested?(%DataURICreated{id: id}), do: {:continue, id}
@@ -80,10 +81,17 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
   """
 
   def handle(%TransformerTaskProcessManager{wants_collection: true, has_collection: false, uri: nil} = pm, %TransformerWALUpdated{wal: _wal} = _event) do
-    %CreateDataURI{
-      id: pm.id,
-      workspace: pm.transformer.workspace
-    }
+    [
+      %CreateDataURI{
+        id: pm.id,
+        workspace: pm.transformer.workspace
+      },
+      %SetTransformerIsReady{
+        id: pm.id,
+        workspace: pm.transformer.workspace,
+        is_ready: false
+      }
+    ]
   end
 
   def handle(%TransformerTaskProcessManager{has_collection: true} = pm, %TransformerWALUpdated{wal: _wal} = _event) do
@@ -95,13 +103,32 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
     end)
       ++
     [
-      %SetCollectionIsReady{
-        id: pm.target,
+      %SetTransformerIsReady{
+        id: pm.id,
         workspace: pm.transformer.workspace,
         is_ready: false
       },
       %RequestTruncateDataset{
         id: pm.id
+      }
+    ]
+  end
+
+  def handle(%TransformerTaskProcessManager{has_collection: true} = pm, %TransformerIsReadySet{is_ready: false} = _event) do
+    # Cascade to downstream transformers, if any
+    Enum.map(MetaStore.get_transformers_by_collection(pm.target, tenant: pm.transformer.ds), fn t ->
+      %SetTransformerIsReady{
+        id: t.id,
+        workspace: t.workspace,
+        is_ready: false
+      }
+    end)
+      ++
+    [
+      %SetCollectionIsReady{
+        id: pm.target,
+        workspace: pm.transformer.workspace,
+        is_ready: false
       }
     ]
   end
@@ -177,11 +204,42 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
   end
 
   def handle(%TransformerTaskProcessManager{has_collection: true} = pm, %TaskCompleted{is_completed: true} = _event) do
-    %SetCollectionIsReady{
-      id: pm.target,
-      workspace: pm.transformer.workspace,
-      is_ready: true
-    }
+    # Now that the target collection is complete and has been updated, any downstream transformers will have to have
+    # their artifacts updated. We will dispatch the task for them, after which any WAL updated events will trigger their
+    # collections to be updated, and so on.
+    Enum.map(MetaStore.get_transformers_by_collection(pm.target, tenant: pm.transformer.ds), fn t ->
+
+      # Add the transaction identifiers as fragments, so that the aggregate can guard against workers
+      # that cannot complete the task due to ownership issues.
+      identifiers = Enum.filter(Map.values(Map.get(t.wal, "identifiers")), fn i ->
+        (i != t.id) and (i not in t.collections) and (i not in t.transformers)
+      end)
+
+      %CreateTask{
+        id: UUID.uuid4(),
+        type: "transformer",
+        task: %{
+          "instruction" => "update_artifacts",
+          "transformer_id" => t.id,
+          "wal" => t.wal
+        },
+        fragments: identifiers
+      }
+
+    end)
+     ++
+    [
+      %SetCollectionIsReady{
+        id: pm.target,
+        workspace: pm.transformer.workspace,
+        is_ready: true
+      },
+      %SetTransformerIsReady{
+        id: pm.id,
+        workspace: pm.transformer.workspace,
+        is_ready: true
+      }
+    ]
   end
 
   # TODO: Handle shutdown when there are no more open tasks (currently handled by after_command/2)

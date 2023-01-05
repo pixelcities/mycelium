@@ -23,14 +23,17 @@ defmodule MetaStore.Aggregates.Transformer do
             wal: nil
 
   alias MetaStore.Aggregates.Transformer
-  alias Core.Commands.{CreateTransformer, UpdateTransformer, SetTransformerPosition, AddTransformerTarget, RemoveTransformerTarget, AddTransformerInput, UpdateTransformerWAL, DeleteTransformer}
-  alias Core.Events.{TransformerCreated, TransformerUpdated, TransformerPositionSet, TransformerTargetAdded, TransformerTargetRemoved, TransformerInputAdded, TransformerWALUpdated, TransformerDeleted}
+  alias Core.Commands.{CreateTransformer, UpdateTransformer, SetTransformerPosition, AddTransformerTarget, RemoveTransformerTarget, AddTransformerInput, UpdateTransformerWAL, SetTransformerIsReady, DeleteTransformer}
+  alias Core.Events.{TransformerCreated, TransformerUpdated, TransformerPositionSet, TransformerTargetAdded, TransformerTargetRemoved, TransformerInputAdded, TransformerWALUpdated, TransformerIsReadySet, TransformerDeleted}
 
   @doc """
   Create a new transformer
   """
   def execute(%Transformer{id: nil}, %CreateTransformer{} = transformer) do
-    TransformerCreated.new(transformer, date: NaiveDateTime.utc_now())
+    TransformerCreated.new(transformer,
+      is_ready: true,
+      date: NaiveDateTime.utc_now()
+    )
   end
 
   def execute(%Transformer{} = transformer, %UpdateTransformer{} = update)
@@ -92,6 +95,10 @@ defmodule MetaStore.Aggregates.Transformer do
     when transformer.workspace == update.workspace
   do
     TransformerWALUpdated.new(update, date: NaiveDateTime.utc_now())
+  end
+
+  def execute(%Transformer{} = _transformer, %SetTransformerIsReady{} = position) do
+    TransformerIsReadySet.new(position, date: NaiveDateTime.utc_now())
   end
 
   def execute(%Transformer{} = _transformer, %DeleteTransformer{} = command) do
@@ -161,6 +168,13 @@ defmodule MetaStore.Aggregates.Transformer do
   def apply(%Transformer{} = transformer, %TransformerWALUpdated{} = updated) do
     %Transformer{transformer |
       wal: updated.wal,
+      date: updated.date
+    }
+  end
+
+  def apply(%Transformer{} = transformer, %TransformerIsReadySet{} = updated) do
+    %Transformer{transformer |
+      is_ready: updated.is_ready,
       date: updated.date
     }
   end
