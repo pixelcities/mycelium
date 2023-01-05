@@ -262,8 +262,21 @@ defmodule MetaStore do
     ds_id = Map.get(metadata, :ds_id, :ds1)
     collection = MetaStore.get_collection!(id, tenant: ds_id)
 
-    if collection.type == "source" and length(collection.targets) == 0 do
-      handle_dispatch(DeleteCollection.new(attrs), metadata)
+    if collection.type == "source" do
+      if length(collection.targets) == 0 do
+        handle_dispatch(DeleteCollection.new(attrs), metadata)
+
+      # Verify the targets are still live
+      else
+        unless Enum.any?(Enum.map(collection.targets, fn t ->
+          MetaStore.get_transformer!(t, tenant: ds_id) != nil
+        end)) do
+          handle_dispatch(DeleteCollection.new(attrs), metadata)
+        else
+          {:error, :cannot_delete_source_with_active_targets}
+        end
+      end
+
     else
       {:error, :cannot_delete_collection}
     end
@@ -325,10 +338,12 @@ defmodule MetaStore do
 
     commands = incoming_collection_cmds ++ incoming_transformer_cmds ++ outgoing_collection_cmds ++ [ delete_self_cmd ]
 
+    # TODO: Handle rollbacks when an error happens in one of the alter commands
     Enum.reduce_while(commands, {:ok, :done}, fn command, _acc ->
       reply = @app.validate_and_dispatch(command, consistency: :strong, application: Module.concat(@app, ds_id), metadata: metadata)
 
-      if reply == :ok do
+      # Also continue on :no_such_target, to recover from bad state
+      if reply == :ok or reply == {:error, :no_such_target} do
         {:cont, {:ok, :done}}
       else
         {:halt, reply}
