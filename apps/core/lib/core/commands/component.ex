@@ -306,7 +306,7 @@ defmodule Core.Commands.CreateWidget do
   def handle_validate(changeset) do
     changeset
     |> validate_required([:id, :workspace, :type])
-    |> validate_inclusion(:type, ["graph"])
+    |> validate_inclusion(:type, ["chart"])
     |> validate_format(:color, ~r/^#[0-9a-fA-F]{6}$/)
     |> validate_position()
     |> validate_shares(:access)
@@ -333,7 +333,7 @@ defmodule Core.Commands.UpdateWidget do
   def handle_validate(changeset) do
     changeset
     |> validate_required([:id, :workspace, :type])
-    |> validate_inclusion(:type, ["graph"])
+    |> validate_inclusion(:type, ["chart"])
     |> validate_format(:color, ~r/^#[0-9a-fA-F]{6}$/)
     |> validate_position()
     |> validate_shares(:access)
