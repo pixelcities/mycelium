@@ -46,6 +46,7 @@ defmodule MetaStore do
     CreateWidget,
     UpdateWidget,
     SetWidgetPosition,
+    SetWidgetIsReady,
     AddWidgetInput,
     PutWidgetSetting,
     PublishWidget,
@@ -60,6 +61,14 @@ defmodule MetaStore do
 
     Repo.one((from t in Widget,
       where: t.id == ^id
+    ), prefix: tenant)
+  end
+
+  def get_widgets_by_collection(id, opts \\ []) do
+    tenant = Keyword.fetch!(opts, :tenant)
+
+    Repo.all((from t in Widget,
+      where: t.collection == ^id
     ), prefix: tenant)
   end
 
@@ -376,6 +385,10 @@ defmodule MetaStore do
     handle_dispatch(SetWidgetPosition.new(attrs), metadata)
   end
 
+  def set_widget_is_ready(attrs, %{user_id: _user_id} = metadata) do
+    handle_dispatch(SetWidgetIsReady.new(attrs), metadata)
+  end
+
   def add_widget_input(attrs, metadata) do
     command = AddWidgetInput.new(attrs)
 
@@ -409,7 +422,7 @@ defmodule MetaStore do
     Enum.reduce_while([incoming_collection_cmd, delete_self_cmd], {:ok, :done}, fn command, _acc ->
       reply = @app.validate_and_dispatch(command, consistency: :strong, application: Module.concat(@app, ds_id), metadata: metadata)
 
-      if reply == :ok do
+      if reply == :ok or reply == {:error, :no_such_target} do
         {:cont, {:ok, :done}}
       else
         {:halt, reply}

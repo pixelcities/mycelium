@@ -31,6 +31,7 @@ defmodule MetaStore.Router do
     CreateWidget,
     UpdateWidget,
     SetWidgetPosition,
+    SetWidgetIsReady,
     AddWidgetInput,
     PutWidgetSetting,
     PublishWidget,
@@ -77,7 +78,7 @@ defmodule MetaStore.Router do
     to: Transformer,
     lifespan: TransformerLifespan
   )
-  dispatch([ CreateWidget, UpdateWidget, SetWidgetPosition, AddWidgetInput, PutWidgetSetting, PublishWidget, DeleteWidget ],
+  dispatch([ CreateWidget, UpdateWidget, SetWidgetPosition, SetWidgetIsReady, AddWidgetInput, PutWidgetSetting, PublishWidget, DeleteWidget ],
     to: Widget,
     lifespan: WidgetLifespan
   )

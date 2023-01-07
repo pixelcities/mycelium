@@ -63,7 +63,7 @@ defmodule Maestro.Allocator do
 
       if ds_id != nil do
         assign_bundle_tasks(user_id, ds_id)
-        assign_transformer_tasks(user_id, ds_id)
+        assign_tasks(user_id, ds_id)
       end
     end)
 
@@ -89,7 +89,7 @@ defmodule Maestro.Allocator do
       :ets.insert(workers, {user_id, meta})
 
       assign_bundle_tasks(user_id, ds_id)
-      assign_transformer_tasks(user_id, ds_id)
+      assign_tasks(user_id, ds_id)
     end
 
     {:noreply, workers}
@@ -127,9 +127,9 @@ defmodule Maestro.Allocator do
     end
   end
 
-  defp assign_transformer_tasks(user_id, ds_id) do
+  defp assign_tasks(user_id, ds_id) do
     Enum.each(Maestro.get_tasks(tenant: ds_id), fn(task) ->
-      if task.type == "transformer" do
+      if task.type == "transformer" or task.type == "widget" do
         Maestro.assign_task(%{
           id: task.id,
           type: task.type,

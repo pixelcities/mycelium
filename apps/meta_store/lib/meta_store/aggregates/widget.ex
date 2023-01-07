@@ -25,12 +25,15 @@ defmodule MetaStore.Aggregates.Widget do
             date: nil
 
   alias MetaStore.Aggregates.Widget
-  alias Core.Commands.{CreateWidget, UpdateWidget, SetWidgetPosition, AddWidgetInput, PutWidgetSetting, PublishWidget, DeleteWidget}
-  alias Core.Events.{WidgetCreated, WidgetUpdated, WidgetPositionSet, WidgetInputAdded, WidgetSettingPut, WidgetPublished, WidgetDeleted}
+  alias Core.Commands.{CreateWidget, UpdateWidget, SetWidgetPosition, SetWidgetIsReady, AddWidgetInput, PutWidgetSetting, PublishWidget, DeleteWidget}
+  alias Core.Events.{WidgetCreated, WidgetUpdated, WidgetPositionSet, WidgetIsReadySet, WidgetInputAdded, WidgetSettingPut, WidgetPublished, WidgetDeleted}
 
 
   def execute(%Widget{id: nil}, %CreateWidget{} = widget) do
-    WidgetCreated.new(widget, date: NaiveDateTime.utc_now())
+    WidgetCreated.new(widget,
+      is_ready: true,
+      date: NaiveDateTime.utc_now()
+    )
   end
 
   def execute(%Widget{} = widget, %UpdateWidget{} = update)
@@ -41,6 +44,10 @@ defmodule MetaStore.Aggregates.Widget do
 
   def execute(%Widget{} = _widget, %SetWidgetPosition{} = position) do
     WidgetPositionSet.new(position, date: NaiveDateTime.utc_now())
+  end
+
+  def execute(%Widget{} = _widget, %SetWidgetIsReady{} = command) do
+    WidgetIsReadySet.new(command, date: NaiveDateTime.utc_now())
   end
 
   def execute(%Widget{} = widget, %AddWidgetInput{} = command) do
@@ -89,6 +96,13 @@ defmodule MetaStore.Aggregates.Widget do
   def apply(%Widget{} = widget, %WidgetPositionSet{} = event) do
     %Widget{widget |
       position: event.position,
+      date: event.date
+    }
+  end
+
+  def apply(%Widget{} = widget, %WidgetIsReadySet{} = event) do
+    %Widget{widget |
+      is_ready: event.is_ready,
       date: event.date
     }
   end

@@ -124,6 +124,12 @@ defmodule Core.Events.WidgetPositionSet do
     with: [:date]
 end
 
+defmodule Core.Events.WidgetIsReadySet do
+  use Commanded.Event,
+    from: Core.Commands.SetWidgetIsReady,
+    with: [:date]
+end
+
 defmodule Core.Events.WidgetInputAdded do
   use Commanded.Event,
     from: Core.Commands.AddWidgetInput,

@@ -355,6 +355,20 @@ defmodule Core.Commands.SetWidgetPosition do
   end
 end
 
+defmodule Core.Commands.SetWidgetIsReady do
+  import Core.Types.Component
+
+  use Commanded.Command,
+    id: :binary_id,
+    workspace: :string,
+    is_ready: {:boolean, default: false}
+
+  def handle_validate(changeset) do
+    changeset
+    |> validate_required([:id, :workspace, :is_ready])
+  end
+end
+
 defmodule Core.Commands.AddWidgetInput do
   use Commanded.Command,
     id: :binary_id,

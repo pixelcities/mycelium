@@ -31,6 +31,7 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
     CreateCollection,
     SetCollectionIsReady,
     SetTransformerIsReady,
+    SetWidgetIsReady,
     AddTransformerTarget,
     CreateTask,
     CancelTask
@@ -120,6 +121,15 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
       %SetTransformerIsReady{
         id: t.id,
         workspace: t.workspace,
+        is_ready: false
+      }
+    end)
+      ++
+    # Same for widgets
+    Enum.map(MetaStore.get_widgets_by_collection(pm.target, tenant: pm.transformer.ds), fn w ->
+      %SetWidgetIsReady{
+        id: w.id,
+        workspace: w.workspace,
         is_ready: false
       }
     end)
@@ -226,8 +236,20 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
         fragments: identifiers
       }
 
-    end)
-     ++
+    end) ++
+
+    Enum.map(MetaStore.get_widgets_by_collection(pm.target, tenant: pm.transformer.ds), fn w ->
+      %CreateTask{
+        id: UUID.uuid4(),
+        causation_id: w.id,
+        type: "widget",
+        task: %{
+          "instruction" => "update_content",
+          "widget_id" => w.id,
+        }
+      }
+    end) ++
+
     [
       %SetCollectionIsReady{
         id: pm.target,
