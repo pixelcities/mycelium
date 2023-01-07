@@ -5,10 +5,19 @@ defmodule LiaisonServerWeb.KeyStore.KeyController do
 
   alias KeyX.KeyStore
 
+
   @doc """
-  Get all keys
+  Get keys
   """
-  def list_keys(conn, _params) do
+  def get_keys(conn, %{"limit" => limit})
+    when is_integer(limit)
+  do
+    user = conn.assigns.current_user
+
+    json(conn, KeyStore.get_keys!(user, [limit: limit]))
+  end
+
+  def get_keys(conn, _params) do
     user = conn.assigns.current_user
 
     json(conn, KeyStore.get_keys!(user))

@@ -75,7 +75,7 @@ defmodule LiaisonServerWeb.Router do
   scope "/keys", LiaisonServerWeb.KeyStore do
     pipe_through [:api, :require_authenticated_user]
 
-    get "/", KeyController, :list_keys
+    get "/", KeyController, :get_keys
     post "/", KeyController, :create_key
     post "/rotate", KeyController, :rotate_keys
 

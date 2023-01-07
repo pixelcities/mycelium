@@ -36,9 +36,12 @@ defmodule KeyX.KeyStore do
     end
   end
 
-  def get_keys!(user) do
+  def get_keys!(user, opts \\ []) do
+    limit = Keyword.get(opts, :limit, nil)
+
     Repo.all(from k in Key,
-      where: k.user_id == ^user.id
+      where: k.user_id == ^user.id,
+      limit: ^limit
     )
   end
 
