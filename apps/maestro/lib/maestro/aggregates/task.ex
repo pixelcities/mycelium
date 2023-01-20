@@ -77,7 +77,7 @@ defmodule Maestro.Aggregates.Task do
     is_completed = if length(task.fragments) > 0 do
       total_fragments = Enum.concat(task.completed_fragments, command.fragments) |> Enum.uniq
 
-      Enum.sort(total_fragments) == Enum.sort(task.fragments)
+      Enum.all?(task.fragments, fn f -> f in total_fragments end)
     else
       true
     end

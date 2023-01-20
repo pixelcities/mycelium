@@ -24,6 +24,8 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
     :is_deleted
   ]
 
+  import Maestro.Utils
+
   alias Maestro.Managers.TransformerTaskProcessManager
   alias Core.Commands.{
     CreateDataURI,
@@ -221,9 +223,7 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
 
       # Add the transaction identifiers as fragments, so that the aggregate can guard against workers
       # that cannot complete the task due to ownership issues.
-      identifiers = Enum.filter(Map.values(Map.get(t.wal, "identifiers")), fn i ->
-        (i != t.id) and (i not in t.collections) and (i not in t.transformers)
-      end)
+      identifiers = get_transformer_identifiers(t)
 
       %CreateTask{
         id: UUID.uuid4(),
@@ -246,7 +246,8 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
         task: %{
           "instruction" => "update_content",
           "widget_id" => w.id,
-        }
+        },
+        fragments: get_widget_identifiers(w)
       }
     end) ++
 

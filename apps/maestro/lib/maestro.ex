@@ -7,7 +7,7 @@ defmodule Maestro do
 
   import Ecto.Query, warn: false
 
-  alias Core.Commands.{CreateTask, AssignTask, UnAssignTask, CompleteTask}
+  alias Core.Commands.{CreateTask, AssignTask, UnAssignTask, CompleteTask, CancelTask}
   alias Maestro.Projections.Task
   alias Maestro.Repo
 
@@ -51,6 +51,14 @@ defmodule Maestro do
       |> CompleteTask.new()
 
     with :ok <- @app.validate_and_dispatch(task, consistency: :strong, application: Module.concat(@app, ds_id), metadata: metadata) do
+      {:ok, :done}
+    else
+      reply -> reply
+    end
+  end
+
+  def cancel_task(attrs, %{ds_id: ds_id} = metadata) do
+    with :ok <- @app.validate_and_dispatch(CancelTask.new(attrs), consistency: :strong, application: Module.concat(@app, ds_id), metadata: metadata) do
       {:ok, :done}
     else
       reply -> reply

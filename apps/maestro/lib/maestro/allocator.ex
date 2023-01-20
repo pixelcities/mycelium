@@ -8,6 +8,7 @@ defmodule Maestro.Allocator do
   """
 
   use GenServer
+  require Logger
 
   alias KeyX.Protocol
 
@@ -130,7 +131,7 @@ defmodule Maestro.Allocator do
   defp assign_tasks(user_id, ds_id) do
     Enum.each(Maestro.get_tasks(tenant: ds_id), fn(task) ->
       if task.type == "transformer" or task.type == "widget" do
-        Maestro.assign_task(%{
+        case Maestro.assign_task(%{
           id: task.id,
           type: task.type,
           task: task.task,
@@ -139,7 +140,16 @@ defmodule Maestro.Allocator do
           metadata: task.metadata
         }, %{
           ds_id: ds_id
-        })
+        }) do
+          {:error, :task_outdated} ->
+            Maestro.cancel_task(%{id: task.id, is_cancelled: true}, %{ds_id: ds_id})
+
+          {:error, :task_noop} ->
+            Logger.debug("Task \"#{task.id}\" for worker \"#{user_id}\" was a noop")
+
+          _ ->
+            Logger.info("Assigning task \"#{task.id}\" to worker \"#{user_id}\"")
+        end
       end
     end)
   end
