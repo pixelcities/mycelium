@@ -12,7 +12,7 @@ defmodule LiaisonServerWeb.Auth do
   @remember_me_options [sign: true, max_age: @max_age, same_site: "Strict", secure: true]
 
   @csrf_cookie "_mycelium_csrf_token"
-  @csrf_options [http_only: false, domain: ".#{@host}", secure: true, same_site: "Strict"]
+  @csrf_options [http_only: false, domain: "#{if @host != "localhost", do: "."}#{@host}", secure: true, same_site: "Strict"]
 
   @doc """
   Logs the user in.

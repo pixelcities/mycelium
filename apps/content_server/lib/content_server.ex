@@ -118,7 +118,7 @@ defmodule ContentServer do
 
     # Make sure the deleted content id is removed from the content_order field in the parent
     # page as well. It staying behind is nonfatal, but a bit messy.
-    content_order = Enum.reject(page.content_order, &(&1 == id))
+    content_order = Enum.reject(page.content_order || [], &(&1 == id))
 
     handle_dispatch(SetPageOrder.new(%{:id => page.id, :workspace => page.workspace, :content_order => content_order}), metadata)
     handle_dispatch(DeleteContent.new(attrs), metadata)
