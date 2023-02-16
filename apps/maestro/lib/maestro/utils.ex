@@ -1,8 +1,15 @@
 defmodule Maestro.Utils do
 
   def get_transformer_identifiers(transformer) do
-    Enum.filter(Map.values(Map.get(transformer.wal, "identifiers")), fn i ->
-      (i != transformer.id) and (i not in transformer.collections) and (i not in transformer.transformers)
+    Enum.filter(Map.values(Map.get(transformer.wal, "identifiers")), fn %{"id" => id, "type" => type} = identifier ->
+      # Sanity check
+      (id != transformer.id) and
+
+      # Skip table identifiers
+      (type == "column") and
+
+      # New columns will still have to be created, so they aren't valid yet
+      (Map.get(identifier, "action") != "add")
     end)
   end
 

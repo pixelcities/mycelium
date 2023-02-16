@@ -416,10 +416,10 @@ defmodule MetaStore do
 
     widget = MetaStore.get_widget!(id, tenant: ds_id)
 
-    incoming_collection_cmd = RemoveCollectionTarget.new(%{:id => widget.collection, :workspace => workspace, :target => id})
+    incoming_collection_cmd = if widget.collection, do: [RemoveCollectionTarget.new(%{:id => widget.collection, :workspace => workspace, :target => id})], else: []
     delete_self_cmd = DeleteWidget.new(attrs)
 
-    Enum.reduce_while([incoming_collection_cmd, delete_self_cmd], {:ok, :done}, fn command, _acc ->
+    Enum.reduce_while(incoming_collection_cmd ++ [delete_self_cmd], {:ok, :done}, fn command, _acc ->
       reply = @app.validate_and_dispatch(command, consistency: :strong, application: Module.concat(@app, ds_id), metadata: metadata)
 
       if reply == :ok or reply == {:error, :no_such_target} do

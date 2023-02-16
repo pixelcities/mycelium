@@ -34,7 +34,7 @@ defmodule Maestro.Managers.WidgetTaskProcessManager do
 
   # Command dispatch
 
-  def handle(%WidgetTaskProcessManager{} = pm, %TaskCompleted{is_completed: true} = _event) do
+  def handle(%WidgetTaskProcessManager{} = pm, %TaskCompleted{is_completed: true} = _event) when pm.widget != nil do
     [
       %SetWidgetIsReady{
         id: pm.id,

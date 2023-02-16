@@ -1,12 +1,16 @@
 defmodule Core.Types.WAL do
   @moduledoc """
 
-  ## Example statements
+  ## Basic example statements
+
+  Normal cases mostly consist of transactions that reference identifiers and
+  values. While transactions cannot really be validated, their usage of identifier
+  and value references are checked.
 
       iex> Core.Types.WAL.new(%{
       ...>   "identifiers" => %{
-      ...>     "1" => "table",
-      ...>     "2" => "col1"
+      ...>     "1" => %{"id" => "table", "type" => "table"},
+      ...>     "2" => %{"id" => "col1", "type" => "column"}
       ...>   },
       ...>   "values" => %{
       ...>     "1" => "1"
@@ -32,6 +36,28 @@ defmodule Core.Types.WAL do
       ...> }).errors
       [{:transactions, {"Non-existent parameter at positions: [\\"$1\\"]", []}}]
 
+
+  ## Identifier instructions
+
+  Identifiers may reference either tables or columns. Because in most operations schemas
+  are assumed to be immutable, identifiers can optionally include actions thate can mutate
+  the schema. Other actions are also possible, but rare.
+
+  The two mutations that are commonly used are: "add" and "drop". Adding or altering a column
+  requires a reference to the linked concept.
+
+      iex> Core.Types.WAL.new(%{
+      ...>   "identifiers" => %{
+      ...>     "1" => %{"id" => "table", "type" => "table"},
+      ...>     "2" => %{"id" => "col1", "type" => "column", "action" => "drop"},
+      ...>     "3" => %{"id" => "col2", "type" => "column", "action" => "add", "params" => ["concept"]}
+      ...>   },
+      ...>   "values" => %{},
+      ...>   "transactions" => [],
+      ...>   "artifacts" => []
+      ...> }).valid?
+      true
+
   """
   use Ecto.Schema
 
@@ -53,6 +79,7 @@ defmodule Core.Types.WAL do
   def new(attrs) do
     changeset(%__MODULE__{}, attrs)
     |> validate_required([:identifiers, :values, :transactions, :artifacts])
+    |> validate_identifiers()
     |> validate_statements()
     |> validate_artifacts()
     |> validate_length()
@@ -103,5 +130,31 @@ defmodule Core.Types.WAL do
     end
   end
 
+  defp validate_identifiers(changeset) do
+    identifiers = get_field(changeset, :identifiers)
+
+    Enum.reduce(identifiers, changeset, fn {_i, %{"id" => _id, "type" => type} = identifier}, acc ->
+      action = Map.get(identifier, "action")
+      params = Map.get(identifier, "params", [])
+
+      unless Enum.all?(Map.keys(identifier), fn k -> k in ["id", "type", "action", "params"] end) do
+        add_error(acc, :identifiers, "Unexpected key in identifier")
+      else
+        unless type == "table" || type == "column" do
+          add_error(acc, :identifiers, "Type must be either \"table\" or \"column\"")
+        else
+          unless action == nil || action == "add" || action == "drop" || action == "alter" do
+            add_error(acc, :identifiers, "Action must be one of: [\"add\",\"drop\",\"alter\"]")
+          else
+            unless action == nil || action == "drop" || ((action == "add" || action == "alter") && length(params) == 1) do
+              add_error(acc, :identifiers, "A required parameter is missing from an \"add\" or \"alter\" action")
+            else
+              acc
+            end
+          end
+        end
+      end
+    end)
+  end
 end
 
