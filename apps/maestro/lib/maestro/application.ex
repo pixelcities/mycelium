@@ -2,6 +2,7 @@ defmodule Maestro.Application do
   @moduledoc false
 
   @parent_module __MODULE__ |> Module.split |> Enum.drop(-1) |> Module.concat
+  @app Application.compile_env!(:maestro, :backend_config)[:backend_app]
 
   use Application
 
@@ -33,7 +34,7 @@ defmodule Maestro.Application do
   end
 
   def get_app() do
-    Application.fetch_env!(:maestro, :backend_config)[:backend_app]
+    @app
   end
 
 end

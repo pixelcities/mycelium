@@ -7,7 +7,7 @@ defmodule Maestro.App do
     ]
   use Commanded.CommandDispatchValidation
 
-  if Application.fetch_env!(:maestro, :backend_config)[:backend_app] == __MODULE__ do
+  if Maestro.Application.get_app() == __MODULE__ do
     router Maestro.Router
   end
 end

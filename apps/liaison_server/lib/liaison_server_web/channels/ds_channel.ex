@@ -194,12 +194,24 @@ defmodule LiaisonServerWeb.DataSpaceChannel do
     app = Module.concat(LiaisonServer.App, socket.assigns.current_ds)
 
     # Start an event handler that will broadcast all relevant events
-    {:ok, _pid} = DynamicSupervisor.start_child(LiaisonServer.RelayEventSupervisor, {module,
-      application: app,
-      ds_id: ds_id,
-      user_id: user.id,
-      workspace: "default"
-    })
+    if module == LiaisonServer.Workflows.RelayEvents do
+      # The main event relay exists for the whole data space
+      {:ok, _pid} = DynamicSupervisor.start_child(LiaisonServer.RelayEventSupervisor, {module,
+        application: app,
+        ds_id: ds_id,
+        user_id: user.id,
+        workspace: "default"
+      })
+
+    else
+      # User event relays can be linked to this process
+      module.start_link(
+        application: app,
+        ds_id: ds_id,
+        user_id: user.id,
+        workspace: "default"
+      )
+    end
 
     if restart do
       case LiaisonServer.EventHistory.replay_from(restart_from, ds_id, user.id) do

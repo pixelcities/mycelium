@@ -155,12 +155,10 @@ defmodule Maestro.Allocator do
   end
 
   defp unassign_tasks(user_id, ds_id) do
-    Enum.each(Maestro.get_tasks(tenant: ds_id), fn task ->
-      if task.worker == user_id do
-        Maestro.unassign_task(%{
-          id: task.id
-        }, %{ds_id: ds_id})
-      end
+    Enum.each(Maestro.get_tasks_by_worker(user_id, tenant: ds_id), fn task ->
+      Maestro.unassign_task(%{
+        id: task.id
+      }, %{ds_id: ds_id})
     end)
   end
 
