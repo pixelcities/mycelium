@@ -42,6 +42,7 @@ defmodule MetaStore do
     AddTransformerInput,
     UpdateTransformerWAL,
     SetTransformerIsReady,
+    SetTransformerError,
     DeleteTransformer,
     CreateWidget,
     UpdateWidget,
@@ -340,6 +341,10 @@ defmodule MetaStore do
 
   def set_transformer_is_ready(attrs, %{user_id: _user_id} = metadata) do
     handle_dispatch(SetTransformerIsReady.new(attrs), metadata)
+  end
+
+  def set_transformer_error(attrs, %{user_id: _user_id} = metadata) do
+    handle_dispatch(SetTransformerError.new(attrs), metadata)
   end
 
   @doc """

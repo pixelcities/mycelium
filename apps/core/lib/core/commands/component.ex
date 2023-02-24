@@ -152,7 +152,8 @@ defmodule Core.Commands.CreateTransformer do
     is_ready: {:boolean, default: false},
     collections: {{:array, :binary_id}, default: []},
     transformers: {{:array, :binary_id}, default: []},
-    wal: :map
+    wal: :map,
+    error: :string
 
   def handle_validate(changeset) do
     changeset
@@ -176,7 +177,8 @@ defmodule Core.Commands.UpdateTransformer do
     is_ready: {:boolean, default: false},
     collections: {{:array, :binary_id}, default: []},
     transformers: {{:array, :binary_id}, default: []},
-    wal: :map
+    wal: :map,
+    error: :string
 
   def handle_validate(changeset) do
     changeset
@@ -272,6 +274,21 @@ defmodule Core.Commands.SetTransformerIsReady do
   def handle_validate(changeset) do
     changeset
     |> validate_required([:id, :workspace, :is_ready])
+  end
+end
+
+defmodule Core.Commands.SetTransformerError do
+  import Core.Types.Component
+
+  use Commanded.Command,
+    id: :binary_id,
+    workspace: :string,
+    is_error: :boolean,
+    error: :string
+
+  def handle_validate(changeset) do
+    changeset
+    |> validate_required([:id, :workspace, :is_error])
   end
 end
 

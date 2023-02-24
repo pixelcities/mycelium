@@ -20,11 +20,34 @@ defmodule MetaStore.Aggregates.Transformer do
             collections: [],
             transformers: [],
             date: nil,
-            wal: nil
+            wal: nil,
+            error: nil
 
   alias MetaStore.Aggregates.Transformer
-  alias Core.Commands.{CreateTransformer, UpdateTransformer, SetTransformerPosition, AddTransformerTarget, RemoveTransformerTarget, AddTransformerInput, UpdateTransformerWAL, SetTransformerIsReady, DeleteTransformer}
-  alias Core.Events.{TransformerCreated, TransformerUpdated, TransformerPositionSet, TransformerTargetAdded, TransformerTargetRemoved, TransformerInputAdded, TransformerWALUpdated, TransformerIsReadySet, TransformerDeleted}
+  alias Core.Commands.{
+    CreateTransformer,
+    UpdateTransformer,
+    SetTransformerPosition,
+    AddTransformerTarget,
+    RemoveTransformerTarget,
+    AddTransformerInput,
+    UpdateTransformerWAL,
+    SetTransformerIsReady,
+    SetTransformerError,
+    DeleteTransformer
+  }
+  alias Core.Events.{
+    TransformerCreated,
+    TransformerUpdated,
+    TransformerPositionSet,
+    TransformerTargetAdded,
+    TransformerTargetRemoved,
+    TransformerInputAdded,
+    TransformerWALUpdated,
+    TransformerIsReadySet,
+    TransformerErrorSet,
+    TransformerDeleted
+  }
 
   @doc """
   Create a new transformer
@@ -97,8 +120,12 @@ defmodule MetaStore.Aggregates.Transformer do
     TransformerWALUpdated.new(update, date: NaiveDateTime.utc_now())
   end
 
-  def execute(%Transformer{} = _transformer, %SetTransformerIsReady{} = position) do
-    TransformerIsReadySet.new(position, date: NaiveDateTime.utc_now())
+  def execute(%Transformer{} = _transformer, %SetTransformerIsReady{} = command) do
+    TransformerIsReadySet.new(command, date: NaiveDateTime.utc_now())
+  end
+
+  def execute(%Transformer{} = _transformer, %SetTransformerError{} = command) do
+    TransformerErrorSet.new(command, date: NaiveDateTime.utc_now())
   end
 
   def execute(%Transformer{} = _transformer, %DeleteTransformer{} = command) do
@@ -175,6 +202,13 @@ defmodule MetaStore.Aggregates.Transformer do
   def apply(%Transformer{} = transformer, %TransformerIsReadySet{} = updated) do
     %Transformer{transformer |
       is_ready: updated.is_ready,
+      date: updated.date
+    }
+  end
+
+  def apply(%Transformer{} = transformer, %TransformerErrorSet{} = updated) do
+    %Transformer{transformer |
+      error: (if updated.is_error, do: Map.get(updated, :error, ""), else: nil),
       date: updated.date
     }
   end

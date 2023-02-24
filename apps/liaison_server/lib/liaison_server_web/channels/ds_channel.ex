@@ -151,6 +151,9 @@ defmodule LiaisonServerWeb.DataSpaceChannel do
   def handle_in("action", %{"type" => "CompleteTask"} = action, socket), do: handle_action(&Maestro.complete_task/2, action, socket)
 
   @impl true
+  def handle_in("action", %{"type" => "FailTask"} = action, socket), do: handle_action(&Maestro.fail_task/2, action, socket)
+
+  @impl true
   def handle_in("action", %{"type" => "CreatePage"} = action, socket), do: handle_action(&ContentServer.create_page/2, action, socket)
 
   @impl true

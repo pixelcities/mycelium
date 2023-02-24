@@ -33,6 +33,7 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
     CreateCollection,
     SetCollectionIsReady,
     SetTransformerIsReady,
+    SetTransformerError,
     SetWidgetIsReady,
     AddTransformerTarget,
     CreateTask,
@@ -44,6 +45,7 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
     TaskCreated,
     TaskCancelled,
     TaskCompleted,
+    TaskFailed,
     TransformerCreated,
     TransformerInputAdded,
     TransformerWALUpdated,
@@ -61,6 +63,7 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
   def interested?(%TransformerIsReadySet{id: id}), do: {:continue, id}
   def interested?(%TaskCreated{causation_id: id}) when id != nil, do: {:continue, id}
   def interested?(%TaskCompleted{causation_id: id}) when id != nil, do: {:continue, id}
+  def interested?(%TaskFailed{causation_id: id}) when id != nil, do: {:continue, id}
   def interested?(%DataURICreated{id: id}), do: {:continue, id}
   def interested?(%DatasetTruncated{id: id}), do: {:continue, id}
   def interested?(%TransformerDeleted{id: id}), do: {:continue, id}
@@ -89,6 +92,11 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
         id: pm.id,
         workspace: pm.transformer.workspace
       },
+      %SetTransformerError{
+        id: pm.id,
+        workspace: pm.transformer.workspace,
+        is_error: false
+      },
       %SetTransformerIsReady{
         id: pm.id,
         workspace: pm.transformer.workspace,
@@ -106,6 +114,11 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
     end)
       ++
     [
+      %SetTransformerError{
+        id: pm.id,
+        workspace: pm.transformer.workspace,
+        is_error: false
+      },
       %SetTransformerIsReady{
         id: pm.id,
         workspace: pm.transformer.workspace,
@@ -265,6 +278,22 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
     ]
   end
 
+  def handle(%TransformerTaskProcessManager{has_collection: true} = pm, %TaskFailed{error: error} = _event) do
+    [
+      %SetTransformerError{
+        id: pm.id,
+        workspace: pm.transformer.workspace,
+        is_error: true,
+        error: error
+      },
+      %SetTransformerIsReady{
+        id: pm.id,
+        workspace: pm.transformer.workspace,
+        is_ready: true
+      }
+    ]
+  end
+
   # TODO: Handle shutdown when there are no more open tasks (currently handled by after_command/2)
   def handle(%TransformerTaskProcessManager{has_collection: true} = pm, %TransformerDeleted{} = _event) do
     Enum.map(pm.created_tasks, fn task_id ->
@@ -336,6 +365,12 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
   end
 
   def apply(%TransformerTaskProcessManager{} = pm, %TaskCompleted{} = event) do
+    %TransformerTaskProcessManager{pm |
+      created_tasks: Enum.filter(pm.created_tasks, fn task_id -> task_id != event.id end)
+    }
+  end
+
+  def apply(%TransformerTaskProcessManager{} = pm, %TaskFailed{} = event) do
     %TransformerTaskProcessManager{pm |
       created_tasks: Enum.filter(pm.created_tasks, fn task_id -> task_id != event.id end)
     }

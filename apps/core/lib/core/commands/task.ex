@@ -66,3 +66,14 @@ defmodule Core.Commands.CompleteTask do
   end
 end
 
+defmodule Core.Commands.FailTask do
+  use Commanded.Command,
+    id: :string,
+    error: :string
+
+  def handle_validate(changeset) do
+    changeset
+    |> validate_required([:id, :error])
+  end
+end
+

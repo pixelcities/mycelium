@@ -7,7 +7,7 @@ defmodule Maestro do
 
   import Ecto.Query, warn: false
 
-  alias Core.Commands.{CreateTask, AssignTask, UnAssignTask, CompleteTask, CancelTask}
+  alias Core.Commands.{CreateTask, AssignTask, UnAssignTask, CompleteTask, CancelTask, FailTask}
   alias Maestro.Projections.Task
   alias Maestro.Repo
 
@@ -33,52 +33,24 @@ defmodule Maestro do
 
   ## Commands
 
-  def schedule_task(attrs, %{ds_id: ds_id} = metadata) do
-    task =
-      attrs
-      |> CreateTask.new()
+  def schedule_task(attrs, %{ds_id: ds_id} = metadata), do: dispatch(CreateTask.new(attrs), metadata, ds_id, :strong)
 
-    with :ok <- @app.validate_and_dispatch(task, consistency: :strong, application: Module.concat(@app, ds_id), metadata: metadata) do
-      {:ok, :done}
-    else
-      reply -> reply
-    end
-  end
+  def assign_task(attrs, %{ds_id: ds_id} = metadata), do: dispatch(AssignTask.new(attrs), metadata, ds_id)
 
-  def assign_task(attrs, %{ds_id: ds_id} = metadata) do
-    task =
-      attrs
-      |> AssignTask.new()
-
-    with :ok <- @app.validate_and_dispatch(task, consistency: :eventual, application: Module.concat(@app, ds_id), metadata: metadata) do
-      {:ok, :done}
-    else
-      reply -> reply
-    end
-  end
-
-  def unassign_task(attrs, %{ds_id: ds_id} = metadata) do
-    task = UnAssignTask.new(attrs)
-
-    with :ok <- @app.validate_and_dispatch(task, consistency: :eventual, application: Module.concat(@app, ds_id), metadata: metadata) do
-      {:ok, :done}
-    else
-      reply -> reply
-    end
-  end
+  def unassign_task(attrs, %{ds_id: ds_id} = metadata), do: dispatch(UnAssignTask.new(attrs), metadata, ds_id)
 
   def complete_task(attrs, %{user_id: user_id, ds_id: ds_id} = metadata) do
     task = CompleteTask.new(Map.merge(attrs, %{"worker" => user_id}))
 
-    with :ok <- @app.validate_and_dispatch(task, consistency: :strong, application: Module.concat(@app, ds_id), metadata: metadata) do
-      {:ok, :done}
-    else
-      reply -> reply
-    end
+    dispatch(task, metadata, ds_id, :strong)
   end
 
-  def cancel_task(attrs, %{ds_id: ds_id} = metadata) do
-    with :ok <- @app.validate_and_dispatch(CancelTask.new(attrs), consistency: :strong, application: Module.concat(@app, ds_id), metadata: metadata) do
+  def cancel_task(attrs, %{ds_id: ds_id} = metadata), do: dispatch(CancelTask.new(attrs), metadata, ds_id, :strong)
+
+  def fail_task(attrs, %{ds_id: ds_id} = metadata), do: dispatch(FailTask.new(attrs), metadata, ds_id)
+
+  defp dispatch(command, metadata, ds_id, consistency \\ :eventual) do
+    with :ok <- @app.validate_and_dispatch(command, consistency: consistency, application: Module.concat(@app, ds_id), metadata: metadata) do
       {:ok, :done}
     else
       reply -> reply

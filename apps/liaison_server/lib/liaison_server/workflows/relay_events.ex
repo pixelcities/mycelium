@@ -27,6 +27,7 @@ defmodule LiaisonServer.Workflows.RelayEvents do
     Core.Events.TransformerUpdated,
     Core.Events.TransformerPositionSet,
     Core.Events.TransformerIsReadySet,
+    Core.Events.TransformerErrorSet,
     Core.Events.TransformerTargetAdded,
     Core.Events.TransformerInputAdded,
     Core.Events.TransformerWALUpdated,

@@ -7,7 +7,7 @@ defmodule Maestro.Projectors.Task do
   @impl Commanded.Projections.Ecto
   def schema_prefix(_event, %{"ds_id" => ds_id} = _metadata), do: ds_id
 
-  alias Core.Events.{TaskCreated, TaskAssigned, TaskUnAssigned, TaskCancelled, TaskCompleted}
+  alias Core.Events.{TaskCreated, TaskAssigned, TaskUnAssigned, TaskCancelled, TaskCompleted, TaskFailed}
   alias Maestro.Projections.Task
 
   project %TaskCreated{} = task, metadata, fn multi ->
@@ -54,7 +54,10 @@ defmodule Maestro.Projectors.Task do
 
     multi
     |> Ecto.Multi.run(:get_task, fn repo, _changes ->
-      {:ok, repo.get(Task, task.id, prefix: ds_id) }
+      case repo.get(Task, task.id, prefix: ds_id) do
+        nil -> {:error, :already_deleted}
+        t -> {:ok, t}
+      end
     end)
     |> Ecto.Multi.update(:update, fn %{get_task: t} ->
       Ecto.Changeset.change(t, is_cancelled: true)
@@ -75,6 +78,25 @@ defmodule Maestro.Projectors.Task do
         worker: nil
       )
     end, prefix: ds_id)
+  end
+
+  project %TaskFailed{} = task, %{"ds_id" => ds_id} = _metadata, fn multi ->
+    multi
+    |> Ecto.Multi.run(:get_task, fn repo, _changes ->
+      case repo.get(Task, task.id, prefix: ds_id) do
+        nil -> {:error, :already_deleted}
+        t -> {:ok, t}
+      end
+    end)
+    |> Ecto.Multi.inspect()
+    |> Ecto.Multi.delete(:delete, fn %{get_task: t} -> t end)
+  end
+
+
+  # Error handlers
+
+  def error({:error, :already_deleted}, _event, _failure_context) do
+    :skip
   end
 
 

@@ -28,3 +28,9 @@ defmodule Core.Events.TaskCompleted do
     with: [:causation_id, :date]
 end
 
+defmodule Core.Events.TaskFailed do
+  use Commanded.Event,
+    from: Core.Commands.FailTask,
+    with: [:causation_id, :date]
+end
+

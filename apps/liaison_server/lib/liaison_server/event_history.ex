@@ -35,6 +35,7 @@ defmodule LiaisonServer.EventHistory do
     Events.TransformerUpdated,
     Events.TransformerPositionSet,
     Events.TransformerIsReadySet,
+    Events.TransformerErrorSet,
     Events.TransformerTargetAdded,
     Events.TransformerInputAdded,
     Events.TransformerWALUpdated,

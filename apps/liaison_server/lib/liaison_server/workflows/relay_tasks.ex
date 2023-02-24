@@ -3,7 +3,11 @@ defmodule LiaisonServer.Workflows.RelayTasks do
     consistency: :eventual,
     start_from: :origin
 
-  alias Core.Events.{TaskAssigned, TaskCompleted}
+  alias Core.Events.{
+    TaskAssigned,
+    TaskCompleted,
+    TaskFailed
+  }
 
   @impl true
   def init(config) do
@@ -22,24 +26,27 @@ defmodule LiaisonServer.Workflows.RelayTasks do
   def handle(%TaskAssigned{} = event, metadata) do
     %{state: state} = metadata
 
-    if state.user_id == event.worker do
-      if Map.has_key?(Enum.into(Phoenix.Tracker.list(LiaisonServerWeb.Tracker, state.channel), %{}), state.user_id) do
-        LiaisonServerWeb.Endpoint.broadcast("user:" <> state.user_id, "event", %{"type" => "TaskAssigned", "payload" => event})
-      else
-        {:error, :disconnect}
-      end
-    else
-      :ok
-    end
+    broadcast("TaskAssigned", state, event, event.worker)
   end
 
   @impl true
   def handle(%TaskCompleted{} = event, metadata) do
     %{state: state} = metadata
 
-    if state.user_id == Map.get(metadata, "user_id") do
+    broadcast("TaskCompleted", state, event, Map.get(metadata, "user_id"))
+  end
+
+  @impl true
+  def handle(%TaskFailed{} = event, metadata) do
+    %{state: state} = metadata
+
+    broadcast("TaskFailed", state, event, Map.get(metadata, "user_id"))
+  end
+
+  defp broadcast(type, state, event, user_id) do
+    if state.user_id == user_id do
       if Map.has_key?(Enum.into(Phoenix.Tracker.list(LiaisonServerWeb.Tracker, state.channel), %{}), state.user_id) do
-        LiaisonServerWeb.Endpoint.broadcast("user:" <> state.user_id, "event", %{"type" => "TaskAssigned", "payload" => event})
+        LiaisonServerWeb.Endpoint.broadcast("user:" <> state.user_id, "event", %{"type" => type, "payload" => event})
       else
         {:error, :disconnect}
       end

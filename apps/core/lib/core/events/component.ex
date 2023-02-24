@@ -100,6 +100,12 @@ defmodule Core.Events.TransformerIsReadySet do
     with: [:date]
 end
 
+defmodule Core.Events.TransformerErrorSet do
+  use Commanded.Event,
+    from: Core.Commands.SetTransformerError,
+    with: [:date]
+end
+
 defmodule Core.Events.TransformerDeleted do
   use Commanded.Event,
     from: Core.Commands.DeleteTransformer,

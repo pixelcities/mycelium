@@ -1,9 +1,10 @@
 defmodule Maestro.Aggregates.TaskLifespan do
   @behaviour Commanded.Aggregates.AggregateLifespan
 
-  alias Core.Events.{TaskCancelled, TaskCompleted}
+  alias Core.Events.{TaskCancelled, TaskCompleted, TaskFailed}
 
   def after_event(%TaskCancelled{}), do: :stop
+  def after_event(%TaskFailed{}), do: :stop
   def after_event(%TaskCompleted{is_completed: is_completed}) when is_completed, do: :stop
   def after_event(_event), do: :infinity
   def after_command(_command), do: :infinity
@@ -26,8 +27,8 @@ defmodule Maestro.Aggregates.Task do
             assigned_at: nil
 
   alias Maestro.Aggregates.Task
-  alias Core.Commands.{CreateTask, AssignTask, UnAssignTask, CancelTask, CompleteTask}
-  alias Core.Events.{TaskCreated, TaskAssigned, TaskUnAssigned, TaskCancelled, TaskCompleted}
+  alias Core.Commands.{CreateTask, AssignTask, UnAssignTask, CancelTask, CompleteTask, FailTask}
+  alias Core.Events.{TaskCreated, TaskAssigned, TaskUnAssigned, TaskCancelled, TaskCompleted, TaskFailed}
 
 
   def execute(%Task{id: nil}, %CreateTask{} = command) do
@@ -91,6 +92,11 @@ defmodule Maestro.Aggregates.Task do
     TaskCompleted.new(Map.put(command, :is_completed, is_completed), causation_id: task.causation_id, date: NaiveDateTime.utc_now())
   end
 
+  def execute(%Task{} = task, %FailTask{} = command) do
+    TaskFailed.new(command, causation_id: task.causation_id, date: NaiveDateTime.utc_now())
+  end
+
+
   defp task_expired?(%NaiveDateTime{} = assigned_at, ttl) do
     if assigned_at == nil, do: false, else: NaiveDateTime.compare(NaiveDateTime.add(NaiveDateTime.utc_now(), -(ttl || 0)), assigned_at) == :gt
   end
@@ -131,6 +137,8 @@ defmodule Maestro.Aggregates.Task do
       is_cancelled: true
     }
   end
+
+  def apply(%Task{} = task, %TaskFailed{} = _event), do: task
 
   def apply(%Task{} = task, %TaskCompleted{} = event) do
     %Task{task |
