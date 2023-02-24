@@ -78,7 +78,10 @@ defmodule MetaStore.Projectors.Transformer do
 
     multi
     |> Ecto.Multi.run(:get_transformer, fn repo, _changes ->
-      {:ok, repo.get(Transformer, transformer.id, prefix: ds_id)}
+      case repo.get(Transformer, transformer.id, prefix: ds_id) do
+        nil -> {:error, :already_deleted}
+        t -> {:ok, t}
+      end
     end)
     |> Ecto.Multi.update(:transformer, fn %{get_transformer: s} ->
       Transformer.changeset(s, %{
@@ -92,7 +95,10 @@ defmodule MetaStore.Projectors.Transformer do
 
     multi
     |> Ecto.Multi.run(:get_transformer, fn repo, _changes ->
-      {:ok, repo.get(Transformer, transformer.id, prefix: ds_id)}
+      case repo.get(Transformer, transformer.id, prefix: ds_id) do
+        nil -> {:error, :already_deleted}
+        t -> {:ok, t}
+      end
     end)
     |> Ecto.Multi.update(:transformer, fn %{get_transformer: s} ->
       Transformer.changeset(s, %{
@@ -108,6 +114,14 @@ defmodule MetaStore.Projectors.Transformer do
     end)
     |> Ecto.Multi.delete(:delete, fn %{get_transformer: s} -> s end)
   end
+
+
+  # Error handlers
+
+  def error({:error, :already_deleted}, _event, _failure_context) do
+    :skip
+  end
+
 
   defp upsert_transformer(multi, transformer, ds_id) do
     multi
