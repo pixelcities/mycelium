@@ -28,8 +28,6 @@ defmodule LiaisonServer.Workflows.RelaySecrets do
 
       :ok
     else
-      DynamicSupervisor.terminate_child(LiaisonServer.RelayEventSupervisor, self())
-
       {:error, :disconnect}
     end
   end
