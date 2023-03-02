@@ -14,6 +14,8 @@ defmodule DataStore.Router do
     DatasetLifespan
   }
 
+  middleware Core.Middleware.TagCommand
+
   identify(Dataset, by: :id, prefix: "datasets-")
 
   dispatch(

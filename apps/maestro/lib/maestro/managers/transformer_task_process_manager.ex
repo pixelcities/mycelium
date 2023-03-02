@@ -90,7 +90,8 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
     [
       %CreateDataURI{
         id: pm.id,
-        workspace: pm.transformer.workspace
+        workspace: pm.transformer.workspace,
+        ds: pm.transformer.ds
       },
       %SetTransformerError{
         id: pm.id,

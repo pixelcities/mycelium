@@ -29,13 +29,18 @@ defmodule DataStore.Aggregates.Dataset do
   """
 
   def execute(%Dataset{id: nil}, %CreateDataURI{} = cmd) do
-    data_space = "ds1"
-    workspace = cmd.workspace
-    dataset_id = UUID.uuid4()
+    data_space = cmd.ds
 
-    DataURICreated.new(cmd,
-      uri: "s3://pxc-collection-store/#{data_space}/#{workspace}/#{dataset_id}"
-    )
+    if data_space do
+      workspace = cmd.workspace
+      dataset_id = UUID.uuid4()
+
+      DataURICreated.new(cmd,
+        uri: "s3://pxc-collection-store/#{data_space}/#{workspace}/#{dataset_id}"
+      )
+    else
+      {:error, :invalid_ds}
+    end
   end
 
   def execute(%Dataset{uri: uri}, %RequestTruncateDataset{} = cmd) do

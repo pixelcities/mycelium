@@ -14,8 +14,11 @@ defmodule DataStore do
   @doc """
   Generate a unique dataset URI
   """
-  def request_data_uri(attrs, %{"user_id" => _user_id, "ds_id" => _ds_id} = metadata) do
-    handle_dispatch(CreateDataURI.new(attrs), metadata)
+  def request_data_uri(attrs, %{"user_id" => _user_id, "ds_id" => ds_id} = metadata) do
+    # Ensure that the ds is correct by overwriting it from the metadata
+    command = CreateDataURI.new(Map.put(attrs, "ds", Atom.to_string(ds_id)))
+
+    handle_dispatch(command, metadata)
   end
 
   def delete_dataset(%{"id" => _id} = attrs, %{"user_id" => _user_id, "ds_id" => _ds_id} = metadata) do

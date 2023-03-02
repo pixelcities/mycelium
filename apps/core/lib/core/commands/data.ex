@@ -1,7 +1,8 @@
 defmodule Core.Commands.CreateDataURI do
   use Commanded.Command,
     id: :string,
-    workspace: :string
+    workspace: :string,
+    ds: :string
 
   def handle_validate(changeset) do
     changeset
