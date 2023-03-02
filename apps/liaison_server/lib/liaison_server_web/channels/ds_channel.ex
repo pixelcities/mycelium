@@ -182,7 +182,7 @@ defmodule LiaisonServerWeb.DataSpaceChannel do
     user = socket.assigns.current_user
     ds_id = socket.assigns.current_ds
 
-    with {:ok, :done} <- func.(Map.fetch!(action, "payload"), %{user_id: user.id, ds_id: ds_id}) do
+    with {:ok, :done} <- func.(Map.fetch!(action, "payload"), %{"user_id" => user.id, "ds_id" => ds_id}) do
       {:noreply, socket}
     else
       err -> {:stop, err, socket}

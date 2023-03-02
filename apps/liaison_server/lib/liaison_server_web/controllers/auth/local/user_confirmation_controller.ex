@@ -31,16 +31,16 @@ defmodule LiaisonServerWeb.Auth.Local.UserConfirmationController do
         config = Application.get_env(:key_x, KeyX.TrialAgent)
 
         # Invite the user to the trial dataspace
-        with ds <- Tenants.get_data_space_by_handle(:ds1),
+        with ds <- Tenants.get_data_space_by_handle(:trial),
              trial_user <- Accounts.get_user_by_email(config[:email]),
              _ds <- Tenants.invite_to_data_space(ds, trial_user, user)
 
         do
           # Share the metadata key
-          TrialAgent.share_manifest_key(user, :ds1)
+          TrialAgent.share_manifest_key(user, :trial)
 
           # TODO: Do not create the user in the ds unless the invite is accepted
-          Landlord.create_user(Map.from_struct(user), %{user_id: user.id, ds_id: :ds1})
+          Landlord.create_user(Map.from_struct(user), %{"user_id" => user.id, "ds_id" => :trial})
         end
 
         json(conn, %{status: "ok"})

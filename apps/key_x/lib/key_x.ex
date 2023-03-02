@@ -11,7 +11,7 @@ defmodule KeyX do
   @doc """
   Forward a secret
   """
-  def share_secret(attrs, %{user_id: _user_id, ds_id: ds_id} = metadata) do
+  def share_secret(attrs, %{"user_id" => _user_id, "ds_id" => ds_id} = metadata) do
     share_secret =
       attrs
       |> ShareSecret.new()

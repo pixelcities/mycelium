@@ -75,8 +75,14 @@ defmodule Maestro.Allocator do
   def handle_call(:clean, _from, workers) do
     all = :ets.tab2list(workers)
 
-    live_workers = Enum.map(all, fn {worker_id, _meta} -> worker_id end)
-    clean_tasks(live_workers, :ds1)
+    live_workers = Enum.group_by(all,
+      fn {_worker_id, meta} -> Map.get(meta, :ds_id) end,
+      fn {worker_id, _meta} -> worker_id end
+    )
+
+    Enum.each(live_workers, fn {ds_id, user_ids} ->
+      clean_tasks(user_ids, ds_id)
+    end)
 
     {:reply, :ok, workers}
   end
@@ -123,8 +129,8 @@ defmodule Maestro.Allocator do
         }
       }
 
-      Maestro.schedule_task(task, %{ds_id: ds_id})
-      Maestro.assign_task(Map.put(task, :worker, user_id), %{ds_id: ds_id})
+      Maestro.schedule_task(task, %{"ds_id" => ds_id})
+      Maestro.assign_task(Map.put(task, :worker, user_id), %{"ds_id" => ds_id})
     end
   end
 
@@ -139,10 +145,10 @@ defmodule Maestro.Allocator do
           fragments: task.fragments,
           metadata: task.metadata
         }, %{
-          ds_id: ds_id
+          "ds_id" => ds_id
         }) do
           {:error, :task_outdated} ->
-            Maestro.cancel_task(%{id: task.id, is_cancelled: true}, %{ds_id: ds_id})
+            Maestro.cancel_task(%{id: task.id, is_cancelled: true}, %{"ds_id" => ds_id})
 
           {:error, :task_noop} ->
             Logger.debug("Task \"#{task.id}\" for worker \"#{user_id}\" was a noop")
@@ -158,7 +164,7 @@ defmodule Maestro.Allocator do
     Enum.each(Maestro.get_tasks_by_worker(user_id, tenant: ds_id), fn task ->
       Maestro.unassign_task(%{
         id: task.id
-      }, %{ds_id: ds_id})
+      }, %{"ds_id" => ds_id})
     end)
   end
 
@@ -167,7 +173,7 @@ defmodule Maestro.Allocator do
       if task.worker not in workers do
         Maestro.unassign_task(%{
           id: task.id
-        }, %{ds_id: ds_id})
+        }, %{"ds_id" => ds_id})
       end
     end)
   end

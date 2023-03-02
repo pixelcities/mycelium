@@ -62,21 +62,19 @@ defmodule ContentServer do
 
   ## Commands
 
-  def create_page(attrs, %{user_id: _user_id} = metadata) do
+  def create_page(attrs, %{"user_id" => _user_id} = metadata) do
     handle_dispatch(CreatePage.new(attrs), metadata)
   end
 
-  def update_page(attrs, %{user_id: _user_id} = metadata) do
+  def update_page(attrs, %{"user_id" => _user_id} = metadata) do
     handle_dispatch(UpdatePage.new(attrs), metadata)
   end
 
-  def set_page_order(attrs, %{user_id: _user_id} = metadata) do
+  def set_page_order(attrs, %{"user_id" => _user_id} = metadata) do
     handle_dispatch(SetPageOrder.new(attrs), metadata)
   end
 
-  def delete_page(%{"id" => id} = attrs, %{user_id: _user_id} = metadata) do
-    ds_id = Map.get(metadata, :ds_id, :ds1)
-
+  def delete_page(%{"id" => id} = attrs, %{"user_id" => _user_id, "ds_id" => ds_id} = metadata) do
     page = get_page!(id, tenant: ds_id)
 
     delete_content_cmds = Enum.map(page.content, fn c -> DeleteContent.new(%{:id => c.id, :workspace => c.workspace}) end)
@@ -99,20 +97,19 @@ defmodule ContentServer do
   User content can either be static or reference a widget.
   In both cases, the content will be served by ContentServerWeb.
   """
-  def create_content(attrs, %{user_id: _user_id} = metadata) do
+  def create_content(attrs, %{"user_id" => _user_id} = metadata) do
     handle_dispatch(CreateContent.new(attrs), metadata)
   end
 
-  def update_content(attrs, %{user_id: _user_id} = metadata) do
+  def update_content(attrs, %{"user_id" => _user_id} = metadata) do
     handle_dispatch(UpdateContent.new(attrs), metadata)
   end
 
-  def update_content_draft(attrs, %{user_id: _user_id} = metadata) do
+  def update_content_draft(attrs, %{"user_id" => _user_id} = metadata) do
     handle_dispatch(UpdateContentDraft.new(attrs), metadata)
   end
 
-  def delete_content(%{"id" => id} = attrs, %{user_id: _user_id} = metadata) do
-    ds_id = Map.get(metadata, :ds_id, :ds1)
+  def delete_content(%{"id" => id} = attrs, %{"user_id" => _user_id, "ds_id" => ds_id} = metadata) do
     content = get_content!(id, tenant: ds_id)
     page = get_page!(content.page_id, tenant: ds_id)
 
@@ -124,9 +121,7 @@ defmodule ContentServer do
     handle_dispatch(DeleteContent.new(attrs), metadata)
   end
 
-  defp handle_dispatch(command, metadata) do
-    ds_id = Map.get(metadata, :ds_id, :ds1)
-
+  defp handle_dispatch(command, %{"ds_id" => ds_id} = metadata) do
     with :ok <- @app.validate_and_dispatch(command, consistency: :strong, application: Module.concat(@app, ds_id), metadata: metadata) do
       {:ok, :done}
     else

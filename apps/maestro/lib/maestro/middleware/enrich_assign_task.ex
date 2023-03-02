@@ -7,9 +7,7 @@ defimpl Core.Middleware.CommandEnrichment, for: Core.Commands.AssignTask do
   @doc """
   Enrich transformer task commands with the right fragments for this user
   """
-  def enrich(%AssignTask{} = command, metadata) do
-    ds_id = Map.get(metadata, "ds_id")
-
+  def enrich(%AssignTask{} = command, %{"ds_id" => ds_id} = metadata) do
     case command.type do
       "transformer" ->
         transformer_id = Map.get(command.task, "transformer_id")

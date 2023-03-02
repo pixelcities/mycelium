@@ -59,7 +59,7 @@ defmodule LiaisonServerWeb.Users.UserProfileController do
         Enum.each(Tenants.get_data_spaces_by_user(user), fn ds ->
           {:ok, ds_id} = Tenants.to_atom(user, ds.handle)
 
-          Landlord.update_user(Map.from_struct(user), %{user_id: user.id, ds_id: ds_id})
+          Landlord.update_user(Map.from_struct(user), %{"user_id" => user.id, "ds_id" => ds_id})
         end)
 
         json(conn, %{

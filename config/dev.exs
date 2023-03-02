@@ -1,5 +1,8 @@
 import Config
 
+config :logger,
+  level: :info
+
 config :ex_aws,
   secret_access_key: [{:awscli, "mycelium", 30}],
   access_key_id: [{:awscli, "mycelium", 30}],

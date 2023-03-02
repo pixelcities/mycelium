@@ -63,8 +63,8 @@ defmodule KeyX.TrialAgent do
       receiver: receiver.id,
       ciphertext: ciphertext
     }, %{
-      user_id: user.id,
-      ds_id: ds_id
+      "user_id" => user.id,
+      "ds_id" => ds_id
     })
   end
 end

@@ -165,8 +165,8 @@ defmodule MetaStore do
   A source is just a shell that inits a source by creating a
   data URI, exchanging shares, etc.
   """
-  def create_source(attrs, %{user_id: _user_id} = metadata) do
-    handle = Atom.to_string(Map.get(metadata, :ds_id, :ds1))
+  def create_source(attrs, %{"user_id" => _user_id, "ds_id" => ds_id} = metadata) do
+    handle = Atom.to_string(ds_id)
 
     create_source =
       attrs
@@ -181,11 +181,11 @@ defmodule MetaStore do
 
   Only the source id is required, any additional fields are upserted
   """
-  def update_source(attrs, %{user_id: _user_id} = metadata) do
+  def update_source(attrs, %{"user_id" => _user_id} = metadata) do
     handle_dispatch(UpdateSource.new(attrs), metadata)
   end
 
-  def delete_source(attrs, %{user_id: _user_id} = metadata) do
+  def delete_source(attrs, %{"user_id" => _user_id} = metadata) do
     handle_dispatch(DeleteSource.new(attrs), metadata)
   end
 
@@ -195,52 +195,50 @@ defmodule MetaStore do
   Metadata is for clients only. It consists of a key with an encrypted value that is shared across
   the workspace.
   """
-  def create_metadata(attrs, %{user_id: _user_id} = metadata) do
+  def create_metadata(attrs, %{"user_id" => _user_id} = metadata) do
     handle_dispatch(CreateMetadata.new(attrs), metadata)
   end
 
   @doc """
   Update the metadata
   """
-  def update_metadata(attrs, %{user_id: _user_id} = metadata) do
+  def update_metadata(attrs, %{"user_id" => _user_id} = metadata) do
     handle_dispatch(UpdateMetadata.new(attrs), metadata)
   end
 
-  def create_concept(attrs, %{user_id: _user_id} = metadata) do
+  def create_concept(attrs, %{"user_id" => _user_id} = metadata) do
     handle_dispatch(CreateConcept.new(attrs), metadata)
   end
 
-  def update_concept(attrs, %{user_id: _user_id} = metadata) do
+  def update_concept(attrs, %{"user_id" => _user_id} = metadata) do
     handle_dispatch(UpdateConcept.new(attrs), metadata)
   end
 
-  def create_collection(attrs, %{user_id: _user_id} = metadata) do
+  def create_collection(attrs, %{"user_id" => _user_id} = metadata) do
     handle_dispatch(CreateCollection.new(attrs), metadata)
   end
 
-  def update_collection(attrs, %{user_id: _user_id} = metadata) do
+  def update_collection(attrs, %{"user_id" => _user_id} = metadata) do
     handle_dispatch(UpdateCollection.new(attrs), metadata)
   end
 
-  def update_collection_schema(attrs, %{user_id: _user_id} = metadata) do
+  def update_collection_schema(attrs, %{"user_id" => _user_id} = metadata) do
     handle_dispatch(UpdateCollectionSchema.new(attrs), metadata)
   end
 
-  def set_collection_color(attrs, %{user_id: _user_id} = metadata) do
+  def set_collection_color(attrs, %{"user_id" => _user_id} = metadata) do
     handle_dispatch(SetCollectionColor.new(attrs), metadata)
   end
 
-  def set_collection_position(attrs, %{user_id: _user_id} = metadata) do
+  def set_collection_position(attrs, %{"user_id" => _user_id} = metadata) do
     handle_dispatch(SetCollectionPosition.new(attrs), metadata)
   end
 
-  def set_collection_is_ready(attrs, %{user_id: _user_id} = metadata) do
+  def set_collection_is_ready(attrs, %{"user_id" => _user_id} = metadata) do
     handle_dispatch(SetCollectionIsReady.new(attrs), metadata)
   end
 
-  def add_collection_target(%{"id" => id, "workspace" => _workspace, "target" => target} = attrs, %{user_id: _user_id} = metadata) do
-    ds_id = Map.get(metadata, :ds_id, :ds1)
-
+  def add_collection_target(%{"id" => _id, "workspace" => _workspace, "target" => target} = attrs, %{"user_id" => _user_id, "ds_id" => ds_id} = metadata) do
     transformer = MetaStore.get_transformer!(target, tenant: ds_id)
 
     if transformer do
@@ -267,7 +265,7 @@ defmodule MetaStore do
     end
   end
 
-  def remove_collection_target(attrs, %{user_id: _user_id} = metadata) do
+  def remove_collection_target(attrs, %{"user_id" => _user_id} = metadata) do
     handle_dispatch(RemoveCollectionTarget.new(attrs), metadata)
   end
 
@@ -277,8 +275,7 @@ defmodule MetaStore do
   Can only delete source collections, as transformer collections are managed
   by the transformer itself. See: delete_transformer/2
   """
-  def delete_collection(%{"id" => id, "workspace" => _workspace} = attrs, %{user_id: _user_id} = metadata) do
-    ds_id = Map.get(metadata, :ds_id, :ds1)
+  def delete_collection(%{"id" => id, "workspace" => _workspace} = attrs, %{"user_id" => _user_id, "ds_id" => ds_id} = metadata) do
     collection = MetaStore.get_collection!(id, tenant: ds_id)
 
     if collection.type == "source" do
@@ -301,30 +298,29 @@ defmodule MetaStore do
     end
   end
 
-  def create_transformer(attrs, %{user_id: _user_id} = metadata) do
+  def create_transformer(attrs, %{"user_id" => _user_id} = metadata) do
     handle_dispatch(CreateTransformer.new(attrs), metadata)
   end
 
-  def update_transformer(attrs, %{user_id: _user_id} = metadata) do
+  def update_transformer(attrs, %{"user_id" => _user_id} = metadata) do
     handle_dispatch(UpdateTransformer.new(attrs), metadata)
   end
 
-  def set_transformer_position(attrs, %{user_id: _user_id} = metadata) do
+  def set_transformer_position(attrs, %{"user_id" => _user_id} = metadata) do
     handle_dispatch(SetTransformerPosition.new(attrs), metadata)
   end
 
-  def add_transformer_target(attrs, %{user_id: _user_id} = metadata) do
+  def add_transformer_target(attrs, %{"user_id" => _user_id} = metadata) do
     handle_dispatch(AddTransformerTarget.new(attrs), metadata)
   end
 
-  def remove_transformer_target(attrs, %{user_id: _user_id} = metadata) do
+  def remove_transformer_target(attrs, %{"user_id" => _user_id} = metadata) do
     handle_dispatch(RemoveTransformerTarget.new(attrs), metadata)
   end
 
-  def add_transformer_input(attrs, metadata) do
+  def add_transformer_input(attrs, %{"user_id" => _user_id, "ds_id" => ds_id} = metadata) do
     command = AddTransformerInput.new(attrs)
 
-    ds_id = Map.get(metadata, :ds_id, :ds1)
     causation_id = Map.get(metadata, :causation_id, UUID.uuid4())
     correlation_id = Map.get(metadata, :correlation_id, UUID.uuid4())
 
@@ -335,15 +331,15 @@ defmodule MetaStore do
     end
   end
 
-  def update_transformer_wal(attrs, %{user_id: _user_id} = metadata) do
+  def update_transformer_wal(attrs, %{"user_id" => _user_id} = metadata) do
     handle_dispatch(UpdateTransformerWAL.new(attrs), metadata)
   end
 
-  def set_transformer_is_ready(attrs, %{user_id: _user_id} = metadata) do
+  def set_transformer_is_ready(attrs, %{"user_id" => _user_id} = metadata) do
     handle_dispatch(SetTransformerIsReady.new(attrs), metadata)
   end
 
-  def set_transformer_error(attrs, %{user_id: _user_id} = metadata) do
+  def set_transformer_error(attrs, %{"user_id" => _user_id} = metadata) do
     handle_dispatch(SetTransformerError.new(attrs), metadata)
   end
 
@@ -353,51 +349,52 @@ defmodule MetaStore do
   This will delete all the incoming and outgoing connectors, and also
   the resulting collection. Finally the transformer itself is deleted.
   """
-  def delete_transformer(%{"id" => id, "workspace" => workspace} = attrs, %{user_id: _user_id} = metadata) do
-    ds_id = Map.get(metadata, :ds_id, :ds1)
-
+  def delete_transformer(%{"id" => id, "workspace" => workspace} = attrs, %{"user_id" => _user_id, "ds_id" => ds_id} = metadata) do
     transformer = MetaStore.get_transformer!(id, tenant: ds_id)
 
-    incoming_collection_cmds = Enum.map(transformer.collections, fn c -> RemoveCollectionTarget.new(%{:id => c, :workspace => workspace, :target => id}) end)
-    incoming_transformer_cmds = Enum.map(transformer.transformers, fn t -> RemoveTransformerTarget.new(%{:id => t, :workspace => workspace, :target => id}) end)
-    outgoing_collection_cmds = Enum.map(transformer.targets, fn t -> DeleteCollection.new(%{:id => t, :workspace => workspace}) end)
-    delete_self_cmd = DeleteTransformer.new(attrs)
+    if transformer do
+      incoming_collection_cmds = Enum.map(transformer.collections, fn c -> RemoveCollectionTarget.new(%{:id => c, :workspace => workspace, :target => id}) end)
+      incoming_transformer_cmds = Enum.map(transformer.transformers, fn t -> RemoveTransformerTarget.new(%{:id => t, :workspace => workspace, :target => id}) end)
+      outgoing_collection_cmds = Enum.map(transformer.targets, fn t -> DeleteCollection.new(%{:id => t, :workspace => workspace}) end)
+      delete_self_cmd = DeleteTransformer.new(attrs)
 
-    commands = incoming_collection_cmds ++ incoming_transformer_cmds ++ outgoing_collection_cmds ++ [ delete_self_cmd ]
+      commands = incoming_collection_cmds ++ incoming_transformer_cmds ++ outgoing_collection_cmds ++ [ delete_self_cmd ]
 
-    # TODO: Handle rollbacks when an error happens in one of the alter commands
-    Enum.reduce_while(commands, {:ok, :done}, fn command, _acc ->
-      reply = @app.validate_and_dispatch(command, consistency: :strong, application: Module.concat(@app, ds_id), metadata: metadata)
+      # TODO: Handle rollbacks when an error happens in one of the alter commands
+      Enum.reduce_while(commands, {:ok, :done}, fn command, _acc ->
+        reply = @app.validate_and_dispatch(command, consistency: :strong, application: Module.concat(@app, ds_id), metadata: metadata)
 
-      # Also continue on :no_such_target, to recover from bad state
-      if reply == :ok or reply == {:error, :no_such_target} do
-        {:cont, {:ok, :done}}
-      else
-        {:halt, reply}
-      end
-    end)
+        # Also continue on :no_such_target, to recover from bad state
+        if reply == :ok or reply == {:error, :no_such_target} do
+          {:cont, {:ok, :done}}
+        else
+          {:halt, reply}
+        end
+      end)
+    else
+      {:error, :already_deleted}
+    end
   end
 
-  def create_widget(attrs, %{user_id: _user_id} = metadata) do
+  def create_widget(attrs, %{"user_id" => _user_id} = metadata) do
     handle_dispatch(CreateWidget.new(attrs), metadata)
   end
 
-  def update_widget(attrs, %{user_id: _user_id} = metadata) do
+  def update_widget(attrs, %{"user_id" => _user_id} = metadata) do
     handle_dispatch(UpdateWidget.new(attrs), metadata)
   end
 
-  def set_widget_position(attrs, %{user_id: _user_id} = metadata) do
+  def set_widget_position(attrs, %{"user_id" => _user_id} = metadata) do
     handle_dispatch(SetWidgetPosition.new(attrs), metadata)
   end
 
-  def set_widget_is_ready(attrs, %{user_id: _user_id} = metadata) do
+  def set_widget_is_ready(attrs, %{"user_id" => _user_id} = metadata) do
     handle_dispatch(SetWidgetIsReady.new(attrs), metadata)
   end
 
-  def add_widget_input(attrs, metadata) do
+  def add_widget_input(attrs, %{"user_id" => _user_id, "ds_id" => ds_id} = metadata) do
     command = AddWidgetInput.new(attrs)
 
-    ds_id = Map.get(metadata, :ds_id, :ds1)
     causation_id = Map.get(metadata, :causation_id, UUID.uuid4())
     correlation_id = Map.get(metadata, :correlation_id, UUID.uuid4())
 
@@ -408,17 +405,15 @@ defmodule MetaStore do
     end
   end
 
-  def put_widget_setting(attrs, %{user_id: _user_id} = metadata) do
+  def put_widget_setting(attrs, %{"user_id" => _user_id} = metadata) do
     handle_dispatch(PutWidgetSetting.new(attrs), metadata)
   end
 
-  def publish_widget(attrs, %{user_id: _user_id} = metadata) do
+  def publish_widget(attrs, %{"user_id" => _user_id} = metadata) do
     handle_dispatch(PublishWidget.new(attrs), metadata)
   end
 
-  def delete_widget(%{"id" => id, "workspace" => workspace} = attrs, %{user_id: _user_id} = metadata) do
-    ds_id = Map.get(metadata, :ds_id, :ds1)
-
+  def delete_widget(%{"id" => id, "workspace" => workspace} = attrs, %{"user_id" => _user_id, "ds_id" => ds_id} = metadata) do
     widget = MetaStore.get_widget!(id, tenant: ds_id)
 
     incoming_collection_cmd = if widget.collection, do: [RemoveCollectionTarget.new(%{:id => widget.collection, :workspace => workspace, :target => id})], else: []
@@ -436,9 +431,7 @@ defmodule MetaStore do
   end
 
 
-  defp handle_dispatch(command, metadata) do
-    ds_id = Map.get(metadata, :ds_id, :ds1)
-
+  defp handle_dispatch(command, %{"ds_id" => ds_id} = metadata) do
     with :ok <- @app.validate_and_dispatch(command, consistency: :strong, application: Module.concat(@app, ds_id), metadata: metadata) do
       {:ok, :done}
     else
