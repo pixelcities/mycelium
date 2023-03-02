@@ -8,7 +8,7 @@ defmodule Core.Middleware.TagCommand do
   Tag each command with metadata
   """
   def before_dispatch(%Pipeline{} = pipeline) do
-    %Pipeline{command: command, metadata: metadata, correlation_id: correlation_id} = pipeline
+    %Pipeline{metadata: metadata, correlation_id: correlation_id} = pipeline
 
     # Record the event, so that future events may lookup the metadata
     Core.Timeline.record(correlation_id, metadata)
@@ -23,7 +23,7 @@ defmodule Core.Middleware.TagCommand do
       end
 
       pipeline
-      |> assign_metadata("ds_id", :ds1)
+      |> assign_metadata("ds_id", ds_id)
     else
       pipeline
     end
@@ -38,7 +38,7 @@ defmodule Core.Middleware.TagCommand do
   end
 
   # Hacky fallback, extract the ds_id from the commanded application name
-  defp extract_ds_from_application(%{application: application} = pipeline) do
+  defp extract_ds_from_application(%{application: application} = _pipeline) do
     String.to_atom(Enum.at(Module.split(application), -1))
   end
 end
