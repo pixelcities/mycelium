@@ -28,12 +28,6 @@ if config_env() == :prod do
       Please add a 32 byte secret
       """
 
-  invite =
-    System.get_env("INVITE_CODE") ||
-      raise """
-      environment variable INVITE_CODE is missing
-      """
-
   pg_host = System.get_env("PGHOST") || "localhost"
   pg_port = String.to_integer(System.get_env("PGPORT") || "5432")
   pg_user = System.get_env("PGUSER") || "postgres"
@@ -78,9 +72,6 @@ if config_env() == :prod do
     port: pg_port,
     username: pg_user,
     password: pg_password
-
-  config :landlord, Landlord.Accounts,
-    invite_code: invite
 
   config :maestro, Maestro.Repo,
     hostname: pg_host,
