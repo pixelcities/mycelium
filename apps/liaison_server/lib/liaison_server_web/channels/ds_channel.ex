@@ -51,6 +51,9 @@ defmodule LiaisonServerWeb.DataSpaceChannel do
   @impl true
   def handle_in("init", %{"type" => "tasks"}, socket), do: handle_subscribe(LiaisonServer.Workflows.RelayTasks, socket)
 
+  @impl true
+  def handle_in("init", %{"type" => "notifications"}, socket), do: handle_subscribe(LiaisonServer.Workflows.RelayNotifications, socket, true)
+
 
   # Command handlers
 
@@ -177,6 +180,9 @@ defmodule LiaisonServerWeb.DataSpaceChannel do
   @impl true
   def handle_in("action", %{"type" => "DeleteContent"} = action, socket), do: handle_action(&ContentServer.delete_content/2, action, socket)
 
+  @impl true
+  def handle_in("action", %{"type" => "MarkNotificationRead"} = action, socket), do: handle_action(&Landlord.mark_notification_read/2, action, socket)
+
 
   defp handle_action(func, action, socket) do
     user = socket.assigns.current_user
@@ -189,7 +195,6 @@ defmodule LiaisonServerWeb.DataSpaceChannel do
     end
   end
 
-  # TODO: stop on leave channel
   defp handle_subscribe(module, socket, restart \\ false, restart_from \\ 0) do
     user = socket.assigns.current_user
     ds_id = socket.assigns.current_ds
@@ -206,22 +211,22 @@ defmodule LiaisonServerWeb.DataSpaceChannel do
         workspace: "default"
       })
 
+      if restart do
+        case LiaisonServer.EventHistory.replay_from(restart_from, ds_id, user.id) do
+          :ok -> {:reply, :ok, socket}
+          :error -> {:reply, :error, socket}
+        end
+      end
+
     else
       # User event relays can be linked to this process
-      module.start_link(
+      {:ok, _pid} = module.start_link(
         application: app,
         ds_id: ds_id,
         user_id: user.id,
         workspace: "default"
       )
-    end
 
-    if restart do
-      case LiaisonServer.EventHistory.replay_from(restart_from, ds_id, user.id) do
-        :ok -> {:reply, :ok, socket}
-        :error -> {:reply, :error, socket}
-      end
-    else
       {:reply, :ok, socket}
     end
   end

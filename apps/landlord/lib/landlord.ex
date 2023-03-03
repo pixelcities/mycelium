@@ -5,34 +5,29 @@ defmodule Landlord do
 
   @app Landlord.Application.get_app()
 
-  alias Core.Commands.{CreateUser, UpdateUser}
+  alias Core.Commands.{CreateUser, UpdateUser, SendUserNotification, MarkNotificationRead}
 
 
-  @doc """
-  Create a user
-  """
-  def create_user(attrs, %{"user_id" => _user_id, "ds_id" => ds_id} = metadata) do
-    command = CreateUser.new(attrs)
+  def create_user(attrs, %{"user_id" => _user_id, "ds_id" => ds_id} = metadata), do: dispatch(CreateUser.new(attrs), ds_id, metadata)
 
-    with :ok <- @app.validate_and_dispatch(command, consistency: :strong, application: Module.concat(@app, ds_id), metadata: metadata) do
+  def update_user(attrs, %{"user_id" => _user_id, "ds_id" => ds_id} = metadata), do: dispatch(UpdateUser.new(attrs), ds_id, metadata)
+
+  def notify_user(attrs, %{"ds_id" => ds_id} = metadata), do: dispatch(SendUserNotification.new(attrs), ds_id, metadata)
+
+  def mark_notification_read(attrs, %{"ds_id" => ds_id} = metadata) do
+    case dispatch(MarkNotificationRead.new(attrs), ds_id, metadata) do
+      {:ok, :done} -> {:ok, :done}
+      {:error, :notification_does_not_exist} -> {:ok, :done}
+      err -> err
+    end
+  end
+
+  defp dispatch(command, ds_id, metadata) do
+    with :ok <- @app.validate_and_dispatch(command, consistency: :eventual, application: Module.concat(@app, ds_id), metadata: metadata) do
       {:ok, :done}
     else
       reply -> reply
     end
   end
-
-  @doc """
-  Update a user
-  """
-  def update_user(attrs, %{"user_id" => _user_id, "ds_id" => ds_id} = metadata) do
-    command = UpdateUser.new(attrs)
-
-    with :ok <- @app.validate_and_dispatch(command, consistency: :strong, application: Module.concat(@app, ds_id), metadata: metadata) do
-      {:ok, :done}
-    else
-      reply -> reply
-    end
-  end
-
 
 end
