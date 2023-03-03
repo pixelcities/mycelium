@@ -39,8 +39,6 @@ defmodule LiaisonServerWeb.Router do
 
     post "/register", UserRegistrationController, :register_user
     post "/login", UserSessionController, :login_user
-    post "/reset_password", UserResetPasswordController, :reset_user_password
-    put "/reset_password/:token", UserResetPasswordController, :confirm_password_reset
   end
 
   scope "/auth/local", LiaisonServerWeb.Auth.Local do
