@@ -12,11 +12,15 @@ config :cors_plug,
   origin: ["https://datagarden.app"]
 
 
+# Core
 config :core, Core,
   from: [
     scheme: "https",
     host: "datagarden.app"
   ]
+
+config :core, Core.Mailer,
+  adapter: Swoosh.Adapters.ExAwsAmazonSES
 
 
 # LiaisonServer
@@ -87,9 +91,6 @@ config :data_store, :backend_config,
 # Landlord
 config :landlord, :backend_config,
   backend_app: LiaisonServer.App
-
-config :landlord, Landlord.Mailer,
-  adapter: Swoosh.Adapters.ExAwsAmazonSES
 
 config :landlord, Landlord.Repo,
   database: "landlord"

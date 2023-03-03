@@ -1,39 +1,22 @@
 defmodule Landlord.Accounts.UserNotifier do
-  import Swoosh.Email
-
-  alias Landlord.Mailer
-
-  # Delivers the email using the application mailer.
-  defp deliver(recipient, subject, body) do
-    email =
-      new()
-      |> to(recipient)
-      |> from({"PixelCities", "no-reply@pixelcities.io"})
-      |> subject(subject)
-      |> text_body(body)
-
-    with {:ok, _metadata} <- Mailer.deliver(email) do
-      {:ok, email}
-    end
-  end
+  alias Core.Email
 
   @doc """
   Deliver instructions to confirm account.
   """
   def deliver_confirmation_instructions(user, url) do
-    deliver(user.email, "Confirmation instructions", """
+    Email.deliver(user.email, "Confirmation instructions", """
+    <p style="font-size: 1rem; color: #363636;"><br /> Welcome to DataGarden! </p>
 
-    ==============================
+    <p style="font-size: 1rem; color: #363636; padding-bottom: 1rem;"> Please confirm your email address by clicking on the following link: </p>
 
-    Hi #{user.email},
+    <a href="#{url}" style="font-size: 1.25rem; background-color: #3457a6; color: white; cursor: pointer; justify-content: center; padding: calc(.5em - 2px) 1em; text-align: center; white-space: nowrap; align-items: center; border: 2px solid transparent; border-radius: 4px; box-shadow: none; display: inline-flex; height: 2rem; line-height: 1.5; position: relative; vertical-align: top; font-family: sans-serif; margin: 0; font-weight: 400; box-sizing: inherit; user-select: none; text-decoration: none;">
+      Confirm email
+    </a>
 
-    You can confirm your account by visiting the URL below:
+    <p style="font-size: 1rem; color: #363636; padding-top: 1rem;">  If you didn't create an account with us, please ignore this. </p>
 
-    #{url}
-
-    If you didn't create an account with us, please ignore this.
-
-    ==============================
+    <p style="font-size: 1rem; color: #363636; padding-top: 0.25rem;">PixelCities </p>
     """)
   end
 
@@ -41,19 +24,18 @@ defmodule Landlord.Accounts.UserNotifier do
   Deliver instructions to reset a user password.
   """
   def deliver_reset_password_instructions(user, url) do
-    deliver(user.email, "Reset password instructions", """
+    Email.deliver(user.email, "Reset password instructions", """
+    <p style="font-size: 1rem; color: #363636;"><br /> Hi #{user.email}, </p>
 
-    ==============================
+    <p style="font-size: 1rem; color: #363636; padding-bottom: 1rem;"> You can reset your password by clicking the link below: </p>
 
-    Hi #{user.email},
+    <a href="#{url}" style="font-size: 1.25rem; background-color: #3457a6; color: white; cursor: pointer; justify-content: center; padding: calc(.5em - 2px) 1em; text-align: center; white-space: nowrap; align-items: center; border: 2px solid transparent; border-radius: 4px; box-shadow: none; display: inline-flex; height: 2rem; line-height: 1.5; position: relative; vertical-align: top; font-family: sans-serif; margin: 0; font-weight: 400; box-sizing: inherit; user-select: none; text-decoration: none;">
+      Reset password
+    </a>
 
-    You can reset your password by visiting the URL below:
+    <p style="font-size: 1rem; color: #363636; padding-top: 1rem;">  If you didn't request this change, please ignore this. </p>
 
-    #{url}
-
-    If you didn't request this change, please ignore this.
-
-    ==============================
+    <p style="font-size: 1rem; color: #363636; padding-top: 0.25rem;">PixelCities </p>
     """)
   end
 
@@ -61,19 +43,18 @@ defmodule Landlord.Accounts.UserNotifier do
   Deliver instructions to update a user email.
   """
   def deliver_update_email_instructions(user, url) do
-    deliver(user.email, "Update email instructions", """
+    Email.deliver(user.email, "Update email instructions", """
+    <p style="font-size: 1rem; color: #363636;"><br /> Hi #{user.email}, </p>
 
-    ==============================
+    <p style="font-size: 1rem; color: #363636; padding-bottom: 1rem;"> You can change your email by clicking the link below: </p>
 
-    Hi #{user.email},
+    <a href="#{url}" style="font-size: 1.25rem; background-color: #3457a6; color: white; cursor: pointer; justify-content: center; padding: calc(.5em - 2px) 1em; text-align: center; white-space: nowrap; align-items: center; border: 2px solid transparent; border-radius: 4px; box-shadow: none; display: inline-flex; height: 2rem; line-height: 1.5; position: relative; vertical-align: top; font-family: sans-serif; margin: 0; font-weight: 400; box-sizing: inherit; user-select: none; text-decoration: none;">
+      Change email
+    </a>
 
-    You can change your email by visiting the URL below:
+    <p style="font-size: 1rem; color: #363636; padding-top: 1rem;">  If you didn't request this change, please ignore this. </p>
 
-    #{url}
-
-    If you didn't request this change, please ignore this.
-
-    ==============================
+    <p style="font-size: 1rem; color: #363636; padding-top: 0.25rem;">PixelCities </p>
     """)
   end
 end

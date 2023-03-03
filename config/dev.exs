@@ -15,12 +15,16 @@ config :cors_plug,
   origin: ["http://localhost:3000"]
 
 
+# Core
 config :core, Core,
   from: [
     scheme: "http",
     host: "localhost",
     port: 3000
   ]
+
+config :core, Core.Mailer,
+  adapter: Swoosh.Adapters.Local
 
 
 # LiaisonServer
@@ -106,9 +110,6 @@ config :data_store, :backend_config,
 # Landlord
 config :landlord, :backend_config,
   backend_app: LiaisonServer.App
-
-config :landlord, Landlord.Mailer,
-  adapter: Swoosh.Adapters.Local
 
 config :landlord, Landlord.Repo,
   database: "landlord",
