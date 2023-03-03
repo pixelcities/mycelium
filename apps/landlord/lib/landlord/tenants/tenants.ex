@@ -103,13 +103,22 @@ defmodule Landlord.Tenants do
 
   Collaborators may be invited using invite_to_data_space/4.
   """
-  def create_data_space(%User{} = user, %{key_id: _key_id} = attrs) do
+  def create_data_space(%User{} = user, %{key_id: _key_id} = attrs, opts \\ []) do
+    user_create = Keyword.get(opts, :user_create, false)
+
     {:ok, data_space} = %DataSpace{}
     |> DataSpace.changeset(attrs)
     |> Ecto.Changeset.put_assoc(:users, [user])
     |> Repo.insert()
 
-    Landlord.Registry.dispatch(String.to_atom(data_space.handle))
+    # Verified by the DataSpace changeset
+    handle = String.to_atom(data_space.handle)
+
+    Landlord.Registry.dispatch(handle)
+
+    if user_create do
+      Landlord.create_user(Map.from_struct(user), %{"user_id" => user.id, "ds_id" => handle})
+    end
   end
 
   @doc """

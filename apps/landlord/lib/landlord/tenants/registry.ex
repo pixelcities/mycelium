@@ -14,8 +14,10 @@ defmodule Landlord.Registry do
     }
   end
 
-  def dispatch(application) when is_atom(application) do
-    Registry.dispatch(__MODULE__, "start", fn entries ->
+  def dispatch(application, opts \\ []) when is_atom(application) do
+    mode = Keyword.get(opts, :mode, "start")
+
+    Registry.dispatch(__MODULE__, mode, fn entries ->
       entries
       |> Enum.sort_by(fn {_pid, {weight, _module, _function}} -> weight end)
       |> Enum.each(fn {_pid, {_weight, module, function}} ->
