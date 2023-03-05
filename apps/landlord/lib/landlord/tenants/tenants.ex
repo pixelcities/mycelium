@@ -13,7 +13,7 @@ defmodule Landlord.Tenants do
 
   alias Landlord.Repo
   alias Landlord.Accounts.User
-  alias Landlord.Tenants.DataSpace
+  alias Landlord.Tenants.{DataSpace, DataSpaceUser}
 
   ## Database getters
 
@@ -55,6 +55,18 @@ defmodule Landlord.Tenants do
       join: u in assoc(d, :users),
       where: u.id == ^user.id
     )
+  end
+
+  @doc """
+  Get data space role for given user
+  """
+  def get_data_space_role(user, data_space) do
+    case Repo.one(from d in DataSpaceUser,
+      where: d.data_space_id == ^data_space.id and d.user_id == ^user.id
+    ) do
+      nil -> {:error, nil}
+      data_space_user -> {:ok, data_space_user.role}
+    end
   end
 
   @doc """
@@ -108,7 +120,7 @@ defmodule Landlord.Tenants do
 
     {:ok, data_space} = %DataSpace{}
     |> DataSpace.changeset(attrs)
-    |> Ecto.Changeset.put_assoc(:users, [user])
+    |> Ecto.Changeset.put_assoc(:data_spaces__users, [%{user: user, role: "owner"}])
     |> Repo.insert()
 
     # Verified by the DataSpace changeset
@@ -117,7 +129,7 @@ defmodule Landlord.Tenants do
     Landlord.Registry.dispatch(handle)
 
     if user_create do
-      Landlord.create_user(Map.from_struct(user), %{"user_id" => user.id, "ds_id" => handle})
+      Landlord.create_user(Map.put(Map.from_struct(user), :role, "owner"), %{"user_id" => user.id, "ds_id" => handle})
     end
   end
 
@@ -135,7 +147,7 @@ defmodule Landlord.Tenants do
       data_space
       |> Repo.preload(:users)
       |> Ecto.Changeset.change()
-      |> Ecto.Changeset.put_assoc(:users, users ++ [invitee])
+      |> Ecto.Changeset.put_assoc(:data_spaces__users, users ++ [%{user: invitee, role: "collaborator"}])
       |> Repo.update!
     end
   end
