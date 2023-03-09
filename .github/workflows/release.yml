@@ -14,9 +14,7 @@ jobs:
         with:
           submodules: recursive
       - name: Build docker image
-        run: |
-          echo $NPM_TOKEN | wc -c
-          docker build . --build-arg GITHUB_NPM_TOKEN=$NPM_TOKEN -f Dockerfile -t mycelium-$GITHUB_REF_NAME
+        run: docker build . --build-arg GITHUB_NPM_TOKEN=$NPM_TOKEN -f Dockerfile -t mycelium-$GITHUB_REF_NAME
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: Extract artifact
