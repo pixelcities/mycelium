@@ -1,0 +1,26 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Build docker image
+        run: docker build . -f Dockerfile -t mycelium-$GITHUB_REF_NAME
+      - name: Extract artifact
+        run: |
+          export IMAGE_ID=$(docker create mycelium-$GITHUB_REF_NAME)
+          docker cp $IMAGE_ID:/srv ./srv
+          docker rm $IMAGE_ID
+          tar czf mycelium-$GITHUB_REF_NAME.tar.gz -C srv .
+      - name: Publish release
+        run: gh release create mycelium-$GITHUB_REF_NAME.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

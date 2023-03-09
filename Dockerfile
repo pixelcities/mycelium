@@ -1,77 +1,66 @@
-ARG ELIXIR_VERSION=1.13.4
-ARG OTP_VERSION=24.3.4.1
-ARG DEBIAN_VERSION=bullseye
-ARG DEBIAN_BUILD=20210902
+ARG ELIXIR_VERSION=1.14.3
+ARG OTP_VERSION=24.3.4.9
+ARG ALPINE_VERSION=3.17
+ARG ALPINE_PATCH=2
 
-ARG BUILDER_IMAGE="hexpm/elixir:${ELIXIR_VERSION}-erlang-${OTP_VERSION}-debian-${DEBIAN_VERSION}-${DEBIAN_BUILD}-slim"
-ARG RUNNER_IMAGE="debian:${DEBIAN_VERSION}"
+ARG BUILDER_IMAGE="hexpm/elixir:${ELIXIR_VERSION}-erlang-${OTP_VERSION}-alpine-${ALPINE_VERSION}.${ALPINE_PATCH}"
+ARG RUNNER_IMAGE="alpine:${ALPINE_VERSION}.${ALPINE_PATCH}"
 
-FROM rust:slim-${DEBIAN_VERSION} as RUST
+FROM rust:alpine${ALPINE_VERSION} as RUST
 FROM ${BUILDER_IMAGE} as BUILDER
 
-# install build dependencies
-RUN apt-get update -y && apt-get install -y build-essential git nodejs \
-    && apt-get clean && rm -f /var/lib/apt/lists/*_*
-
-# prepare build dir
-WORKDIR /srv
-
 ENV MIX_ENV="prod"
-
-# setup and transfer rustup and cargo
 ENV RUSTUP_HOME=/usr/local/rustup \
     CARGO_HOME=/usr/local/cargo \
     PATH=/usr/local/cargo/bin:$PATH
 
+WORKDIR /srv
+
+RUN apk update && \
+    apk add build-base protobuf-dev curl inotify-tools nodejs npm && \
+    npm install -g sass
+
 COPY --from=RUST /usr/local/cargo /usr/local/cargo
 COPY --from=RUST /usr/local/rustup /usr/local/rustup
 
-# install hex + rebar
+# Install hex + rebar
 RUN rm -Rf _build && \
     mix local.hex --force && \
     mix local.rebar --force
 
-# install mix dependencies
+# Install mix dependencies
 COPY mix.exs mix.lock ./
 COPY apps apps
-
 RUN mix deps.get
+
 RUN mkdir config
-
-# copy compile-time config files before we compile dependencies
 COPY config/config.exs config/${MIX_ENV}.exs config/
-
-# compile assets
-RUN cd apps/content_server && mix assets.deploy
-
-RUN mix compile
-
-# Changes to config/runtime.exs don't require recompiling the code
 COPY config/runtime.exs config/
 
-RUN mix release
+# Compile
+RUN mkdir _build && ln -s /usr/local/bin/sass /srv/_build/sass-linux-x64 # Fix sass on alpine
+RUN cd apps/content_server && mix assets.deploy
+RUN RUSTFLAGS="-C target-feature=-crt-static" mix compile
 
-# start a new build stage so that the final image will only contain
-# the compiled release and other runtime necessities
+# Create release
+RUN mix release && \
+    rm /srv/_build/${MIX_ENV}/rel/mycelium/releases/COOKIE # Force the use of RELEASE_COOKIE
+
+#---
 FROM ${RUNNER_IMAGE}
 
-RUN apt-get update -y && apt-get install -y libstdc++6 openssl libncurses5 locales \
-  && apt-get clean && rm -f /var/lib/apt/lists/*_*
-
-# Set the locale
-RUN sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && locale-gen
+RUN apk update && \
+    apk add --no-cache libstdc++ openssl ncurses-libs musl-locales
 
 ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
 
+ENV MIX_ENV="prod"
+
 WORKDIR "/srv"
 RUN chown nobody /srv
 
-# set runner ENV
-ENV MIX_ENV="prod"
-
-# Only copy the final release from the build stage
 COPY --from=BUILDER --chown=nobody:root /srv/_build/${MIX_ENV}/rel/mycelium ./
 
 USER nobody
