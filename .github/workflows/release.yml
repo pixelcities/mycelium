@@ -11,8 +11,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+        with:
+          submodules: recursive
       - name: Build docker image
-        run: docker build . -f Dockerfile -t mycelium-$GITHUB_REF_NAME
+        run: docker build . --build-arg GITHUB_NPM_TOKEN=$NPM_TOKEN -f Dockerfile -t mycelium-$GITHUB_REF_NAME
       - name: Extract artifact
         run: |
           export IMAGE_ID=$(docker create mycelium-$GITHUB_REF_NAME)

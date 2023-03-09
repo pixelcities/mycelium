@@ -1,3 +1,5 @@
+ARG GITHUB_NPM_TOKEN
+
 ARG ELIXIR_VERSION=1.14.3
 ARG OTP_VERSION=24.3.4.9
 ARG ALPINE_VERSION=3.17
@@ -38,9 +40,12 @@ COPY config/config.exs config/${MIX_ENV}.exs config/
 COPY config/runtime.exs config/
 
 # Compile
-RUN mkdir _build && ln -s /usr/local/bin/sass /srv/_build/sass-linux-x64 # Fix sass on alpine
-RUN cd apps/content_server && mix assets.deploy
 RUN RUSTFLAGS="-C target-feature=-crt-static" mix compile
+RUN ln -s /usr/local/bin/sass /srv/_build/sass-linux-x64 # Fix sass on alpine
+RUN cd apps/content_server && \
+    echo '//npm.pkg.github.com/:_authToken=${GITHUB_NPM_TOKEN}' >> assets/.npmrc && \
+    mix setup && \
+    mix assets.deploy
 
 # Create release
 RUN mix release && \

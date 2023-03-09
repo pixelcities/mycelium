@@ -51,7 +51,7 @@ defmodule ContentServer.MixProject do
 
   defp aliases do
     [
-      setup: ["deps.get", "ecto.setup", "cmd --cd assets npm install"],
+      setup: ["deps.get", "cmd --cd assets npm install"],
       "assets.deploy": [
         "cmd --cd assets node build.js --deploy",
         "sass default --no-source-map --style=compressed",
