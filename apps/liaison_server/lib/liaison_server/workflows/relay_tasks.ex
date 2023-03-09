@@ -1,7 +1,7 @@
 defmodule LiaisonServer.Workflows.RelayTasks do
   use Commanded.Event.Handler,
     consistency: :eventual,
-    start_from: :origin
+    start_from: :current
 
   alias Core.Events.{
     TaskAssigned,
