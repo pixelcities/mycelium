@@ -1,4 +1,4 @@
-name: release
+name: Create Release
 
 on:
   push:
@@ -24,7 +24,7 @@ jobs:
           docker rm $IMAGE_ID
           tar czf mycelium-$GITHUB_REF_NAME.tar.gz -C srv .
       - name: Publish release
-        run: gh release create mycelium-$GITHUB_REF_NAME.tar.gz
+        run: gh release create $GITHUB_REF_NAME mycelium-$GITHUB_REF_NAME.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
