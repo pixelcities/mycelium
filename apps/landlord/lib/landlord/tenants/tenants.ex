@@ -142,7 +142,7 @@ defmodule Landlord.Tenants do
     if not is_member?(data_space, user) || is_member?(data_space, invitee) do
       {:error, :invalid_membership}
     else
-      users = Repo.all(from u in User, join: d in assoc(u, :data_spaces))
+      users = Repo.all(from u in DataSpaceUser, where: u.data_space_id == ^data_space.id)
 
       data_space
       |> Repo.preload(:users)
