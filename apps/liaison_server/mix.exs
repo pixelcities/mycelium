@@ -32,6 +32,7 @@ defmodule LiaisonServer.MixProject do
       {:eventstore, "~> 1.3"},
       {:jason, "~> 1.3"},
       {:phoenix, "~> 1.6"},
+      {:phoenix_html, "~> 3.0"},
       {:plug_cowboy, "~> 2.5"},
       {:cors_plug, "~> 2.0"},
       {:remote_ip, "~> 1.0.0"},
