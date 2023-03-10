@@ -15,7 +15,7 @@ defmodule Core.Email do
       |> to(recipient)
       |> from({"PixelCities", "no-reply@pixelcities.io"})
       |> subject(subject)
-      |> text_body(render_body(body))
+      |> html_body(render_body(body))
 
     with {:ok, _metadata} <- Core.Mailer.deliver(email) do
       {:ok, email}
