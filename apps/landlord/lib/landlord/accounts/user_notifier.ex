@@ -1,5 +1,5 @@
 defmodule Landlord.Accounts.UserNotifier do
-  alias Core.Email
+  alias Landlord.Email
 
   @doc """
   Deliver instructions to confirm account.

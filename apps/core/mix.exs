@@ -28,13 +28,7 @@ defmodule Core.MixProject do
       {:commanded, "~> 1.4"},
       {:commanded_messaging, "~> 0.2"},
       {:elixir_uuid, "~> 1.2"},
-      {:jason, "~> 1.3"},
-
-      {:swoosh, "~> 1.7"},
-      {:ex_aws, "~> 2.3"},
-      {:sweet_xml, "~> 0.7"},
-      {:hackney, "~> 1.18"},
-      {:gen_smtp, "~> 1.2"}
+      {:jason, "~> 1.3"}
     ]
   end
 end

@@ -16,7 +16,7 @@ jobs:
       - name: Build docker image
         run: docker build . --build-arg GITHUB_NPM_TOKEN=$NPM_TOKEN -f Dockerfile -t mycelium-$GITHUB_REF_NAME
         env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Extract artifact
         run: |
           export IMAGE_ID=$(docker create mycelium-$GITHUB_REF_NAME)

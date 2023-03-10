@@ -36,6 +36,12 @@ defmodule Landlord.MixProject do
       {:jason, "~> 1.3"},
       {:postgrex, "~> 0.16"},
 
+      {:swoosh, "~> 1.7"},
+      {:ex_aws, "~> 2.3"},
+      {:sweet_xml, "~> 0.7"},
+      {:hackney, "~> 1.18"},
+      {:gen_smtp, "~> 1.2"},
+
       {:core, "~> 0.1", in_umbrella: true}
     ]
   end

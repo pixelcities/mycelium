@@ -1,12 +1,12 @@
-defmodule Core.Mailer do
+defmodule Landlord.Mailer do
   @moduledoc """
   View development emails using `Swoosh.Adapters.Local.Storage.Memory`
   """
 
-  use Swoosh.Mailer, otp_app: :core
+  use Swoosh.Mailer, otp_app: :landlord
 end
 
-defmodule Core.Email do
+defmodule Landlord.Email do
   import Swoosh.Email
 
   def deliver(recipient, subject, body) do
@@ -17,7 +17,7 @@ defmodule Core.Email do
       |> subject(subject)
       |> html_body(render_body(body))
 
-    with {:ok, _metadata} <- Core.Mailer.deliver(email) do
+    with {:ok, _metadata} <- Landlord.Mailer.deliver(email) do
       {:ok, email}
     end
   end

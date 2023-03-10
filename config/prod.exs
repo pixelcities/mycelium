@@ -19,9 +19,6 @@ config :core, Core,
     host: "datagarden.app"
   ]
 
-config :core, Core.Mailer,
-  adapter: Swoosh.Adapters.ExAwsAmazonSES
-
 
 # LiaisonServer
 config :liaison_server, LiaisonServer.EventStore,
@@ -94,6 +91,9 @@ config :landlord, :backend_config,
 
 config :landlord, Landlord.Repo,
   database: "landlord"
+
+config :landlord, Landlord.Mailer,
+  adapter: Swoosh.Adapters.ExAwsAmazonSES
 
 
 # KeyX

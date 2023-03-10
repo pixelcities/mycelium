@@ -23,9 +23,6 @@ config :core, Core,
     port: 3000
   ]
 
-config :core, Core.Mailer,
-  adapter: Swoosh.Adapters.Local
-
 
 # LiaisonServer
 config :liaison_server, LiaisonServer.EventStore,
@@ -115,6 +112,9 @@ config :landlord, Landlord.Repo,
   database: "landlord",
   username: "postgres",
   hostname: "localhost"
+
+config :landlord, Landlord.Mailer,
+  adapter: Swoosh.Adapters.Local
 
 
 # KeyX
