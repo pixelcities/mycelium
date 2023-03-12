@@ -2,36 +2,38 @@ import Config
 
 if config_env() == :prod do
   # Env vars
-  secret_key_base =
-    System.get_env("SECRET_KEY_BASE") ||
-      raise """
-      environment variable SECRET_KEY_BASE is missing.
-      You can generate one by calling: mix phx.gen.secret
-      """
+  secret_key_base = System.get_env("SECRET_KEY_BASE") ||
+    raise """
+    environment variable SECRET_KEY_BASE is missing.
+    You can generate one by calling: mix phx.gen.secret
+    """
 
   host = System.get_env("HOST") || "datagarden.app"
   port = String.to_integer(System.get_env("PORT") || "5000")
 
-  content_secret_key_base =
-    System.get_env("CONTENT_SECRET_KEY_BASE") ||
-      raise """
-      environment variable CONTENT_SECRET_KEY_BASE is missing.
-      """
+  content_secret_key_base = System.get_env("CONTENT_SECRET_KEY_BASE") ||
+    raise """
+    environment variable CONTENT_SECRET_KEY_BASE is missing.
+    """
 
   content_host = System.get_env("CONTENT_HOST") || "datagarden.page"
   content_port = String.to_integer(System.get_env("CONTENT_PORT") || "5001")
 
-  secret_key =
-    System.get_env("SECRET_KEY") ||
-      raise """
-      environment variable SECRET_KEY is missing.
-      Please add a 32 byte secret
-      """
+  secret_key = System.get_env("SECRET_KEY") ||
+    raise """
+    environment variable SECRET_KEY is missing.
+    Please add a 32 byte secret
+    """
 
   pg_host = System.get_env("PGHOST") || "localhost"
   pg_port = String.to_integer(System.get_env("PGPORT") || "5432")
   pg_user = System.get_env("PGUSER") || "postgres"
   pg_password = System.get_env("PGPASSWORD")
+
+  data_store_role_arn = System.get_env("DATA_STORE_ROLE_ARN") ||
+    raise """
+    environment variable DATA_STORE_ROLE_ARN is missing.
+    """
 
 
   # Configs
@@ -84,5 +86,8 @@ if config_env() == :prod do
     port: pg_port,
     username: pg_user,
     password: pg_password
+
+  config :data_store, DataStore.Data,
+    role_arn: data_store_role_arn
 
 end

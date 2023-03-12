@@ -78,11 +78,7 @@ config :data_store, DataStore.App,
 
 config :data_store, DataStore.Data,
   bucket: "pxc-collection-store",
-  restrict_source_ip: false,
-  role_arn: System.get_env("DATA_STORE_ROLE_ARN") ||
-    raise """
-    environment variable SENDGRID_API_KEY is missing.
-    """
+  restrict_source_ip: false
 
 config :data_store, :backend_config,
   backend_app: LiaisonServer.App
