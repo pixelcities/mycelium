@@ -6,7 +6,6 @@ defmodule DataStore.DataTokens do
 
   @config Application.get_env(:data_store, DataStore.Data)
   @bucket @config[:bucket]
-  @role_arn @config[:role_arn]
   @restrict_source_ip @config[:restrict_source_ip]
 
   alias MetaStore
@@ -30,7 +29,9 @@ defmodule DataStore.DataTokens do
         "write" -> write_policy(path)
       end
 
-      query = ExAws.STS.assume_role(@role_arn, user.id,
+      role_arn = Application.get_env(:data_store, DataStore.Data)[:role_arn]
+
+      query = ExAws.STS.assume_role(role_arn, user.id,
         [
           {:duration, 900},
           {:policy, harden_policy(policy, ip)}
