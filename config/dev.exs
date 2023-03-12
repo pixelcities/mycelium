@@ -97,7 +97,6 @@ config :data_store, DataStore.App,
 
 config :data_store, DataStore.Data,
   bucket: "pxc-collection-store",
-  role_arn: "arn:aws:iam::120183265440:role/mycelium-s3-collection-manager",
   restrict_source_ip: false
 
 config :data_store, :backend_config,
