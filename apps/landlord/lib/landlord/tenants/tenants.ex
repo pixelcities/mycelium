@@ -142,13 +142,8 @@ defmodule Landlord.Tenants do
     if not is_member?(data_space, user) || is_member?(data_space, invitee) do
       {:error, :invalid_membership}
     else
-      users = Repo.all(from u in DataSpaceUser, where: u.data_space_id == ^data_space.id)
-
-      data_space
-      |> Repo.preload(:users)
-      |> Ecto.Changeset.change()
-      |> Ecto.Changeset.put_assoc(:data_spaces__users, users ++ [%{user: invitee, role: "collaborator"}])
-      |> Repo.update!
+      %DataSpaceUser{user: invitee, data_space: data_space, role: "collaborator"}
+      |> Repo.insert!()
     end
   end
 
