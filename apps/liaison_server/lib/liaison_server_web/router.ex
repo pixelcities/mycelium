@@ -56,7 +56,7 @@ defmodule LiaisonServerWeb.Router do
     post "/datatokens", UserProfileController, :datatokens
     get "/:id", UserProfileController, :get_user
     put "/profile", UserProfileController, :update_user
-    put "/profile/confirm_email/:token", UserProfileController, :confirm_email
+    put "/profile/confirm_email/:token/:rotation_token", UserProfileController, :confirm_email
   end
 
   ## Data space routes

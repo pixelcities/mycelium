@@ -178,23 +178,24 @@ defmodule Landlord.Accounts do
     context = "change:#{user.email}"
 
     with {:ok, query} <- UserToken.verify_change_email_token_query(token, context),
-         %UserToken{sent_to: email} <- Repo.one(query),
-         {:ok, _} <- Repo.transaction(user_email_multi(user, email, context)) do
-      :ok
+         %UserToken{sent_to: email, extra: %{"hashed_password" => hashed_password}} <- Repo.one(query),
+         {:ok, %{user: updated_user}} <- Repo.transaction(user_email_multi(user, email, hashed_password, context)) do
+      {:ok, updated_user}
     else
-      _ -> :error
+      _ ->
+        :error
     end
   end
 
-  defp user_email_multi(user, email, context) do
+  defp user_email_multi(user, email, hashed_password, context) do
     changeset =
       user
-      |> User.email_changeset(%{email: email})
+      |> User.confirm_email_changeset(%{email: email, hashed_password: hashed_password})
       |> User.confirm_changeset()
 
     Ecto.Multi.new()
     |> Ecto.Multi.update(:user, changeset)
-    |> Ecto.Multi.delete_all(:tokens, UserToken.user_and_contexts_query(user, [context]))
+    |> Ecto.Multi.delete_all(:tokens, UserToken.user_and_contexts_query(user, :all))
   end
 
   @doc """
@@ -208,7 +209,7 @@ defmodule Landlord.Accounts do
   """
   def deliver_update_email_instructions(%User{} = user, current_email, update_email_url_fun)
       when is_function(update_email_url_fun, 1) do
-    {encoded_token, user_token} = UserToken.build_email_token(user, "change:#{current_email}")
+    {encoded_token, user_token} = UserToken.build_email_token(user, "change:#{current_email}", %{hashed_password: user.hashed_password})
 
     Repo.insert!(user_token)
     UserNotifier.deliver_update_email_instructions(user, update_email_url_fun.(encoded_token))

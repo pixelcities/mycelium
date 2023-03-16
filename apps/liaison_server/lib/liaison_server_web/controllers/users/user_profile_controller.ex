@@ -75,19 +75,16 @@ defmodule LiaisonServerWeb.Users.UserProfileController do
 
 
   def update_user(conn, %{"action" => "update_email"} = params) do
-    %{"current_password" => password, "user" => user_params, "rotation_token" => _rotation_token} = params
+    %{"current_password" => password, "user" => user_params, "rotation_token" => rotation_token} = params
     user = conn.assigns.current_user
 
-    # TODO: include rotation token in email instructions
     case Accounts.apply_user_email(user, password, user_params) do
       {:ok, applied_user} ->
         Accounts.deliver_update_email_instructions(
           applied_user,
           user.email,
-          &Routes.user_profile_url(get_external_host(), :confirm_email, &1)
+          &Routes.user_profile_url(get_external_host(), :confirm_email, &1, rotation_token)
         )
-
-        # TODO: omit event
 
         json(conn, %{
           "status" => "ok",
@@ -136,11 +133,17 @@ defmodule LiaisonServerWeb.Users.UserProfileController do
     user = conn.assigns.current_user
 
     case Accounts.update_user_email(user, token) do
-      :ok ->
+      {:ok, user} ->
 
         # Now that the email has been confirmed, also rotate any pending keys
         case KeyStore.commit_rotation(rotation_token, user) do
           {:ok, _} ->
+            Enum.each(Tenants.get_data_spaces_by_user(user), fn ds ->
+              {:ok, ds_id} = Tenants.to_atom(user, ds.handle)
+
+              Landlord.update_user(Map.from_struct(user), %{"user_id" => user.id, "ds_id" => ds_id})
+            end)
+
             json(conn, %{
               "status" => "ok"
             })

@@ -14,6 +14,7 @@ defmodule Landlord.Accounts.UserToken do
     field :token, :binary
     field :context, :string
     field :sent_to, :string
+    field :extra, :map, default: %{}
     belongs_to :user, Landlord.Accounts.User, type: :binary_id
 
     timestamps(updated_at: false)
@@ -74,11 +75,11 @@ defmodule Landlord.Accounts.UserToken do
   Users can easily adapt the existing code to provide other types of delivery methods,
   for example, by phone numbers.
   """
-  def build_email_token(user, context) do
-    build_hashed_token(user, context, user.email)
+  def build_email_token(user, context, extra \\ %{}) do
+    build_hashed_token(user, context, user.email, extra)
   end
 
-  defp build_hashed_token(user, context, sent_to) do
+  defp build_hashed_token(user, context, sent_to, extra) do
     token = :crypto.strong_rand_bytes(@rand_size)
     hashed_token = :crypto.hash(@hash_algorithm, token)
 
@@ -87,6 +88,7 @@ defmodule Landlord.Accounts.UserToken do
        token: hashed_token,
        context: context,
        sent_to: sent_to,
+       extra: extra,
        user_id: user.id
      }}
   end

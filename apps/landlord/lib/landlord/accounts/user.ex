@@ -102,17 +102,36 @@ defmodule Landlord.Accounts.User do
   @doc """
   A user changeset for changing the email.
 
-  It requires the email to change otherwise an error is added.
+  It requires the email to change otherwise an error is added. The
+  email changeset also requires a new password because the email is used
+  as a salt on the client side.
   """
-  def email_changeset(user, attrs) do
+  def email_changeset(user, attrs, opts \\ []) do
     user
-    |> cast(attrs, [:email])
+    |> cast(attrs, [:email, :password])
+    |> validate_email()
+    |> validate_password(opts)
+    |> case do
+      %{changes: %{email: _}} = changeset -> changeset
+      %{} = changeset -> add_error(changeset, :email, "did not change")
+    end
+  end
+
+  @doc """
+  Post confirmation email changeset
+
+  The (hashed) password is expected to already have been validated.
+  """
+  def confirm_email_changeset(user, attrs) do
+    user
+    |> cast(attrs, [:email, :hashed_password])
     |> validate_email()
     |> case do
       %{changes: %{email: _}} = changeset -> changeset
       %{} = changeset -> add_error(changeset, :email, "did not change")
     end
   end
+
 
   @doc """
   A user changeset for changing the password.
