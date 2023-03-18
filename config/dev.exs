@@ -1,7 +1,7 @@
 import Config
 
 config :logger,
-  level: :info
+  level: :debug
 
 config :ex_aws,
   secret_access_key: [{:awscli, "mycelium", 30}],

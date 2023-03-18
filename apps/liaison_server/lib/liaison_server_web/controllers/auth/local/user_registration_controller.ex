@@ -13,14 +13,16 @@ defmodule LiaisonServerWeb.Auth.Local.UserRegistrationController do
   def register_user(conn, %{"user" => user_params}) do
     case Accounts.register_user(user_params) do
       {:ok, user} ->
-        {:ok, _} =
-          Accounts.deliver_user_confirmation_instructions(
-            user,
-            &Routes.user_confirmation_url(get_external_host(), :confirm_registration, &1)
-          )
+        if user.confirmed_at == nil do
+          {:ok, _} =
+            Accounts.deliver_user_confirmation_instructions(
+              user,
+              &Routes.user_confirmation_url(get_external_host(), :confirm_registration, &1)
+            )
+        end
 
         conn
-        |> Auth.log_in_user(user)
+        |> Auth.log_in_user(user, %{}, user)
 
       {:error, %Ecto.Changeset{} = changeset} ->
         errors = changeset_error(changeset)

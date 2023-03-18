@@ -5,7 +5,16 @@ defmodule Landlord do
 
   @app Landlord.Application.get_app()
 
-  alias Core.Commands.{CreateUser, UpdateUser, SendUserNotification, MarkNotificationRead}
+  alias Core.Commands.{
+    CreateUser,
+    UpdateUser,
+    InviteUser,
+    AcceptInvite,
+    ConfirmInvite,
+    CancelInvite,
+    SendUserNotification,
+    MarkNotificationRead
+  }
 
 
   def create_user(attrs, %{"user_id" => _user_id, "ds_id" => ds_id} = metadata), do: dispatch(CreateUser.new(attrs), ds_id, metadata)
@@ -21,6 +30,14 @@ defmodule Landlord do
       err -> err
     end
   end
+
+  def invite_user(attrs, %{"user_id" => _user_id, "ds_id" => ds_id} = metadata), do: dispatch(InviteUser.new(attrs), ds_id, metadata)
+
+  def accept_invite(attrs, %{"user_id" => _user_id, "ds_id" => ds_id} = metadata), do: dispatch(AcceptInvite.new(attrs), ds_id, metadata)
+
+  def confirm_invite(attrs, %{"user_id" => _user_id, "ds_id" => ds_id} = metadata), do: dispatch(ConfirmInvite.new(attrs), ds_id, metadata)
+
+  def cancel_invite(attrs, %{"user_id" => _user_id, "ds_id" => ds_id} = metadata), do: dispatch(CancelInvite.new(attrs), ds_id, metadata)
 
   defp dispatch(command, ds_id, metadata) do
     with :ok <- @app.validate_and_dispatch(command, consistency: :eventual, application: Module.concat(@app, ds_id), metadata: metadata) do

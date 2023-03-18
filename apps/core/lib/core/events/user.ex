@@ -40,3 +40,21 @@ defmodule Core.Events.UserInvited do
     with: [:date]
 end
 
+defmodule Core.Events.InviteAccepted do
+  use Commanded.Event,
+    from: Core.Commands.AcceptInvite,
+    with: [:date]
+end
+
+defmodule Core.Events.InviteConfirmed do
+  use Commanded.Event,
+    from: Core.Commands.ConfirmInvite,
+    with: [:date]
+end
+
+defmodule Core.Events.InviteCancelled do
+  use Commanded.Event,
+    from: Core.Commands.CancelInvite,
+    with: [:date]
+end
+

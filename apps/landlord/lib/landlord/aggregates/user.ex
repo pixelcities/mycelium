@@ -5,39 +5,26 @@ defmodule Landlord.Aggregates.User do
             name: nil,
             picture: nil,
             last_active_at: nil,
-            date: nil,
-            invite_pending: false
+            date: nil
 
   alias Landlord.Aggregates.User
   alias Core.Commands.{
     CreateUser,
     UpdateUser,
-    SetUserActivity,
-    InviteUser
+    SetUserActivity
   }
   alias Core.Events.{
     UserCreated,
     UserUpdated,
-    UserActivitySet,
-    UserInvited
+    UserActivitySet
   }
 
 
-  def execute(%User{id: nil, invite_pending: false}, %CreateUser{} = user) do
-    UserCreated.new(user, date: NaiveDateTime.utc_now())
-  end
-
-  def execute(%User{id: _id, invite_pending: true}, %CreateUser{} = user) do
+  def execute(%User{id: nil}, %CreateUser{} = user) do
     UserCreated.new(user, date: NaiveDateTime.utc_now())
   end
 
   def execute(%User{}, %CreateUser{}), do: {:error, :user_already_created}
-
-  def execute(%User{id: nil, invite_pending: false}, %InviteUser{} = command) do
-    UserInvited.new(command, date: NaiveDateTime.utc_now())
-  end
-
-  def execute(%User{}, %InviteUser{}), do: {:error, :user_already_invited}
 
   def execute(%User{id: _id}, %UpdateUser{} = update) do
     UserUpdated.new(update, date: NaiveDateTime.utc_now())
@@ -61,8 +48,7 @@ defmodule Landlord.Aggregates.User do
       name: event.name,
       picture: event.picture,
       last_active_at: event.last_active_at,
-      date: event.date,
-      invite_pending: false
+      date: event.date
     }
   end
 
@@ -84,16 +70,6 @@ defmodule Landlord.Aggregates.User do
       last_active_at: event.last_active_at,
       date: event.date
     }
-  end
-
-  def apply(%User{} = user, %UserInvited{} = event) do
-    %User{user |
-      id: event.id,
-      email: event.email,
-      role: event.role,
-      date: event.date,
-      invite_pending: true
-  }
   end
 
 end

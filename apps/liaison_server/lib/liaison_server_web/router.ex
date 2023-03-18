@@ -66,6 +66,10 @@ defmodule LiaisonServerWeb.Router do
 
     get "/", DataSpaceController, :list_data_spaces
     get "/:handle", DataSpaceController, :get_data_space
+    post "/:handle/invite", DataSpaceController, :invite_to_data_space
+    post "/:handle/cancel_invite", DataSpaceController, :cancel_invite
+    post "/:handle/confirm_member", DataSpaceController, :confirm_member
+    put "/accept_invite/:token", DataSpaceController, :accept_invite
   end
 
   ## KeyStore routes

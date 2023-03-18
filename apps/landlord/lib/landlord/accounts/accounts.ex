@@ -63,7 +63,10 @@ defmodule Landlord.Accounts do
   ## User registration
 
   @doc """
-  Registers a user.
+  Registers a user with an invite token
+
+  If a valid invite token is included in the request, we can immediatly confirm
+  the user because the invite was sent to the email address already.
 
   ## Examples
 
@@ -72,8 +75,22 @@ defmodule Landlord.Accounts do
 
       iex> register_user(%{field: bad_value})
       {:error, %Ecto.Changeset{}}
-
   """
+  def register_user(%{"invite" => token} = attrs) do
+    case %User{}
+      |> User.registration_changeset(attrs)
+      |> Repo.insert()
+    do
+      {:ok, user} ->
+        case Landlord.Tenants.accept_invite(user, token) do
+          {:ok, _} -> Repo.update(User.confirm_changeset(user))
+          _ -> {:ok, user} # Fallback to a "normal" registration
+        end
+
+      err -> err
+    end
+  end
+
   def register_user(attrs) do
     %User{}
     |> User.registration_changeset(attrs)
@@ -179,7 +196,7 @@ defmodule Landlord.Accounts do
 
     with {:ok, query} <- UserToken.verify_change_email_token_query(token, context),
          %UserToken{sent_to: email, extra: %{"hashed_password" => hashed_password}} <- Repo.one(query),
-         {:ok, %{user: updated_user}} <- Repo.transaction(user_email_multi(user, email, hashed_password, context)) do
+         {:ok, %{user: updated_user}} <- Repo.transaction(user_email_multi(user, email, hashed_password)) do
       {:ok, updated_user}
     else
       _ ->
@@ -187,7 +204,7 @@ defmodule Landlord.Accounts do
     end
   end
 
-  defp user_email_multi(user, email, hashed_password, context) do
+  defp user_email_multi(user, email, hashed_password) do
     changeset =
       user
       |> User.confirm_email_changeset(%{email: email, hashed_password: hashed_password})
