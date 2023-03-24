@@ -5,7 +5,7 @@ defmodule LiaisonServerWeb.Router do
 
   pipeline :common do
     plug RemoteIp,
-      headers: ~w[x-real-ip]
+      headers: ~w[x-forwarded-for]
     plug :fetch_session
     plug :put_secure_browser_headers
     plug :fetch_current_user
@@ -14,11 +14,13 @@ defmodule LiaisonServerWeb.Router do
   pipeline :auth do
     plug :common
     plug :accepts, ["json"]
+    plug :put_format, "json"
   end
 
   pipeline :api do
     plug :common
     plug :accepts, ["json"]
+    plug :put_format, "json"
     plug :protect_from_forgery
   end
 

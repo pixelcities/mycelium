@@ -9,6 +9,7 @@ config :hammer,
 config :liaison_server, event_stores: [LiaisonServer.EventStore]
 config :liaison_server, LiaisonServerWeb.Endpoint,
   url: [host: "localhost"],
+  render_errors: [view: LiaisonServerWeb.ErrorView, accepts: ~w(json), layout: false],
   pubsub_server: LiaisonServer.PubSub
 
 config :content_server, event_stores: [ContentServer.EventStore]
