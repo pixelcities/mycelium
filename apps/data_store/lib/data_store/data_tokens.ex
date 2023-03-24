@@ -4,6 +4,8 @@ defmodule DataStore.DataTokens do
 
   """
 
+  require Logger
+
   @config Application.get_env(:data_store, DataStore.Data)
   @bucket @config[:bucket]
   @restrict_source_ip @config[:restrict_source_ip]
@@ -37,13 +39,20 @@ defmodule DataStore.DataTokens do
           {:policy, harden_policy(policy, ip)}
         ]
       )
-      {:ok, %{body: body}} = ExAws.request(query)
 
-      {:ok, %{
-        "access_key" => body.access_key_id,
-        "secret_key" => body.secret_access_key,
-        "session_token" => body.session_token
-      }}
+      case ExAws.request(query) do
+        {:ok, %{body: body}} ->
+          {:ok, %{
+            "access_key" => body.access_key_id,
+            "secret_key" => body.secret_access_key,
+            "session_token" => body.session_token
+          }}
+        {:error, error} ->
+          Logger.error(Exception.format(:error, error))
+          Logger.debug(policy)
+
+          {:error, :invalid_policy}
+      end
     else
       err -> err
     end
