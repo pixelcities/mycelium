@@ -72,9 +72,9 @@ defmodule LiaisonServerWeb.Auth do
     conn = fetch_cookies(conn)
 
     cookie = conn.cookies[@csrf_cookie]
-    header = hd(get_req_header(conn, "x-csrf-token"))
+    header = get_req_header(conn, "x-csrf-token")
 
-    unless cookie == header do
+    unless length(header) > 0 && cookie == hd(header) do
       conn
       |> resp(403, "Forbidden")
       |> halt()

@@ -1,5 +1,8 @@
 defmodule LiaisonServerWeb.Router do
   use LiaisonServerWeb, :router
+  use Plug.ErrorHandler
+
+  require Logger
 
   import LiaisonServerWeb.Auth
 
@@ -105,4 +108,24 @@ defmodule LiaisonServerWeb.Router do
     put "/sync", ProtocolController, :put_state
   end
 
+
+  defp handle_errors(conn, %{reason: %Phoenix.Router.NoRouteError{message: message}}) do
+    conn
+    |> json(%{error: Regex.replace(~r/ +\(.*\)$/, message, "")})
+    |> halt()
+  end
+
+  defp handle_errors(conn, %{reason: %Plug.CSRFProtection.InvalidCSRFTokenError{message: message}}) do
+    conn |> json(%{error: message}) |> halt()
+  end
+
+  defp handle_errors(conn, %{reason: %Phoenix.ActionClauseError{}}) do
+    conn |> json(%{error: "Bad request"}) |> halt()
+  end
+
+  defp handle_errors(conn, reason) do
+    Logger.error("Unhandled error in router: " <> Exception.format(:error, reason))
+
+    conn |> json(%{error: "Internal server error"}) |> halt()
+  end
 end
