@@ -24,7 +24,8 @@ defmodule MetaStore.Application do
     end
 
     children = [
-      MetaStore.Repo
+      MetaStore.Repo,
+      {Mutex, name: CommandMutex}
     ]
 
     opts = [strategy: :one_for_one, name: MetaStore.ApplicationSupervisor]

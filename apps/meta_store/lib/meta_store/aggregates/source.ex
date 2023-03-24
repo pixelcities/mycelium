@@ -29,21 +29,53 @@ defmodule MetaStore.Aggregates.Source do
     SourceCreated.new(source, date: NaiveDateTime.utc_now())
   end
 
-  def execute(%Source{} = source, %UpdateSource{} = update)
-    when source.workspace == update.workspace
+  def execute(%Source{} = source, %UpdateSource{__metadata__: %{user_id: user_id}} = update)
+    when source.workspace == update.workspace and source.uri == update.uri
   do
-    SourceUpdated.new(update, date: NaiveDateTime.utc_now())
+    if authorized?(user_id, source.schema) && valid_shares?(user_id, source.schema, update.schema) do
+      SourceUpdated.new(update, date: NaiveDateTime.utc_now())
+    else
+      {:error, :unauthorized}
+    end
   end
 
-  def execute(%Source{} = source, %DeleteSource{} = command) do
-    unless command.source_has_collection do
-      SourceDeleted.new(command,
-        uri: source.uri,
-        date: NaiveDateTime.utc_now()
-      )
+  def execute(%Source{} = _source, %UpdateSource{} = _update), do: {:error, :invalid_update}
+
+  def execute(%Source{} = source, %DeleteSource{__metadata__: %{user_id: user_id, source_has_collection: source_has_collection}} = command) do
+    if authorized?(user_id, source.schema) do
+      unless source_has_collection do
+        SourceDeleted.new(command,
+          uri: source.uri,
+          date: NaiveDateTime.utc_now()
+        )
+      else
+        {:error, :source_must_not_be_in_use}
+      end
     else
-      {:error, :source_must_not_be_in_use}
+      {:error, :unauthorized}
     end
+  end
+
+  defp authorized?(user_id, schema) do
+    Enum.any?(schema.shares, fn share ->
+      share.principal == user_id
+    end)
+  end
+
+  defp valid_shares?(user_id, original_schema, new_schema) do
+    new_columns = Map.new(Enum.map(new_schema.columns, fn c -> {c.id, c} end))
+
+    Enum.reduce_while(original_schema.columns, true, fn column, true ->
+      case Map.get(new_columns, column.id) do
+        nil -> {:halt, false}
+        new_column ->
+          if MapSet.new(column.shares) == MapSet.new(new_column.shares) || Enum.any?(column.shares, fn share -> share.principal == user_id end) do
+            {:cont, true}
+          else
+            {:halt, false}
+          end
+      end
+    end)
   end
 
 
@@ -69,6 +101,6 @@ defmodule MetaStore.Aggregates.Source do
     }
   end
 
-  def apply(%Source{} = source, %SourceDeleted{} = event), do: source
+  def apply(%Source{} = source, %SourceDeleted{} = _event), do: source
 
 end

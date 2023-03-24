@@ -7,11 +7,13 @@ end
 defmodule Core.Events.SourceUpdated do
   use Commanded.Event,
     from: Core.Commands.UpdateSource,
-    with: [:date]
+    with: [:date],
+    drop: [:__metadata__]
 end
 
 defmodule Core.Events.SourceDeleted do
   use Commanded.Event,
     from: Core.Commands.DeleteSource,
-    with: [:date, :uri]
+    with: [:date, :uri],
+    drop: [:__metadata__]
 end

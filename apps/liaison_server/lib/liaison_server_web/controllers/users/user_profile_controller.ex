@@ -35,11 +35,11 @@ defmodule LiaisonServerWeb.Users.UserProfileController do
   @doc """
   Get a set of session tokens to interact with remote datasets
   """
-  def datatokens(conn, %{"uri" => uri, "mode" => mode}) do
+  def datatokens(conn, %{"uri" => uri, "tag" => tag, "mode" => mode}) do
     user = conn.assigns.current_user
     remote_ip = to_string(:inet_parse.ntoa(conn.remote_ip))
 
-    case DataStore.generate_data_tokens(uri, mode, user, remote_ip) do
+    case DataStore.generate_data_tokens(uri, tag, mode, user, remote_ip) do
       {:ok, tokens} ->
         json(conn, tokens)
 

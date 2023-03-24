@@ -29,7 +29,7 @@ defmodule DataStore do
     handle_dispatch(RequestTruncateDataset.new(attrs), metadata)
   end
 
-  def generate_data_tokens(uri, mode, user, ip), do: DataStore.DataTokens.generate_data_tokens(uri, mode, user, ip)
+  def generate_data_tokens(uri, tag, mode, user, ip), do: DataStore.DataTokens.generate_data_tokens(uri, tag, mode, user, ip)
 
 
   defp handle_dispatch(command, %{"ds_id" => ds_id} = metadata) do

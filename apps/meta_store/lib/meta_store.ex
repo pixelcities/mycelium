@@ -6,6 +6,7 @@ defmodule MetaStore do
   @app MetaStore.Application.get_app()
 
   import Ecto.Query, warn: false
+  import Ecto.Changeset
 
   alias MetaStore.Repo
   alias MetaStore.Projections.{
@@ -156,30 +157,63 @@ defmodule MetaStore do
     ), prefix: tenant)
   end
 
+  def get_source_by_uri_and_user_id(uri, user_id, opts \\ []) do
+    tenant = Keyword.fetch!(opts, :tenant)
+
+    Repo.one((from s in Source,
+      join: c in Schema, on: s.id == c.source_id,
+      join: h in assoc(c, :shares),
+      where: h.principal == ^user_id and s.uri == ^uri
+    ), prefix: tenant)
+  end
+
+  def get_all_uris(opts \\ []) do
+    tenant = Keyword.fetch!(opts, :tenant)
+
+    sources = Repo.all((from s in Source,
+      select: [:uri]
+    ), prefix: tenant)
+    source_uris = Enum.map(sources, fn s -> s.uri end)
+
+    collections = Repo.all((from c in Collection,
+      select: [:uri]
+    ), prefix: tenant)
+    collection_uris = Enum.map(collections, fn c -> c.uri end)
+
+    source_uris ++ collection_uris
+  end
+
 
   ## Commands
 
   @doc """
   Create a source
 
-  A source is just a shell that inits a source by creating a
-  data URI, exchanging shares, etc.
+  The given URI is checked for formatting and uniqueness. This protects against
+  re-use of previously created URIs, which would pass the integrity check. The
+  dispatch for this command is done within a mutex, to guard against racing the
+  URI uniqueness check, which queries the read model.
   """
   def create_source(attrs, %{"user_id" => _user_id, "ds_id" => ds_id} = metadata) do
     handle = Atom.to_string(ds_id)
+
+    lock = Mutex.await(CommandMutex, handle)
 
     create_source =
       attrs
       |> CreateSource.new()
       |> CreateSource.validate_uri_namespace(handle, "default")
+      |> CreateSource.validate_uri_uniqueness(get_all_uris(tenant: ds_id))
 
-    handle_dispatch(create_source, metadata)
+    resp = handle_dispatch(create_source, metadata)
+
+    Mutex.release(CommandMutex, lock)
   end
 
   @doc """
   Update a source
 
-  Only the source id is required, any additional fields are upserted
+  The aggregate guards against changing the workspace or uri.
   """
   def update_source(attrs, %{"user_id" => _user_id} = metadata) do
     handle_dispatch(UpdateSource.new(attrs), metadata)
@@ -214,8 +248,20 @@ defmodule MetaStore do
     handle_dispatch(UpdateConcept.new(attrs), metadata)
   end
 
-  def create_collection(attrs, %{"user_id" => _user_id} = metadata) do
-    handle_dispatch(CreateCollection.new(attrs), metadata)
+  @doc """
+  Create a collection
+
+  Users are only ever able to create source collections, which requires
+  that the URI matches the source and that they have access to the original
+  source.
+  """
+  def create_collection(%{"uri" => uri} = attrs, %{"user_id" => user_id, "ds_id" => ds_id} = metadata) do
+    create_collection =
+      attrs
+      |> CreateCollection.new()
+      |> CreateCollection.validate_source(get_source_by_uri_and_user_id(uri, user_id, tenant: ds_id))
+
+    handle_dispatch(create_collection, metadata)
   end
 
   def update_collection(attrs, %{"user_id" => _user_id} = metadata) do
@@ -431,12 +477,42 @@ defmodule MetaStore do
   end
 
 
-  defp handle_dispatch(command, %{"ds_id" => ds_id} = metadata) do
+  defp handle_dispatch(command, %{"user_id" => user_id, "ds_id" => ds_id} = metadata) do
     with :ok <- @app.validate_and_dispatch(command, consistency: :strong, application: Module.concat(@app, ds_id), metadata: metadata) do
       {:ok, :done}
     else
-      reply -> reply
+      reply ->
+        case reply do
+          {:error, :unregistered_command} -> reply
+          {:error, :consistency_timeout} -> reply
+          {:error, error} ->
+            Logger.error("Error dispatching command #{inspect(command)} with metadata #{inspect(metadata)}: #{inspect(error)}")
+            Landlord.notify_user(%{
+              id: Ecto.UUID.generate(),
+              type: "error",
+              message: format_error(error),
+              receiver: user_id,
+              is_urgent: true
+            }, metadata)
+
+            reply
+          err -> err
+        end
     end
   end
+
+  defp format_error({:validation_failure, %Ecto.Changeset{} = reason}) do
+    errors = traverse_errors(reason, fn {msg, _opts} -> msg end)
+
+    "Validation failure: " <> Enum.join(Enum.map(Map.to_list(errors), fn {k, v} -> Atom.to_string(k) <> " " <> Enum.join(v, " and ") end), ", ")
+  end
+
+  defp format_error(reason) when is_atom(reason) do
+    [head | tail] = String.split(Atom.to_string(reason), "_")
+
+    Enum.join([String.capitalize(head)] ++ tail, " ")
+  end
+
+  defp format_error(_reason), do: "Internal server error"
 
 end

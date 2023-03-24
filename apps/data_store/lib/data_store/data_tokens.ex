@@ -13,6 +13,7 @@ defmodule DataStore.DataTokens do
   alias MetaStore
   alias Landlord.Tenants
   alias DataStore.Data
+  alias Core.Integrity
 
   @doc """
   Generate access credentials for the given URI
@@ -20,9 +21,10 @@ defmodule DataStore.DataTokens do
   The credentials are valid for 15 minutes, and grant read or write s3 operations on the given
   subpath within the collection bucket.
   """
-  def generate_data_tokens(uri, mode, user, ip) do
+  def generate_data_tokens(uri, tag, mode, user, ip) do
     with :ok <- validate_mode(mode),
-         :ok <- validate_path(user, uri, mode)
+         :ok <- validate_path(user, uri, mode),
+         :ok <- Integrity.verify(uri, tag)
     do
       path = String.trim(Enum.at(String.split(uri, @bucket), 1), "/")
 
@@ -118,30 +120,42 @@ defmodule DataStore.DataTokens do
     with {:ok, ds, _, _} <- parse_uri(uri, :read),
          :ok <- validate_data_space(ds, user)
     do
-      sources = MetaStore.get_sources_by_user(user, tenant: ds)
-      collections = MetaStore.get_collections_by_user(user, tenant: ds)
+      validate_ownership(uri, user, ds)
+    else
+      err -> err
+    end
+  end
 
-      uris = Enum.map(sources, fn s -> s.uri end) ++ Enum.map(collections, fn c -> c.uri end)
+  defp validate_path(user, uri, "write") do
+    with {:ok, ds, workspace, _, _} <- parse_uri(uri, :write),
+         :ok <- validate_data_space(ds, user),
+         :ok <- validate_workspace(workspace, user)
+    do
+      uris = MetaStore.get_all_uris(tenant: ds)
 
+      # Validate the caller has access to this URI
       if uri in uris do
-        :ok
+        validate_ownership(uri, user, ds)
+
+      # If there is no such path, this is the creator
       else
-        {:error, "unauthorized"}
+        :ok
       end
     else
       err -> err
     end
   end
 
-  # TODO: validate dataset was requested beforehand
-  defp validate_path(user, uri, "write") do
-    with {:ok, ds, workspace, _, _} <- parse_uri(uri, :write),
-         :ok <- validate_data_space(ds, user),
-         :ok <- validate_workspace(workspace, user)
-    do
+  defp validate_ownership(uri, user, ds) do
+    sources = MetaStore.get_sources_by_user(user, tenant: ds)
+    collections = MetaStore.get_collections_by_user(user, tenant: ds)
+
+    uris = Enum.map(sources, fn s -> s.uri end) ++ Enum.map(collections, fn c -> c.uri end)
+
+    if uri in uris do
       :ok
     else
-      err -> err
+      {:error, "unauthorized"}
     end
   end
 

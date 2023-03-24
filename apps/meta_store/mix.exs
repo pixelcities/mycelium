@@ -38,6 +38,7 @@ defmodule MetaStore.MixProject do
       {:ecto_sql, "~> 3.6"},
       {:postgrex, "~> 0.16"},
       {:jason, "~> 1.3"},
+      {:mutex, "~> 1.3"},
 
       {:core, "~> 0.1", in_umbrella: true},
       {:landlord, "~> 0.1", in_umbrella: true}

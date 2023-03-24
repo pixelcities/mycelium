@@ -8,6 +8,7 @@ defmodule KeyX.KeyStore do
 
   alias KeyX.Repo
   alias KeyX.KeyStore.{Key, KeyRotation, Manifest}
+  alias Landlord.Accounts.User
 
   ## Database getters
 
@@ -20,10 +21,11 @@ defmodule KeyX.KeyStore do
   Always returns {:error, nil} when not found, so that
   keys cannot be enumerated or retrieved for other users.
   """
-  def get_key_by_id_and_user(key_id, user) when is_binary(key_id) do
+  def get_key_by_id_and_user(key_id, %User{} = user), do: get_key_by_id_and_user(key_id, user.id)
+  def get_key_by_id_and_user(key_id, user_id) when is_binary(key_id) do
     try do
       case Repo.one(from k in Key,
-          where: k.key_id == ^key_id and k.user_id == ^user.id
+          where: k.key_id == ^key_id and k.user_id == ^user_id
       ) do
         nil -> {:error, nil}
         key -> {:ok, key}

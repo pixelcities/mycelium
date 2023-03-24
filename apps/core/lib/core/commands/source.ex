@@ -3,7 +3,7 @@ defmodule Core.Commands.CreateSource do
     id: :string,
     workspace: :string,
     type: :string,
-    uri: :string,
+    uri: {{:array, :string}, []},
     schema: :map,
     is_published: {:boolean, default: false}
 
@@ -17,9 +17,19 @@ defmodule Core.Commands.CreateSource do
     Enum.reduce(schema.errors, changeset, fn {err, {message, additional}}, changeset -> add_error(changeset, err, message, additional) end)
   end
 
+  defp validate_integrity(changeset) do
+    [uri, tag] = fetch_field!(changeset, :uri)
+
+    unless Core.Integrity.is_valid?(uri, tag) do
+      add_error(changeset, :uri, "Invalid URI")
+    else
+      changeset
+    end
+  end
+
   def validate_uri_namespace(changeset, data_space, workspace) do
     changeset
-    |> validate_change(:uri, fn :uri, uri ->
+    |> validate_change(:uri, fn :uri, [uri, tag] ->
       if !String.starts_with?(uri, "s3://pxc-collection-store/#{data_space}/#{workspace}/") do
         [uri: "invalid namespace"]
       else
@@ -28,19 +38,26 @@ defmodule Core.Commands.CreateSource do
     end)
   end
 
+  def validate_uri_uniqueness(changeset, uris) do
+    changeset
+    |> validate_exclusion(changeset, :uri, uris)
+  end
+
   def handle_validate(changeset) do
     changeset
     |> validate_required([:id])
+    |> validate_length(:uri, is: 2)
     |> validate_schema()
+    |> validate_integrity()
   end
 end
 
 defmodule Core.Commands.UpdateSource do
-  use Commanded.Command,
+  use Core.Utils.EnrichableCommand,
     id: :string,
     workspace: :string,
     type: :string,
-    uri: :string,
+    uri: {{:array, :string}, []},
     schema: :map,
     is_published: {:boolean, default: false}
 
@@ -57,12 +74,13 @@ defmodule Core.Commands.UpdateSource do
   def handle_validate(changeset) do
     changeset
     |> validate_required([:id, :workspace])
+    |> validate_length(:uri, is: 2)
     |> validate_schema()
   end
 end
 
 defmodule Core.Commands.DeleteSource do
-  use Commanded.Command,
+  use Core.Utils.EnrichableCommand,
     id: :string,
     workspace: :string
 

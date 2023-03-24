@@ -39,6 +39,6 @@ defmodule Core.Middleware.TagCommand do
 
   # Hacky fallback, extract the ds_id from the commanded application name
   defp extract_ds_from_application(%{application: application} = _pipeline) do
-    String.to_atom(Enum.at(Module.split(application), -1))
+    String.to_existing_atom(Enum.at(Module.split(application), -1))
   end
 end

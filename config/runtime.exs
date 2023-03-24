@@ -19,9 +19,15 @@ if config_env() == :prod do
   content_host = System.get_env("CONTENT_HOST") || "datagarden.page"
   content_port = String.to_integer(System.get_env("CONTENT_PORT") || "5001")
 
-  secret_key = System.get_env("SECRET_KEY") ||
+  agent_secret_key = System.get_env("AGENT_SECRET_KEY") ||
     raise """
-    environment variable SECRET_KEY is missing.
+    environment variable AGENT_SECRET_KEY is missing.
+    Please add a 32 byte secret
+    """
+
+  integrity_secret_key = System.get_env("INTEGRITY_SECRET_KEY") ||
+    raise """
+    environment variable INTEGRITY_SECRET_KEY is missing.
     Please add a 32 byte secret
     """
 
@@ -44,7 +50,10 @@ if config_env() == :prod do
     secret_key_base: secret_key_base
 
   config :key_x, KeyX.TrialAgent,
-    secret_key: secret_key
+    secret_key: agent_secret_key
+
+  config :core, Core.Integrity,
+    secret_key: integrity_secret_key
 
   config :liaison_server, LiaisonServer.EventStore,
     hostname: pg_host,

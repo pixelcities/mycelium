@@ -99,7 +99,7 @@ defmodule Landlord.Tenants do
   """
   def to_atom(user, handle) do
     case get_data_space_by_user_and_handle(user, handle) do
-      {:ok, data_space} -> {:ok, String.to_atom(data_space.handle)}
+      {:ok, data_space} -> {:ok, String.to_existing_atom(data_space.handle)}
       {:error, _} -> {:error, :invalid_handle}
     end
   end
@@ -165,7 +165,7 @@ defmodule Landlord.Tenants do
          {:ok, %{}} <- Repo.transaction(accept_invite_multi(user, data_space))
     do
       # Verified by the DataSpace changeset
-      handle = String.to_atom(data_space.handle)
+      handle = String.to_existing_atom(data_space.handle)
 
       Landlord.accept_invite(%{email: user.email, id: user.id}, %{"user_id" => user.id, "ds_id" => handle})
     else
@@ -179,7 +179,7 @@ defmodule Landlord.Tenants do
         nil -> {:error, :member_has_not_accepted_invite}
         changeset ->
           data_space_user = Repo.update!(DataSpaceUser.confirm_member_changeset(changeset)) |> Repo.preload(:user)
-          handle = String.to_atom(data_space.handle)
+          handle = String.to_existing_atom(data_space.handle)
 
           Landlord.confirm_invite(%{email: data_space_user.user.email}, %{"user_id" => user.id, "ds_id" => handle})
           Landlord.create_user(Map.put(Map.from_struct(data_space_user.user), :role, data_space_user.role), %{"user_id" => user.id, "ds_id" => handle})
@@ -195,7 +195,7 @@ defmodule Landlord.Tenants do
         nil -> {:error, :no_such_invite}
         changeset ->
           Repo.delete!(changeset)
-          handle = String.to_atom(data_space.handle)
+          handle = String.to_existing_atom(data_space.handle)
 
           Landlord.cancel_invite(%{email: invite_email}, %{"user_id" => user.id, "ds_id" => handle})
       end

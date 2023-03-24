@@ -5,12 +5,21 @@ defmodule Core.Commands.CreateCollection do
     id: :binary_id,
     workspace: :string,
     type: :string,
-    uri: :string,
+    uri: {{:array, :string}, []},
     schema: :map,
     targets: {{:array, :binary_id}, default: []},
     position: {{:array, :float}, default: [0.0, 0.0]},
     color: {:string, default: "#000000"},
     is_ready: {:boolean, default: false}
+
+  def validate_source(changeset, nil), do: add_error(changeset, :type, "Cannot validate source")
+  def validate_source(changeset, source) do
+    changeset
+    |> validate_inclusion(:type, ["source"])
+    |> validate_change(:uri, fn :uri, [uri, tag] ->
+      if uri != source.uri, do: [uri: "invalid URI"], else: []
+    end)
+  end
 
   def handle_validate(changeset) do
     changeset
@@ -28,7 +37,7 @@ defmodule Core.Commands.UpdateCollection do
     id: :binary_id,
     workspace: :string,
     type: :string,
-    uri: :string,
+    uri: {{:array, :string}, []},
     schema: :map,
     targets: {{:array, :binary_id}, default: []},
     position: {{:array, :float}, default: [0.0, 0.0]},

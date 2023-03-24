@@ -18,6 +18,7 @@ defmodule DataStore.Aggregates.Dataset do
   alias DataStore.Aggregates.Dataset
   alias Core.Commands.{CreateDataURI, RequestTruncateDataset, TruncateDataset, RequestDeleteDataset, DeleteDataset}
   alias Core.Events.{DataURICreated, TruncateDatasetRequested, DatasetTruncated, DeleteDatasetRequested, DatasetDeleted}
+  alias Core.Integrity
 
   @doc """
   Generate and track data URIs
@@ -35,8 +36,12 @@ defmodule DataStore.Aggregates.Dataset do
       workspace = cmd.workspace
       dataset_id = UUID.uuid4()
 
+      uri = "s3://pxc-collection-store/#{data_space}/#{workspace}/#{dataset_id}"
+      tag = Integrity.sign(uri)
+
       DataURICreated.new(cmd,
-        uri: "s3://pxc-collection-store/#{data_space}/#{workspace}/#{dataset_id}"
+        uri: uri,
+        tag: tag
       )
     else
       {:error, :invalid_ds}
