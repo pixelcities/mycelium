@@ -2,11 +2,18 @@ defmodule Core.Commands.CreateDataURI do
   use Commanded.Command,
     id: :string,
     workspace: :string,
-    ds: :string
+    ds: :string,
+    type: :string
+
+  def validate_type(changeset, strict_types) when is_list(strict_types) do
+    changeset
+    |> validate_inclusion(:type, strict_types)
+  end
 
   def handle_validate(changeset) do
     changeset
     |> validate_required([:id, :workspace])
+    |> validate_inclusion(:type, ["source", "collection"])
   end
 end
 

@@ -23,8 +23,8 @@ defmodule DataStore.DataTokens do
   """
   def generate_data_tokens(uri, tag, mode, user, ip) do
     with :ok <- validate_mode(mode),
-         :ok <- validate_path(user, uri, mode),
-         :ok <- Integrity.verify(uri, tag)
+         {:ok, valid_uri} <- validate_path(user, uri, mode),
+         :ok <- Integrity.verify(valid_uri, tag)
     do
       path = String.trim(Enum.at(String.split(uri, @bucket), 1), "/")
 
@@ -118,28 +118,33 @@ defmodule DataStore.DataTokens do
 
   defp validate_path(user, uri, "read") do
     with {:ok, ds, _, _} <- parse_uri(uri, :read),
-         :ok <- validate_data_space(ds, user)
+         :ok <- validate_data_space(ds, user),
+         :ok <- validate_ownership(uri, user, ds)
     do
-      validate_ownership(uri, user, ds)
+      {:ok, uri}
     else
       err -> err
     end
   end
 
   defp validate_path(user, uri, "write") do
-    with {:ok, ds, workspace, _, _} <- parse_uri(uri, :write),
+    with {:ok, ds, workspace, type, dataset, _} <- parse_uri(uri, :write),
          :ok <- validate_data_space(ds, user),
          :ok <- validate_workspace(workspace, user)
     do
+      normalized_uri = rebuild_uri(ds, workspace, type, dataset)
       uris = MetaStore.get_all_uris(tenant: ds)
 
       # Validate the caller has access to this URI
-      if uri in uris do
-        validate_ownership(uri, user, ds)
+      if normalized_uri in uris do
+        case validate_ownership(normalized_uri, user, ds) do
+          :ok -> {:ok, normalized_uri}
+          err -> err
+        end
 
       # If there is no such path, this is the creator
       else
-        :ok
+        {:ok, normalized_uri}
       end
     else
       err -> err
@@ -147,6 +152,7 @@ defmodule DataStore.DataTokens do
   end
 
   defp validate_ownership(uri, user, ds) do
+    # TODO: offload to db instead of returning all uris
     sources = MetaStore.get_sources_by_user(user, tenant: ds)
     collections = MetaStore.get_collections_by_user(user, tenant: ds)
 
@@ -177,18 +183,21 @@ defmodule DataStore.DataTokens do
   end
 
   defp parse_uri(uri, :write) do
-    case Regex.named_captures(~r/^s3:\/\/(?<bucket>[a-z0-9-]+)\/(?<ds>[a-z0-9_]+)\/(?<workspace>[a-z0-9-]+)\/(?<dataset>[a-z0-9-]+)\/(?<fragment>[a-z0-9-]+).parquet$/, uri) do
+    case Regex.named_captures(~r/^s3:\/\/(?<bucket>[a-z0-9-]+)\/(?<ds>[a-z0-9_]{1,255})\/(?<workspace>[a-z0-9-]{1,255})\/(?<type>[a-z]+)\/(?<dataset>[a-z0-9-]{36})\/(?<fragment>[a-z0-9-]{36}).parquet$/, uri) do
       nil -> {:error, "invalid_uri"}
       %{
         "bucket" => @bucket,
         "ds" => ds,
         "workspace" => workspace,
+        "type" => type,
         "dataset" => dataset,
         "fragment" => fragment
-      } -> {:ok, ds, workspace, dataset, fragment}
+      } -> {:ok, ds, workspace, type, dataset, fragment}
       _ -> {:error, "unauthorized"}
     end
   end
+
+  defp rebuild_uri(ds, workspace, type, dataset), do: "s3://#{@bucket}/#{ds}/#{workspace}/#{type}/#{dataset}"
 
   defp harden_policy(policy, ip) do
     if @restrict_source_ip do

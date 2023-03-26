@@ -1,7 +1,7 @@
 defmodule Core.Events.DataURICreated do
   use Commanded.Event,
     from: Core.Commands.CreateDataURI,
-    with: [:uri]
+    with: [:uri, :tag]
 end
 
 defmodule Core.Events.TruncateDatasetRequested do

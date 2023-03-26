@@ -7,13 +7,15 @@ end
 defmodule Core.Events.CollectionUpdated do
   use Commanded.Event,
     from: Core.Commands.UpdateCollection,
-    with: [:date]
+    with: [:date],
+    drop: [:__metadata__]
 end
 
 defmodule Core.Events.CollectionSchemaUpdated do
   use Commanded.Event,
     from: Core.Commands.UpdateCollectionSchema,
-    with: [:date]
+    with: [:date],
+    drop: [:__metadata__]
 end
 
 defmodule Core.Events.CollectionTargetAdded do
@@ -49,7 +51,8 @@ end
 defmodule Core.Events.CollectionDeleted do
   use Commanded.Event,
     from: Core.Commands.DeleteCollection,
-    with: [:date, :type, :uri]
+    with: [:date, :type, :uri],
+    drop: [:__metadata__]
 end
 
 defmodule Core.Events.TransformerCreated do
@@ -61,7 +64,8 @@ end
 defmodule Core.Events.TransformerUpdated do
   use Commanded.Event,
     from: Core.Commands.UpdateTransformer,
-    with: [:date]
+    with: [:date],
+    drop: [:__metadata__]
 end
 
 defmodule Core.Events.TransformerTargetAdded do
@@ -91,7 +95,8 @@ end
 defmodule Core.Events.TransformerWALUpdated do
   use Commanded.Event,
     from: Core.Commands.UpdateTransformerWAL,
-    with: [:date]
+    with: [:date],
+    drop: [:__metadata__]
 end
 
 defmodule Core.Events.TransformerIsReadySet do

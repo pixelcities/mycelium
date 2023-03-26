@@ -13,6 +13,7 @@ defmodule DataStore.Aggregates.Dataset do
   defstruct id: nil,
             workspace: nil,
             uri: nil,
+            type: nil,
             date: nil
 
   alias DataStore.Aggregates.Dataset
@@ -34,9 +35,10 @@ defmodule DataStore.Aggregates.Dataset do
 
     if data_space do
       workspace = cmd.workspace
+      type = cmd.type
       dataset_id = UUID.uuid4()
 
-      uri = "s3://pxc-collection-store/#{data_space}/#{workspace}/#{dataset_id}"
+      uri = "s3://pxc-collection-store/#{data_space}/#{workspace}/#{type}/#{dataset_id}"
       tag = Integrity.sign(uri)
 
       DataURICreated.new(cmd,
@@ -78,7 +80,8 @@ defmodule DataStore.Aggregates.Dataset do
     %Dataset{dataset |
       id: event.id,
       workspace: event.workspace,
-      uri: event.uri
+      uri: event.uri,
+      type: event.type
     }
   end
 
@@ -103,6 +106,6 @@ defmodule DataStore.Aggregates.Dataset do
     }
   end
 
-  def apply(%Dataset{} = dataset, %DatasetDeleted{} = _event), do: __MODULE__.__struct__
+  def apply(%Dataset{} = _dataset, %DatasetDeleted{} = _event), do: __MODULE__.__struct__
 
 end

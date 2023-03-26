@@ -44,7 +44,7 @@ defmodule MetaStore.Projectors.Source do
     |> Ecto.Multi.insert_or_update(:source, fn %{get_source: s} ->
       Source.changeset(s, %{
         workspace: source.workspace,
-        uri: source.uri,
+        uri: hd(source.uri),
         type: source.type,
         is_published: source.is_published
       })

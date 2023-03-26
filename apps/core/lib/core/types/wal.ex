@@ -89,19 +89,27 @@ defmodule Core.Types.WAL do
     transactions = get_field(changeset, :transactions)
 
     Enum.reduce(transactions, changeset, fn transaction, acc ->
-      errors = case Regex.scan(~r/(?:%([0-9]+)\$I)|(?>(?<!\$)\$(?!\$)([0-9]+))/, transaction) do
-        nil -> []
-        positions -> Enum.reduce(positions, [], fn position, err ->
-          field = if String.starts_with?(hd(position), "$"), do: :values, else: :identifiers
+      # Validate that all paramaters are declared
+      errors =
+        case Regex.scan(~r/(?:%([0-9]+)\$I)|(?>(?<!\$)\$(?!\$)([0-9]+))/, transaction) do
+          nil -> []
+          positions -> Enum.reduce(positions, [], fn position, err ->
+            field = if String.starts_with?(hd(position), "$"), do: :values, else: :identifiers
 
-          if Map.has_key?(get_field(changeset, field), Enum.at(position, -1)), do: err, else: [hd(position) | err]
-        end)
-      end
+            if Map.has_key?(get_field(changeset, field), Enum.at(position, -1)), do: err, else: [hd(position) | err]
+          end)
+        end
 
       if Enum.any?(errors) do
         add_error(acc, :transactions, "Non-existent parameter at positions: #{inspect errors}")
       else
-        acc
+        # Validate that there are no raw column identifiers
+        # TODO: Columns should be prefixed with a constant, so that we don't block all UUID usage
+        if Regex.match?(~r/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/, transaction) do
+          add_error(acc, :transactions, "Column identifier was not declared")
+        else
+          acc
+        end
       end
     end)
   end

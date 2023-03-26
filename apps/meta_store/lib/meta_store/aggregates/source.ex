@@ -30,7 +30,7 @@ defmodule MetaStore.Aggregates.Source do
   end
 
   def execute(%Source{} = source, %UpdateSource{__metadata__: %{user_id: user_id}} = update)
-    when source.workspace == update.workspace and source.uri == update.uri
+    when source.workspace == update.workspace and hd(source.uri) == hd(update.uri)
   do
     if authorized?(user_id, source.schema) && valid_shares?(user_id, source.schema, update.schema) do
       SourceUpdated.new(update, date: NaiveDateTime.utc_now())
@@ -41,8 +41,8 @@ defmodule MetaStore.Aggregates.Source do
 
   def execute(%Source{} = _source, %UpdateSource{} = _update), do: {:error, :invalid_update}
 
-  def execute(%Source{} = source, %DeleteSource{__metadata__: %{user_id: user_id, source_has_collection: source_has_collection}} = command) do
-    if authorized?(user_id, source.schema) do
+  def execute(%Source{} = source, %DeleteSource{__metadata__: %{user_id: user_id, source_has_collection: source_has_collection, is_admin: is_admin}} = command) do
+    if is_admin || authorized?(user_id, source.schema) do
       unless source_has_collection do
         SourceDeleted.new(command,
           uri: source.uri,

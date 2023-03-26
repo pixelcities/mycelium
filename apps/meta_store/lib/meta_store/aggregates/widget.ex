@@ -131,6 +131,6 @@ defmodule MetaStore.Aggregates.Widget do
     }
   end
 
-  def apply(%Widget{} = widget, %WidgetDeleted{} = event), do: widget
+  def apply(%Widget{} = widget, %WidgetDeleted{} = _event), do: widget
 
 end

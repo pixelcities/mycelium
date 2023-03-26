@@ -49,20 +49,25 @@ defmodule MetaStore.Aggregates.Transformer do
     TransformerDeleted
   }
 
-  @doc """
-  Create a new transformer
-  """
-  def execute(%Transformer{id: nil}, %CreateTransformer{} = transformer) do
+  def execute(%Transformer{id: nil}, %CreateTransformer{} = transformer)
+    when transformer.wal == nil
+  do
     TransformerCreated.new(transformer,
       is_ready: true,
       date: NaiveDateTime.utc_now()
     )
   end
 
-  def execute(%Transformer{} = transformer, %UpdateTransformer{} = update)
+  def execute(%Transformer{} = transformer, %UpdateTransformer{__metadata__: %{access_map: access_map}} = update)
     when transformer.workspace == update.workspace
   do
-    TransformerUpdated.new(update, date: NaiveDateTime.utc_now())
+    with :ok <- validate_wal_inputs(update.wal, transformer.collections, transformer.transformers),
+         :ok <- validate_wal_changes(transformer.wal, update.wal, access_map)
+    do
+      TransformerUpdated.new(update, date: NaiveDateTime.utc_now())
+    else
+      err -> err
+    end
   end
 
   def execute(%Transformer{} = _transformer, %SetTransformerPosition{} = position) do
@@ -114,10 +119,14 @@ defmodule MetaStore.Aggregates.Transformer do
     end
   end
 
-  def execute(%Transformer{} = transformer, %UpdateTransformerWAL{} = update)
+  def execute(%Transformer{} = transformer, %UpdateTransformerWAL{__metadata__: %{access_map: access_map}} = update)
     when transformer.workspace == update.workspace
   do
-    TransformerWALUpdated.new(update, date: NaiveDateTime.utc_now())
+    with :ok <- validate_wal_inputs(update.wal, transformer.collections, transformer.transformers),
+         :ok <- validate_wal_changes(transformer.wal, update.wal, access_map)
+    do
+      TransformerWALUpdated.new(update, date: NaiveDateTime.utc_now())
+    end
   end
 
   def execute(%Transformer{} = _transformer, %SetTransformerIsReady{} = command) do
@@ -132,6 +141,60 @@ defmodule MetaStore.Aggregates.Transformer do
     TransformerDeleted.new(command, date: NaiveDateTime.utc_now())
   end
 
+  defp validate_wal_inputs(wal, collections, transformers) do
+    table_identifiers =
+      Map.get(wal, "identifiers")
+      |> Map.filter(fn {_k, v} -> Map.get(v, "type") == "table" end)
+      |> Map.values()
+      |> Enum.map(fn x -> Map.get(x, "id") end)
+      |> Enum.map(fn x -> x in collections || x in transformers end)
+
+    if Enum.all?(table_identifiers) do
+      :ok
+    else
+      {:error, :missing_input}
+    end
+  end
+
+  defp validate_wal_changes(original_wal, command_wal, access_map) do
+    original_identifers = Map.to_list(Map.get(original_wal, "identifiers", %{}))
+    command_identifiers = Map.to_list(Map.get(command_wal, "identifiers", %{}))
+
+    # Only validate new identifiers, the user may not have access to existing ones, which
+    # is perfectly allowed as long as they don't change anything.
+    new_identifiers = MapSet.difference(MapSet.new(command_identifiers), MapSet.new(original_identifers))
+    access_to_identifiers =
+      new_identifiers
+      |> MapSet.to_list()
+      |> Enum.map(fn {k, _v} -> Map.get(access_map, k) end)
+      |> Enum.all?()
+
+    if access_to_identifiers do
+      original_transactions = Map.get(original_wal, "identifiers", [])
+      command_transactions = Map.get(command_wal, "identifiers", [])
+
+      # Next, ensure that unauthorized identifiers were not used in the transaction
+      new_transactions = MapSet.difference(MapSet.new(command_transactions), MapSet.new(original_transactions))
+      access_to_refs =
+        new_transactions
+        |> MapSet.to_list()
+        |> Enum.map(fn transaction ->
+          case Regex.scan(~r/%([0-9]+)\$I/, transaction) do
+            nil -> false
+            match -> Enum.all?(Enum.map(match, fn [_, id] -> Map.get(access_map, id) end))
+          end
+        end)
+        |> Enum.all?()
+
+      if access_to_refs do
+        :ok
+      else
+        {:error, :invalid_reference_in_transaction}
+      end
+    else
+      {:error, :new_identifier_unauthorized}
+    end
+  end
 
   # State mutators
 
@@ -213,6 +276,6 @@ defmodule MetaStore.Aggregates.Transformer do
     }
   end
 
-  def apply(%Transformer{} = transformer, %TransformerDeleted{} = event), do: transformer
+  def apply(%Transformer{} = transformer, %TransformerDeleted{} = _event), do: transformer
 
 end

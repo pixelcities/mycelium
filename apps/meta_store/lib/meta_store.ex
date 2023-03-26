@@ -8,6 +8,8 @@ defmodule MetaStore do
   import Ecto.Query, warn: false
   import Ecto.Changeset
 
+  require Logger
+
   alias MetaStore.Repo
   alias MetaStore.Projections.{
     Widget,
@@ -192,7 +194,7 @@ defmodule MetaStore do
   The given URI is checked for formatting and uniqueness. This protects against
   re-use of previously created URIs, which would pass the integrity check. The
   dispatch for this command is done within a mutex, to guard against racing the
-  URI uniqueness check, which queries the read model.
+  URI uniqueness check.
   """
   def create_source(attrs, %{"user_id" => _user_id, "ds_id" => ds_id} = metadata) do
     handle = Atom.to_string(ds_id)
@@ -208,6 +210,8 @@ defmodule MetaStore do
     resp = handle_dispatch(create_source, metadata)
 
     Mutex.release(CommandMutex, lock)
+
+    resp
   end
 
   @doc """

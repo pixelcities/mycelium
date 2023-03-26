@@ -29,8 +29,8 @@ defmodule Core.Commands.CreateSource do
 
   def validate_uri_namespace(changeset, data_space, workspace) do
     changeset
-    |> validate_change(:uri, fn :uri, [uri, tag] ->
-      if !String.starts_with?(uri, "s3://pxc-collection-store/#{data_space}/#{workspace}/") do
+    |> validate_change(:uri, fn :uri, [uri, _tag] ->
+      if !String.starts_with?(uri, "s3://pxc-collection-store/#{data_space}/#{workspace}/source/") do
         [uri: "invalid namespace"]
       else
         []

@@ -8,12 +8,13 @@ defmodule DataStore.Data do
   alias ExAws.S3
 
   def validate_uri(uri) do
-    case Regex.named_captures(~r/^s3:\/\/(?<bucket>[a-z0-9-]+)\/(?<ds>[a-z0-9_]+)\/(?<workspace>[a-z0-9-]+)\/(?<dataset>[a-z0-9-]+)$/, uri) do
+    case Regex.named_captures(~r/^s3:\/\/(?<bucket>[a-z0-9-]+)\/(?<ds>[a-z0-9_]{1,255})\/(?<workspace>[a-z0-9-]{1,255})\/(?<type>[a-z]+)\/(?<dataset>[a-z0-9-]{36})$/, uri) do
       nil -> {:error, "invalid_uri"}
       %{
         "bucket" => @bucket,
         "ds" => ds,
         "workspace" => workspace,
+        "type" => _type,
         "dataset" => dataset
       } -> {:ok, ds, workspace, dataset}
       _ -> {:error, "unauthorized"}

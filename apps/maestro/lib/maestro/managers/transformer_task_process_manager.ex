@@ -6,6 +6,10 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
   needs to be generated. This process manager will listen for such events
   and ensure that tasks are scheduled that will compute the fragments of
   these collections.
+
+  TODO: Track expected events with (intermediate) task completion in a saga,
+  enabling compensating transactions on error, ensuring all events are received,
+  and finally allowing some more control on what worker is dispatching a command.
   """
 
   use Commanded.ProcessManagers.ProcessManager,
@@ -91,7 +95,8 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
       %CreateDataURI{
         id: pm.id,
         workspace: pm.transformer.workspace,
-        ds: pm.transformer.ds
+        ds: pm.transformer.ds,
+        type: "collection"
       },
       %SetTransformerError{
         id: pm.id,
@@ -191,7 +196,7 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
     end
   end
 
-  def handle(%TransformerTaskProcessManager{wants_collection: true, has_collection: false} = pm, %DataURICreated{uri: uri} = _event) do
+  def handle(%TransformerTaskProcessManager{wants_collection: true, has_collection: false} = pm, %DataURICreated{uri: uri, tag: tag} = _event) do
     collection_id = UUID.uuid4()
     in_collections = Enum.map(pm.transformer.collections, fn collection_id -> MetaStore.get_collection!(collection_id, tenant: pm.transformer.ds) end)
     collection_color = if length(in_collections) == 1, do: hd(in_collections).color, else: "#FFFFFF"
@@ -201,7 +206,7 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
         id: collection_id,
         workspace: pm.transformer.workspace,
         type: "collection",
-        uri: uri,
+        uri: [uri, tag],
         schema: nil,
         position: [hd(pm.transformer.position) + 200.0, Enum.at(pm.transformer.position, 1)],
         color: collection_color,
@@ -220,7 +225,7 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
           "instruction" => "compute_fragment",
           "collection_id" => collection_id,
           "transformer_id" => pm.id,
-          "uri" => uri,
+          "uri" => [uri, tag],
           "wal" => pm.transformer.wal
         },
         fragments: Enum.flat_map(in_collections, fn collection -> collection.schema.column_order end),
@@ -349,7 +354,7 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
 
   def apply(%TransformerTaskProcessManager{uri: nil} = pm, %DataURICreated{} = event) do
     %TransformerTaskProcessManager{pm |
-      uri: event.uri
+      uri: [event.uri, event.tag]
     }
   end
 

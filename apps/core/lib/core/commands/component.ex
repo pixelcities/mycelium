@@ -16,7 +16,7 @@ defmodule Core.Commands.CreateCollection do
   def validate_source(changeset, source) do
     changeset
     |> validate_inclusion(:type, ["source"])
-    |> validate_change(:uri, fn :uri, [uri, tag] ->
+    |> validate_change(:uri, fn :uri, [uri, _tag] ->
       if uri != source.uri, do: [uri: "invalid URI"], else: []
     end)
   end
@@ -33,7 +33,7 @@ end
 defmodule Core.Commands.UpdateCollection do
   import Core.Types.Component
 
-  use Commanded.Command,
+  use Core.Utils.EnrichableCommand,
     id: :binary_id,
     workspace: :string,
     type: :string,
@@ -56,7 +56,7 @@ end
 defmodule Core.Commands.UpdateCollectionSchema do
   import Core.Types.Component
 
-  use Commanded.Command,
+  use Core.Utils.EnrichableCommand,
     id: :binary_id,
     workspace: :string,
     schema: :map
@@ -138,7 +138,7 @@ end
 defmodule Core.Commands.DeleteCollection do
   import Core.Types.Component
 
-  use Commanded.Command,
+  use Core.Utils.EnrichableCommand,
     id: :binary_id,
     workspace: :string
 
@@ -176,7 +176,7 @@ end
 defmodule Core.Commands.UpdateTransformer do
   import Core.Types.Component
 
-  use Commanded.Command,
+  use Core.Utils.EnrichableCommand,
     id: :binary_id,
     workspace: :string,
     type: :string,
@@ -260,7 +260,7 @@ end
 defmodule Core.Commands.UpdateTransformerWAL do
   import Core.Types.Component
 
-  use Commanded.Command,
+  use Core.Utils.EnrichableCommand,
     id: :binary_id,
     workspace: :string,
     wal: :map

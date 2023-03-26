@@ -62,17 +62,6 @@ defmodule Core.Types.Component do
     end)
   end
 
-  def validate_uri_namespace(changeset, data_space, workspace) do
-    changeset
-    |> validate_change(:uri, fn :uri, uri ->
-      if !String.starts_with?(uri, "s3://pxc-collection-store/#{data_space}/#{workspace}/") do
-        [uri: "invalid namespace"]
-      else
-        []
-      end
-    end)
-  end
-
   def validate_wal(changeset, opts \\ []) do
     allow_nil = Keyword.get(opts, :allow_nil, false)
 

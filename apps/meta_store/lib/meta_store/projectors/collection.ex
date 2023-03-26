@@ -111,7 +111,7 @@ defmodule MetaStore.Projectors.Collection do
     |> Ecto.Multi.insert_or_update(:collection, fn %{get_collection: s} ->
       Collection.changeset(s, %{
         workspace: collection.workspace,
-        uri: collection.uri,
+        uri: hd(collection.uri),
         type: collection.type,
         targets: collection.targets,
         position: collection.position,

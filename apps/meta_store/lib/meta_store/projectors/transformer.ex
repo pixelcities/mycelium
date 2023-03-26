@@ -118,6 +118,7 @@ defmodule MetaStore.Projectors.Transformer do
 
   # Error handlers
 
+  @impl true
   def error({:error, :already_deleted}, _event, _failure_context) do
     :skip
   end

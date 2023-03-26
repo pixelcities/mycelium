@@ -13,10 +13,16 @@ defmodule DataStore do
 
   @doc """
   Generate a unique dataset URI
+
+  Users can only request URIs for sources
   """
   def request_data_uri(attrs, %{"user_id" => _user_id, "ds_id" => ds_id} = metadata) do
     # Ensure that the ds is correct by overwriting it from the metadata
-    command = CreateDataURI.new(Map.put(attrs, "ds", Atom.to_string(ds_id)))
+    command =
+      attrs
+      |> Map.put("ds",  Atom.to_string(ds_id))
+      |> CreateDataURI.new()
+      |> CreateDataURI.validate_type(["source"])
 
     handle_dispatch(command, metadata)
   end
