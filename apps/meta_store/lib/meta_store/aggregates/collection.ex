@@ -129,28 +129,20 @@ defmodule MetaStore.Aggregates.Collection do
   end
 
   # TODO: Enforce locking behaviour
-  defp authorized?(_user_id, nil), do: true
-  defp authorized?(user_id, %{id: _id} = schema) do
+  defp authorized?(user_id, schema) do
     Enum.any?(schema.shares || [], fn share ->
       share.principal == user_id
     end)
   end
 
-  defp authorized?(user_id, %{"id" => _id} = schema) do
-    Enum.any?(Map.get(schema, "shares", []), fn share ->
-      Map.get(share, "principal") == user_id
-    end)
-  end
-
-  defp valid_shares?(_user_id, nil, _new_schema), do: true
   defp valid_shares?(user_id, original_schema, new_schema) do
-    new_columns = Map.new(Enum.map(Map.get(new_schema, "columns", []), fn c -> {Map.get(c, "id"), c} end))
+    new_columns = Map.new(Enum.map(new_schema.columns, fn c -> {c.id, c} end))
 
     Enum.reduce_while(original_schema.columns, true, fn column, true ->
       case Map.get(new_columns, column.id) do
         nil -> {:halt, false}
         new_column ->
-          if MapSet.new(column.shares) == MapSet.new(Map.get(new_column, "shares")) || Enum.any?(column.shares, fn share -> share.principal == user_id end) do
+          if MapSet.new(column.shares) == MapSet.new(new_column.shares) || Enum.any?(column.shares, fn share -> share.principal == user_id end) do
             {:cont, true}
           else
             {:halt, false}

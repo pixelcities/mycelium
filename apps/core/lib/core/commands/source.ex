@@ -4,18 +4,8 @@ defmodule Core.Commands.CreateSource do
     workspace: :string,
     type: :string,
     uri: {{:array, :string}, []},
-    schema: :map,
+    schema: Core.Types.Schema,
     is_published: {:boolean, default: false}
-
-  alias Core.Types.Schema
-
-  defp validate_schema(changeset) do
-    schema = changeset
-    |> fetch_field!(:schema)
-    |> Schema.new()
-
-    Enum.reduce(schema.errors, changeset, fn {err, {message, additional}}, changeset -> add_error(changeset, err, message, additional) end)
-  end
 
   defp validate_integrity(changeset) do
     [uri, tag] = fetch_field!(changeset, :uri)
@@ -49,7 +39,6 @@ defmodule Core.Commands.CreateSource do
     changeset
     |> validate_required([:id])
     |> validate_length(:uri, is: 2)
-    |> validate_schema()
     |> validate_integrity()
   end
 end
@@ -60,24 +49,13 @@ defmodule Core.Commands.UpdateSource do
     workspace: :string,
     type: :string,
     uri: {{:array, :string}, []},
-    schema: :map,
+    schema: Core.Types.Schema,
     is_published: {:boolean, default: false}
-
-  alias Core.Types.Schema
-
-  defp validate_schema(changeset) do
-    schema = changeset
-    |> fetch_field!(:schema)
-    |> Schema.new()
-
-    Enum.reduce(schema.errors, changeset, fn {err, {message, additional}}, changeset -> add_error(changeset, err, message, additional) end)
-  end
 
   def handle_validate(changeset) do
     changeset
     |> validate_required([:id, :workspace])
     |> validate_length(:uri, is: 2)
-    |> validate_schema()
   end
 end
 

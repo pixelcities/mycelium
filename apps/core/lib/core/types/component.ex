@@ -1,7 +1,7 @@
 defmodule Core.Types.Component do
   import Ecto.Changeset
 
-  alias Core.Types.{Schema, Share, WAL}
+  alias Core.Types.{Share, WAL}
 
   defp validate_targets(changeset) do
     changeset
@@ -42,14 +42,6 @@ defmodule Core.Types.Component do
     else
       add_error(changeset, hd(fields), "missing one of these fields: #{inspect fields}")
     end
-  end
-
-  def validate_schema(changeset) do
-    schema = changeset
-    |> fetch_field!(:schema)
-    |> Schema.new()
-
-    Enum.reduce(schema.errors, changeset, fn {err, {message, additional}}, changeset -> add_error(changeset, err, message, additional) end)
   end
 
   def validate_shares(changeset, field \\ :shares) do

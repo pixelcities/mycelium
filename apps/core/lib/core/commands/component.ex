@@ -6,7 +6,7 @@ defmodule Core.Commands.CreateCollection do
     workspace: :string,
     type: :string,
     uri: {{:array, :string}, []},
-    schema: :map,
+    schema: Core.Types.Schema,
     targets: {{:array, :binary_id}, default: []},
     position: {{:array, :float}, default: [0.0, 0.0]},
     color: {:string, default: "#000000"},
@@ -26,7 +26,6 @@ defmodule Core.Commands.CreateCollection do
     |> validate_required([:id, :workspace, :type, :uri, :schema])
     |> validate_inclusion(:type, ["source", "collection"])
     |> validate_component()
-    |> validate_schema()
   end
 end
 
@@ -38,7 +37,7 @@ defmodule Core.Commands.UpdateCollection do
     workspace: :string,
     type: :string,
     uri: {{:array, :string}, []},
-    schema: :map,
+    schema: Core.Types.Schema,
     targets: {{:array, :binary_id}, default: []},
     position: {{:array, :float}, default: [0.0, 0.0]},
     color: {:string, default: "#000000"},
@@ -49,7 +48,6 @@ defmodule Core.Commands.UpdateCollection do
     |> validate_required([:id, :workspace, :type, :uri, :schema])
     |> validate_inclusion(:type, ["source", "collection"])
     |> validate_component()
-    |> validate_schema()
   end
 end
 
@@ -59,12 +57,11 @@ defmodule Core.Commands.UpdateCollectionSchema do
   use Core.Utils.EnrichableCommand,
     id: :binary_id,
     workspace: :string,
-    schema: :map
+    schema: Core.Types.Schema
 
   def handle_validate(changeset) do
     changeset
     |> validate_required([:id, :workspace, :schema])
-    |> validate_schema()
   end
 end
 
