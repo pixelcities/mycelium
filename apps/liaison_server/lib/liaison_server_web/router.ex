@@ -58,6 +58,7 @@ defmodule LiaisonServerWeb.Router do
     pipe_through [:api, :require_authenticated_user]
 
     post "/token", UserProfileController, :token
+    post "/pagetoken", UserProfileController, :pagetoken
     post "/datatokens", UserProfileController, :datatokens
     get "/:id", UserProfileController, :get_user
     put "/profile", UserProfileController, :update_user

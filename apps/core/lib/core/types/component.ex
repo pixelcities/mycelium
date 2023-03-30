@@ -1,7 +1,8 @@
 defmodule Core.Types.Component do
   import Ecto.Changeset
 
-  alias Core.Types.{Share, WAL}
+  alias Core.Types.Schemas.Share
+  alias Core.Types.WAL
 
   defp validate_targets(changeset) do
     changeset

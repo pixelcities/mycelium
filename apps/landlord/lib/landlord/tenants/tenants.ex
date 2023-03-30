@@ -75,7 +75,11 @@ defmodule Landlord.Tenants do
   def get_data_space!(id), do: Repo.get!(DataSpace, id)
   def get_data_space_by_handle(handle) when is_atom(handle), do:
     get_data_space_by_handle(Atom.to_string(handle))
-  def get_data_space_by_handle(handle), do: Repo.get_by!(DataSpace, handle: handle)
+  def get_data_space_by_handle(handle) do
+    Repo.one(from d in DataSpace,
+      where: d.handle == ^handle
+    )
+  end
 
   @doc """
   Get a single data space by user and handle

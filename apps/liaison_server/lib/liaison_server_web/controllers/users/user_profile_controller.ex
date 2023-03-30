@@ -33,6 +33,18 @@ defmodule LiaisonServerWeb.Users.UserProfileController do
   end
 
   @doc """
+  Get a session token to be used with the content server
+  """
+  def pagetoken(conn, _params) do
+    user = conn.assigns.current_user
+
+    json(conn, %{
+      "user_id" => user.id,
+      "token" => Phoenix.Token.sign(ContentServerWeb.Endpoint, "auth", user.id)
+    })
+  end
+
+  @doc """
   Get a set of session tokens to interact with remote datasets
   """
   def datatokens(conn, %{"uri" => uri, "tag" => tag, "mode" => mode}) do

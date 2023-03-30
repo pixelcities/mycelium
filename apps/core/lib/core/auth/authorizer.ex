@@ -3,13 +3,14 @@ defmodule Core.Auth.Authorizer do
   @doc """
   Placeholder for more advanced authorization rules
   """
-  def authorized?(user, shares) do
+  def authorized?(%{} = user, shares), do: authorized?(user.id, shares)
+  def authorized?(user_id, shares) do
     Enum.any?(shares, fn share ->
       if Map.get(share, "type") == "public" || Map.get(share, "type") == "internal" do
         true
 
       else
-        !!user && user.id == Map.get(share, "principal")
+        !!user_id && user_id == Map.get(share, "principal")
       end
     end)
   end
