@@ -32,6 +32,10 @@ defmodule MetaStore.Aggregates.Source do
   def execute(%Source{} = source, %UpdateSource{__metadata__: %{user_id: user_id}} = update)
     when source.workspace == update.workspace and hd(source.uri) == hd(update.uri)
   do
+    IO.inspect(source.schema)
+    IO.inspect(update.schema)
+
+    # TODO: source.schema sometimes has string keys?
     if authorized?(user_id, source.schema) && valid_shares?(user_id, source.schema, update.schema) do
       SourceUpdated.new(update, date: NaiveDateTime.utc_now())
     else
@@ -56,20 +60,26 @@ defmodule MetaStore.Aggregates.Source do
     end
   end
 
-  defp authorized?(user_id, schema) do
-    Enum.any?(schema.shares, fn share ->
+  defp authorized?(user_id, %{id: _id} = schema) do
+    Enum.any?(schema.shares || [], fn share ->
       share.principal == user_id
     end)
   end
 
+  defp authorized?(user_id, %{"id" => _id} = schema) do
+    Enum.any?(Map.get(schema, "shares", []), fn share ->
+      Map.get(share, "principal") == user_id
+    end)
+  end
+
   defp valid_shares?(user_id, original_schema, new_schema) do
-    new_columns = Map.new(Enum.map(new_schema.columns, fn c -> {c.id, c} end))
+    new_columns = Map.new(Enum.map(Map.get(new_schema, "columns", []), fn c -> {Map.get(c, "id"), c} end))
 
     Enum.reduce_while(original_schema.columns, true, fn column, true ->
       case Map.get(new_columns, column.id) do
         nil -> {:halt, false}
         new_column ->
-          if MapSet.new(column.shares) == MapSet.new(new_column.shares) || Enum.any?(column.shares, fn share -> share.principal == user_id end) do
+          if MapSet.new(column.shares) == MapSet.new(Map.get(new_column, "shares")) || Enum.any?(column.shares, fn share -> share.principal == user_id end) do
             {:cont, true}
           else
             {:halt, false}

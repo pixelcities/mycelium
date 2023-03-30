@@ -120,7 +120,7 @@ defmodule Landlord.Tenants do
 
     {:ok, data_space} = %DataSpace{}
     |> DataSpace.changeset(attrs)
-    |> Ecto.Changeset.put_assoc(:data_spaces__users, [%{user: user, role: "owner"}])
+    |> Ecto.Changeset.put_assoc(:data_spaces__users, [%{user: user, role: "owner", status: "confirmed"}])
     |> Repo.insert()
 
     # Verified by the DataSpace changeset

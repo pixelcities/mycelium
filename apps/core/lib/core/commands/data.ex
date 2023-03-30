@@ -7,12 +7,13 @@ defmodule Core.Commands.CreateDataURI do
 
   def validate_type(changeset, strict_types) when is_list(strict_types) do
     changeset
+    |> validate_required(:type)
     |> validate_inclusion(:type, strict_types)
   end
 
   def handle_validate(changeset) do
     changeset
-    |> validate_required([:id, :workspace])
+    |> validate_required([:id, :workspace, :type])
     |> validate_inclusion(:type, ["source", "collection"])
   end
 end

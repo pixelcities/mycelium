@@ -67,7 +67,7 @@ defmodule Core.Types.Schema do
 
   def new(attrs) do
     changeset(%__MODULE__{}, attrs)
-    |> validate_required([:id, :key_id, :tag])
+    |> validate_required([:id])
   end
 end
 

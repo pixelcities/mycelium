@@ -56,7 +56,9 @@ defmodule DataStore.DataTokens do
           {:error, :invalid_policy}
       end
     else
-      err -> err
+      err ->
+        Logger.error(Exception.format(:error, err))
+        err
     end
   end
 

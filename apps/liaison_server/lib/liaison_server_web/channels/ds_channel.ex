@@ -15,7 +15,7 @@ defmodule LiaisonServerWeb.DataSpaceChannel do
     if authorized?(user, maybe_ds_id, payload) do
       {:ok, ds_id} = maybe_ds_id
       data_space = Tenants.get_data_space_by_handle(ds_id)
-      role = Tenants.get_data_space_role(user, data_space)
+      {:ok, role} = Tenants.get_data_space_role(user, data_space)
 
       socket = assign(socket, :current_ds, ds_id)
       socket = assign(socket, :current_role, role)

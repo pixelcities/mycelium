@@ -259,7 +259,7 @@ defmodule MetaStore do
   that the URI matches the source and that they have access to the original
   source.
   """
-  def create_collection(%{"uri" => uri} = attrs, %{"user_id" => user_id, "ds_id" => ds_id} = metadata) do
+  def create_collection(%{"uri" => [uri, _tag]} = attrs, %{"user_id" => user_id, "ds_id" => ds_id} = metadata) do
     create_collection =
       attrs
       |> CreateCollection.new()
@@ -292,25 +292,25 @@ defmodule MetaStore do
     transformer = MetaStore.get_transformer!(target, tenant: ds_id)
 
     if transformer do
-      max_inputs = if transformer.type == "merge", do: 2, else: 1
+      command =
+        attrs
+        |> AddCollectionTarget.new()
+        |> AddCollectionTarget.validate_transformer_target(transformer)
 
-      if length(transformer.collections) < max_inputs do
-        handle_dispatch(AddCollectionTarget.new(attrs), metadata)
-      else
-        {:error, :too_many_inputs}
-      end
+      handle_dispatch(command, metadata)
 
     else
       widget = MetaStore.get_widget!(target, tenant: ds_id)
 
       if widget do
-        unless widget.collection do
-          handle_dispatch(AddCollectionTarget.new(attrs), metadata)
-        else
-          {:error, :target_already_has_input}
-        end
+        command =
+          attrs
+          |> AddCollectionTarget.new()
+          |> AddCollectionTarget.validate_widget_target(widget)
+
+        handle_dispatch(command, metadata)
       else
-        {:error, :target_does_not_exist}
+        dispatch_error(:target_does_not_exist, metadata)
       end
     end
   end
@@ -339,15 +339,22 @@ defmodule MetaStore do
         end)) do
           handle_dispatch(DeleteCollection.new(attrs), metadata)
         else
-          {:error, :cannot_delete_source_with_active_targets}
+          dispatch_error(:cannot_delete_source_with_active_targets, metadata)
         end
       end
 
     else
-      {:error, :cannot_delete_collection}
+      dispatch_error(:cannot_delete_collection, metadata)
     end
   end
 
+  @doc """
+  Create a transformer
+
+  Transformers are usually created without any inputs, but will receive one or more
+  inputs later on. The transformer will execute a transformation on the incoming data
+  (usually a collection) and eventually put the results in a new collection.
+  """
   def create_transformer(attrs, %{"user_id" => _user_id} = metadata) do
     handle_dispatch(CreateTransformer.new(attrs), metadata)
   end
@@ -381,6 +388,12 @@ defmodule MetaStore do
     end
   end
 
+  @doc """
+  Update the transformer WAL
+
+  The WAL is verified to have the expected structure, and the aggregate guards
+  against the use of columns the user does not have access to.
+  """
   def update_transformer_wal(attrs, %{"user_id" => _user_id} = metadata) do
     handle_dispatch(UpdateTransformerWAL.new(attrs), metadata)
   end
@@ -426,6 +439,17 @@ defmodule MetaStore do
     end
   end
 
+  @doc """
+  Create a widget
+
+  Widgets require a collection input to be usuable. They implement "export"
+  behaviour within the workflows. For example, data from a collection can
+  be visualized using various charts.
+
+  This is achieved by storing the visualization result in the widget itself,
+  so that the collection data does not have to be exposed to, for example, a
+  public report.
+  """
   def create_widget(attrs, %{"user_id" => _user_id} = metadata) do
     handle_dispatch(CreateWidget.new(attrs), metadata)
   end
@@ -481,7 +505,7 @@ defmodule MetaStore do
   end
 
 
-  defp handle_dispatch(command, %{"user_id" => user_id, "ds_id" => ds_id} = metadata) do
+  defp handle_dispatch(command, %{"user_id" => _user_id, "ds_id" => ds_id} = metadata) do
     with :ok <- @app.validate_and_dispatch(command, consistency: :strong, application: Module.concat(@app, ds_id), metadata: metadata) do
       {:ok, :done}
     else
@@ -491,18 +515,23 @@ defmodule MetaStore do
           {:error, :consistency_timeout} -> reply
           {:error, error} ->
             Logger.error("Error dispatching command #{inspect(command)} with metadata #{inspect(metadata)}: #{inspect(error)}")
-            Landlord.notify_user(%{
-              id: Ecto.UUID.generate(),
-              type: "error",
-              message: format_error(error),
-              receiver: user_id,
-              is_urgent: true
-            }, metadata)
 
-            reply
+            dispatch_error(error, metadata)
           err -> err
         end
     end
+  end
+
+  # Dispatch the error as a notification. This will upgrade the error
+  # to :ok if the notification was dispatched correctly.
+  defp dispatch_error(error, %{"user_id" => user_id} = metadata) do
+    Landlord.notify_user(%{
+      id: Ecto.UUID.generate(),
+      type: "error",
+      message: format_error(error),
+      receiver: user_id,
+      is_urgent: true
+    }, metadata)
   end
 
   defp format_error({:validation_failure, %Ecto.Changeset{} = reason}) do

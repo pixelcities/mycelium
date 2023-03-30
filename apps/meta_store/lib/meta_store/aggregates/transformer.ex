@@ -58,10 +58,10 @@ defmodule MetaStore.Aggregates.Transformer do
     )
   end
 
-  def execute(%Transformer{} = transformer, %UpdateTransformer{__metadata__: %{access_map: access_map}} = update)
+  def execute(%Transformer{id: id} = transformer, %UpdateTransformer{__metadata__: %{access_map: access_map}} = update)
     when transformer.workspace == update.workspace
   do
-    with :ok <- validate_wal_inputs(update.wal, transformer.collections, transformer.transformers),
+    with :ok <- validate_wal_inputs(id, update.wal, transformer.collections, transformer.transformers),
          :ok <- validate_wal_changes(transformer.wal, update.wal, access_map)
     do
       TransformerUpdated.new(update, date: NaiveDateTime.utc_now())
@@ -119,10 +119,10 @@ defmodule MetaStore.Aggregates.Transformer do
     end
   end
 
-  def execute(%Transformer{} = transformer, %UpdateTransformerWAL{__metadata__: %{access_map: access_map}} = update)
+  def execute(%Transformer{id: id} = transformer, %UpdateTransformerWAL{__metadata__: %{access_map: access_map}} = update)
     when transformer.workspace == update.workspace
   do
-    with :ok <- validate_wal_inputs(update.wal, transformer.collections, transformer.transformers),
+    with :ok <- validate_wal_inputs(id, update.wal, transformer.collections, transformer.transformers),
          :ok <- validate_wal_changes(transformer.wal, update.wal, access_map)
     do
       TransformerWALUpdated.new(update, date: NaiveDateTime.utc_now())
@@ -141,13 +141,13 @@ defmodule MetaStore.Aggregates.Transformer do
     TransformerDeleted.new(command, date: NaiveDateTime.utc_now())
   end
 
-  defp validate_wal_inputs(wal, collections, transformers) do
+  defp validate_wal_inputs(id, wal, collections, transformers) do
     table_identifiers =
       Map.get(wal, "identifiers")
       |> Map.filter(fn {_k, v} -> Map.get(v, "type") == "table" end)
       |> Map.values()
       |> Enum.map(fn x -> Map.get(x, "id") end)
-      |> Enum.map(fn x -> x in collections || x in transformers end)
+      |> Enum.map(fn x -> x == id || x in collections || x in transformers end)
 
     if Enum.all?(table_identifiers) do
       :ok
@@ -156,9 +156,15 @@ defmodule MetaStore.Aggregates.Transformer do
     end
   end
 
+  @doc """
+  Validate access for the WAL changes
+
+  TODO: Validate strict query structure per transformer type, with the exception
+  of the custom transformer.
+  """
   defp validate_wal_changes(original_wal, command_wal, access_map) do
-    original_identifers = Map.to_list(Map.get(original_wal, "identifiers", %{}))
-    command_identifiers = Map.to_list(Map.get(command_wal, "identifiers", %{}))
+    original_identifers = Map.to_list(Map.get(original_wal || %{}, "identifiers", %{}))
+    command_identifiers = Map.to_list(Map.get(command_wal || %{}, "identifiers", %{}))
 
     # Only validate new identifiers, the user may not have access to existing ones, which
     # is perfectly allowed as long as they don't change anything.
@@ -170,8 +176,8 @@ defmodule MetaStore.Aggregates.Transformer do
       |> Enum.all?()
 
     if access_to_identifiers do
-      original_transactions = Map.get(original_wal, "identifiers", [])
-      command_transactions = Map.get(command_wal, "identifiers", [])
+      original_transactions = Map.get(original_wal || %{}, "transactions", [])
+      command_transactions = Map.get(command_wal || %{}, "transactions", [])
 
       # Next, ensure that unauthorized identifiers were not used in the transaction
       new_transactions = MapSet.difference(MapSet.new(command_transactions), MapSet.new(original_transactions))

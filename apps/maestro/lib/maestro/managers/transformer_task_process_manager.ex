@@ -112,7 +112,7 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
   end
 
   def handle(%TransformerTaskProcessManager{has_collection: true} = pm, %TransformerWALUpdated{wal: _wal} = _event) do
-    Enum.map(pm.created_tasks, fn task_id ->
+    Enum.map(pm.created_tasks || [], fn task_id ->
       %CancelTask{
         id: task_id,
         is_cancelled: true
@@ -201,13 +201,32 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
     in_collections = Enum.map(pm.transformer.collections, fn collection_id -> MetaStore.get_collection!(collection_id, tenant: pm.transformer.ds) end)
     collection_color = if length(in_collections) == 1, do: hd(in_collections).color, else: "#FFFFFF"
 
+    shares =
+      in_collections
+      |> Enum.flat_map(fn collection ->
+        case MetaStore.get_schema!(collection.schema.id, tenant: pm.transformer.ds) do
+          nil -> []
+          schema -> schema.shares || []
+        end
+      end)
+      |> MapSet.new()
+      |> MapSet.to_list()
+      |> Enum.map(fn share -> %{type: share.type, principal: share.principal} end)
+
     [
       %CreateCollection{
         id: collection_id,
         workspace: pm.transformer.workspace,
         type: "collection",
         uri: [uri, tag],
-        schema: nil,
+        schema: %{
+          id: collection_id,
+          key_id: nil,
+          column_order: [],
+          columns: [],
+          shares: shares,
+          tag: ""
+        },
         position: [hd(pm.transformer.position) + 200.0, Enum.at(pm.transformer.position, 1)],
         color: collection_color,
         is_ready: false
@@ -302,7 +321,7 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
 
   # TODO: Handle shutdown when there are no more open tasks (currently handled by after_command/2)
   def handle(%TransformerTaskProcessManager{has_collection: true} = pm, %TransformerDeleted{} = _event) do
-    Enum.map(pm.created_tasks, fn task_id ->
+    Enum.map(pm.created_tasks || [], fn task_id ->
       %CancelTask{
         id: task_id,
         is_cancelled: true
@@ -366,19 +385,19 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
 
   def apply(%TransformerTaskProcessManager{} = pm, %TaskCancelled{} = event) do
     %TransformerTaskProcessManager{pm |
-      created_tasks: Enum.filter(pm.created_tasks, fn task_id -> task_id != event.id end)
+      created_tasks: Enum.filter(pm.created_tasks || [], fn task_id -> task_id != event.id end)
     }
   end
 
   def apply(%TransformerTaskProcessManager{} = pm, %TaskCompleted{} = event) do
     %TransformerTaskProcessManager{pm |
-      created_tasks: Enum.filter(pm.created_tasks, fn task_id -> task_id != event.id end)
+      created_tasks: Enum.filter(pm.created_tasks || [], fn task_id -> task_id != event.id end)
     }
   end
 
   def apply(%TransformerTaskProcessManager{} = pm, %TaskFailed{} = event) do
     %TransformerTaskProcessManager{pm |
-      created_tasks: Enum.filter(pm.created_tasks, fn task_id -> task_id != event.id end)
+      created_tasks: Enum.filter(pm.created_tasks || [], fn task_id -> task_id != event.id end)
     }
   end
 

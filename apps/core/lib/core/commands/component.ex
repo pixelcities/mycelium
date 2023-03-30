@@ -74,6 +74,22 @@ defmodule Core.Commands.AddCollectionTarget do
     workspace: :string,
     target: :binary_id
 
+  def validate_transformer_target(changeset, transformer) do
+    changeset
+    |> validate_change(:target, fn :target, _target ->
+      max_inputs = if transformer.type == "merge", do: 2, else: 1
+
+      if length(transformer.collections) < max_inputs, do: [], else: [target: "too many inputs"]
+    end)
+  end
+
+  def validate_widget_target(changeset, widget) do
+    changeset
+    |> validate_change(:target, fn :target, _target ->
+      unless widget.collection, do: [], else: [target: "already has input"]
+    end)
+  end
+
   def handle_validate(changeset) do
     changeset
     |> validate_required([:id, :workspace, :target])
@@ -408,7 +424,7 @@ defmodule Core.Commands.AddWidgetInput do
 end
 
 defmodule Core.Commands.PutWidgetSetting do
-  use Commanded.Command,
+  use Core.Utils.EnrichableCommand,
     id: :binary_id,
     workspace: :string,
     key: :string,
@@ -439,7 +455,7 @@ defmodule Core.Commands.PublishWidget do
 end
 
 defmodule Core.Commands.DeleteWidget do
-  use Commanded.Command,
+  use Core.Utils.EnrichableCommand,
     id: :binary_id,
     workspace: :string
 

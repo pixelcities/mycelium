@@ -88,7 +88,6 @@ defmodule Maestro.Projectors.Task do
         t -> {:ok, t}
       end
     end)
-    |> Ecto.Multi.inspect()
     |> Ecto.Multi.delete(:delete, fn %{get_task: t} -> t end)
   end
 

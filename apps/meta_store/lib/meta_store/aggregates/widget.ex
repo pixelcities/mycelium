@@ -36,10 +36,13 @@ defmodule MetaStore.Aggregates.Widget do
     )
   end
 
-  def execute(%Widget{} = widget, %UpdateWidget{} = update)
+  def execute(%Widget{settings: settings} = widget, %UpdateWidget{} = update)
     when widget.workspace == update.workspace
   do
-    WidgetUpdated.new(update, date: NaiveDateTime.utc_now())
+    # Don't allow changing settings through this command
+    WidgetUpdated.new(update,
+      settings: settings,
+      date: NaiveDateTime.utc_now())
   end
 
   def execute(%Widget{} = _widget, %SetWidgetPosition{} = position) do
@@ -58,16 +61,34 @@ defmodule MetaStore.Aggregates.Widget do
     end
   end
 
-  def execute(%Widget{} = _widget, %PutWidgetSetting{} = command) do
-    WidgetSettingPut.new(command, date: NaiveDateTime.utc_now())
+  def execute(%Widget{} = _widget, %PutWidgetSetting{__metadata__: %{user_id: user_id, shares: shares}} = command) do
+    if valid_setting?(command.key, user_id, shares) do
+      WidgetSettingPut.new(command, date: NaiveDateTime.utc_now())
+    else
+      {:error, :unauthorized}
+    end
   end
 
   def execute(%Widget{} = _widget, %PublishWidget{} = command) do
     WidgetPublished.new(command, date: NaiveDateTime.utc_now())
   end
 
-  def execute(%Widget{} = _widget, %DeleteWidget{} = command) do
-    WidgetDeleted.new(command, date: NaiveDateTime.utc_now())
+  def execute(%Widget{} = _widget, %DeleteWidget{__metadata__: %{user_id: user_id, is_admin: is_admin, shares: shares}} = command) do
+    if is_admin || authorized?(user_id, shares) do
+      WidgetDeleted.new(command, date: NaiveDateTime.utc_now())
+    else
+      {:error, :unauthorized}
+    end
+  end
+
+  defp authorized?(user_id, shares) do
+    Enum.any?(shares, fn share ->
+      share.principal == user_id
+    end)
+  end
+
+  defp valid_setting?(key, user_id, shares) do
+    if String.contains?(String.downcase(key, :ascii), "column"), do: authorized?(user_id, shares), else: true
   end
 
 

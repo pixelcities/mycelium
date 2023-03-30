@@ -40,7 +40,9 @@ defmodule Core.Commands.CreateSource do
 
   def validate_uri_uniqueness(changeset, uris) do
     changeset
-    |> validate_exclusion(changeset, :uri, uris)
+    |> validate_change(:uri, fn :uri, [uri, _tag] ->
+      if uri in uris, do: [uri: "invalid namespace"], else: []
+    end)
   end
 
   def handle_validate(changeset) do

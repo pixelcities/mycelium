@@ -150,7 +150,8 @@ end
 defmodule Core.Events.WidgetSettingPut do
   use Commanded.Event,
     from: Core.Commands.PutWidgetSetting,
-    with: [:date]
+    with: [:date],
+    drop: [:__metadata__]
 end
 
 defmodule Core.Events.WidgetPublished do
@@ -162,6 +163,7 @@ end
 defmodule Core.Events.WidgetDeleted do
   use Commanded.Event,
     from: Core.Commands.DeleteWidget,
-    with: [:date]
+    with: [:date],
+    drop: [:__metadata__]
 end
 
