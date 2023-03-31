@@ -1,6 +1,5 @@
 defmodule ContentServerWeb.Live.Content do
   use ContentServerWeb, :live_view
-  on_mount ContentServerWeb.Live.UserAuth
 
   alias Landlord.Tenants
   alias ContentServerWeb.Live.Components
@@ -29,7 +28,7 @@ defmodule ContentServerWeb.Live.Content do
           content ->
             token = Map.get(params, "token")
 
-            if token_is_valid?(token, content.access) do
+            if token_is_valid?(token, content.access, ds) do
               socket = assign(socket, :authorized, true)
               socket = assign(socket, :ds_id, ds.handle)
               socket = assign(socket, :external_host, URI.to_string(Core.Utils.Web.get_external_host()))
@@ -55,12 +54,12 @@ defmodule ContentServerWeb.Live.Content do
     {:ok, redirect(socket, to: "/error")}
   end
 
-  defp token_is_valid?(token, access) do
+  defp token_is_valid?(token, access, ds) do
     if is_public?(access) do
       true
     else
       case Phoenix.Token.verify(ContentServerWeb.Endpoint, "auth", token, max_age: 86400) do
-        {:ok, user_id} -> authorized?(user_id, access)
+        {:ok, user_id} -> authorized?(user_id, access, Tenants.is_member?(ds, user_id))
         _ -> false
       end
     end

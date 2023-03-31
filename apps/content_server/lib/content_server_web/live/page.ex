@@ -1,6 +1,5 @@
 defmodule ContentServerWeb.Live.Page do
   use ContentServerWeb, :live_view
-  on_mount ContentServerWeb.Live.UserAuth
 
   alias Landlord.Tenants
   alias ContentServerWeb.Live.Components

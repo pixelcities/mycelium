@@ -108,6 +108,26 @@ defmodule Landlord.Tenants do
     end
   end
 
+  @doc """
+  Confirm a user is member of the given data space
+  """
+  def is_member?(%DataSpace{} = data_space, %User{} = user), do: is_member?(data_space, user.id)
+  def is_member?(%DataSpace{} = data_space, user_id) do
+    query = from u in User,
+      join: d in assoc(u, :data_spaces),
+      where: d.id == ^data_space.id and u.id == ^user_id
+
+    Repo.exists?(query)
+  end
+
+  def is_owner?(%DataSpace{} = data_space, %User{} = user), do: is_owner?(data_space, user.id)
+  def is_owner?(%DataSpace{} = data_space, user_id) do
+    query = from u in DataSpaceUser,
+      where: u.user_id == ^user_id and u.data_space_id == ^data_space.id and u.role == "owner"
+
+    Repo.exists?(query)
+  end
+
 
   ## Database setters
 
@@ -147,7 +167,7 @@ defmodule Landlord.Tenants do
 
   """
   def invite_to_data_space(%DataSpace{} = data_space, %User{} = user, recipient_email, email_url_fun, _attrs \\ %{}) do
-    if not is_owner?(data_space, user) || is_member?(data_space, recipient_email) do
+    if not is_owner?(data_space, user) || email_is_member?(data_space, recipient_email) do
       {:error, :invalid_membership}
     else
       {encoded_token, invite_token} = DataSpaceToken.build_invite_token(data_space, recipient_email)
@@ -178,7 +198,7 @@ defmodule Landlord.Tenants do
   end
 
   def confirm_member(%DataSpace{} = data_space, %User{} = user, new_member_id) do
-    if is_member?(data_space, user.email) do
+    if email_is_member?(data_space, user.email) do
       case Repo.one(from u in DataSpaceUser, where: u.user_id == ^new_member_id and u.data_space_id == ^data_space.id) do
         nil -> {:error, :member_has_not_accepted_invite}
         changeset ->
@@ -194,7 +214,7 @@ defmodule Landlord.Tenants do
   end
 
   def cancel_invite(%DataSpace{} = data_space, %User{} = user, invite_email) do
-    if is_member?(data_space, user.email) do
+    if email_is_member?(data_space, user.email) do
       case Repo.one(from t in DataSpaceToken, where: t.sent_to == ^invite_email and t.data_space_id == ^data_space.id) do
         nil -> {:error, :no_such_invite}
         changeset ->
@@ -223,17 +243,10 @@ defmodule Landlord.Tenants do
     |> Ecto.Multi.delete_all(:tokens, DataSpaceToken.user_and_data_space_query(user, data_space))
   end
 
-  defp is_member?(%DataSpace{} = data_space, email) do
+  defp email_is_member?(%DataSpace{} = data_space, email) do
     query = from u in User,
       join: d in assoc(u, :data_spaces),
       where: d.id == ^data_space.id and u.email == ^email
-
-    Repo.exists?(query)
-  end
-
-  defp is_owner?(%DataSpace{} = data_space, %User{} = user) do
-    query = from u in DataSpaceUser,
-      where: u.user_id == ^user.id and u.data_space_id == ^data_space.id and u.role == "owner"
 
     Repo.exists?(query)
   end
