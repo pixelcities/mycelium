@@ -11,12 +11,14 @@ defmodule Landlord.Aggregates.User do
   alias Core.Commands.{
     CreateUser,
     UpdateUser,
-    SetUserActivity
+    SetUserActivity,
+    DeleteUser
   }
   alias Core.Events.{
     UserCreated,
     UserUpdated,
-    UserActivitySet
+    UserActivitySet,
+    UserDeleted
   }
 
 
@@ -35,6 +37,10 @@ defmodule Landlord.Aggregates.User do
       last_active_at: NaiveDateTime.utc_now(),
       date: NaiveDateTime.utc_now()
     )
+  end
+
+  def execute(%User{id: _id}, %DeleteUser{} = command) do
+    UserDeleted.new(command, date: NaiveDateTime.utc_now())
   end
 
 
@@ -71,5 +77,7 @@ defmodule Landlord.Aggregates.User do
       date: event.date
     }
   end
+
+  def apply(%User{} = _user, %UserDeleted{} = _event), do: __MODULE__.__struct__
 
 end

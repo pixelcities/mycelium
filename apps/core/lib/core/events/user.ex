@@ -34,6 +34,12 @@ defmodule Core.Events.UserActivitySet do
     with: [:last_active_at, :date]
 end
 
+defmodule Core.Events.UserDeleted do
+  use Commanded.Event,
+    from: Core.Commands.DeleteUser,
+    with: [:date]
+end
+
 defmodule Core.Events.UserInvited do
   use Commanded.Event,
     from: Core.Commands.InviteUser,

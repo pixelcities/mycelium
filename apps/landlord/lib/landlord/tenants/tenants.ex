@@ -237,6 +237,22 @@ defmodule Landlord.Tenants do
     Repo.transaction(accept_invite_multi(user, data_space))
   end
 
+  @doc """
+  Remove a user from a data space
+  """
+  def delete_user_from_data_space(%DataSpace{} = data_space, %User{} = user) do
+    if not email_is_member?(data_space, user.email) do
+      {:error, :invalid_membership}
+    else
+      with {:ok, _} <- Repo.delete(Repo.one(from u in DataSpaceUser, where: u.user_id == ^user.id and u.data_space_id == ^data_space.id)) do
+        Landlord.delete_user(%{id: user.id}, %{"user_id" => user.id, "ds_id" => data_space.handle})
+      else
+        err -> err
+      end
+    end
+  end
+
+
   defp accept_invite_multi(user, data_space) do
     Ecto.Multi.new()
     |> Ecto.Multi.insert(:user, %DataSpaceUser{user: user, data_space: data_space, role: "collaborator", status: "pending"})

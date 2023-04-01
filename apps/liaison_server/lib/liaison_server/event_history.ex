@@ -23,6 +23,7 @@ defmodule LiaisonServer.EventHistory do
     Events.UserCreated,
     Events.UserUpdated,
     Events.UserActivitySet,
+    Events.UserDeleted,
     Events.UserInvited,
     Events.InviteAccepted,
     Events.InviteConfirmed,

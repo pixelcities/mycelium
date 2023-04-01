@@ -8,6 +8,7 @@ defmodule Landlord do
   alias Core.Commands.{
     CreateUser,
     UpdateUser,
+    DeleteUser,
     InviteUser,
     AcceptInvite,
     ConfirmInvite,
@@ -20,6 +21,8 @@ defmodule Landlord do
   def create_user(attrs, %{"user_id" => _user_id, "ds_id" => ds_id} = metadata), do: dispatch(CreateUser.new(attrs), ds_id, metadata)
 
   def update_user(attrs, %{"user_id" => _user_id, "ds_id" => ds_id} = metadata), do: dispatch(UpdateUser.new(attrs), ds_id, metadata)
+
+  def delete_user(attrs, %{"user_id" => _user_id, "ds_id" => ds_id} = metadata), do: dispatch(DeleteUser.new(attrs), ds_id, metadata)
 
   def notify_user(attrs, %{"ds_id" => ds_id} = metadata), do: dispatch(SendUserNotification.new(attrs), ds_id, metadata)
 

@@ -40,6 +40,16 @@ defmodule Core.Commands.SetUserActivity do
   end
 end
 
+defmodule Core.Commands.DeleteUser do
+  use Commanded.Command,
+    id: :string
+
+  def handle_validate(changeset) do
+    changeset
+    |> validate_required([:id])
+  end
+end
+
 defmodule Core.Commands.InviteUser do
   use Commanded.Command,
     email: :string,

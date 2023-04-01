@@ -15,6 +15,7 @@ defmodule LiaisonServer.Workflows.RelayEvents do
     Core.Events.UserCreated,
     Core.Events.UserUpdated,
     Core.Events.UserActivitySet,
+    Core.Events.UserDeleted,
     Core.Events.UserInvited,
     Core.Events.InviteAccepted,
     Core.Events.InviteConfirmed,

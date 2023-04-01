@@ -6,6 +6,7 @@ defmodule Landlord.Router do
     CreateUser,
     UpdateUser,
     SetUserActivity,
+    DeleteUser,
     InviteUser,
     AcceptInvite,
     ConfirmInvite,
@@ -18,7 +19,7 @@ defmodule Landlord.Router do
   identify(User, by: :id, prefix: "users-")
   identify(Invite, by: :email, prefix: "invites-")
 
-  dispatch([ CreateUser, UpdateUser, SetUserActivity ], to: User)
+  dispatch([ CreateUser, UpdateUser, SetUserActivity, DeleteUser ], to: User)
   dispatch([ InviteUser, AcceptInvite, ConfirmInvite, CancelInvite ], to: Invite, lifespan: InviteLifespan)
   dispatch(SendUserNotification, to: Notification, identity: :receiver, identity_prefix: "notifications-")
   dispatch(MarkNotificationRead, to: Notification, identity: :read_by, identity_prefix: "notifications-")

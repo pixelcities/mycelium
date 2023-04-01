@@ -75,6 +75,7 @@ defmodule LiaisonServerWeb.Router do
     post "/:handle/invite", DataSpaceController, :invite_to_data_space
     post "/:handle/cancel_invite", DataSpaceController, :cancel_invite
     post "/:handle/confirm_member", DataSpaceController, :confirm_member
+    delete "/:handle/leave", DataSpaceController, :leave_data_space
     put "/accept_invite/:token", DataSpaceController, :accept_invite
   end
 

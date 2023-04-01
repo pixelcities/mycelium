@@ -140,4 +140,26 @@ defmodule LiaisonServerWeb.DataSpaces.DataSpaceController do
     end
   end
 
+  def leave_data_space(conn, %{"handle" => handle}) do
+    user = conn.assigns.current_user
+
+    case Tenants.get_data_space_by_user_and_handle(user, handle) do
+      {:ok, data_space} ->
+        case Tenants.delete_user_from_data_space(data_space, user) do
+          {:ok, _} -> json(conn, %{"status" => "ok"})
+          _ ->
+            conn
+            |> put_status(500)
+            |> json(%{"status" => "error"})
+        end
+
+      {:error, _err} ->
+        conn
+        |> put_status(404)
+        |> json(%{
+          "status" => "not found"
+        })
+    end
+  end
+
 end
