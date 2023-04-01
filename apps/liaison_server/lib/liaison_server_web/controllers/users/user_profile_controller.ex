@@ -68,11 +68,17 @@ defmodule LiaisonServerWeb.Users.UserProfileController do
 
     case Accounts.update_user_profile(user, user_params) do
       {:ok, user} ->
-        Enum.each(Tenants.get_data_spaces_by_user(user), fn ds ->
-          {:ok, ds_id} = Tenants.to_atom(user, ds.handle)
+        Tenants.get_data_spaces_by_user(user)
+          |> Enum.reject(fn ds -> ds.handle == "trial" end)
+          |> Enum.each(fn ds ->
+            {:ok, ds_id} = Tenants.to_atom(user, ds.handle)
+            {:ok, role} = Tenants.get_data_space_role(user, ds)
 
-          Landlord.update_user(Map.from_struct(user), %{"user_id" => user.id, "ds_id" => ds_id})
-        end)
+            user
+              |> Map.from_struct()
+              |> Map.put(:role, role)
+              |> Landlord.update_user(%{"user_id" => user.id, "ds_id" => ds_id})
+          end)
 
         json(conn, %{
           "status" => "ok"
@@ -150,11 +156,17 @@ defmodule LiaisonServerWeb.Users.UserProfileController do
         # Now that the email has been confirmed, also rotate any pending keys
         case KeyStore.commit_rotation(rotation_token, user) do
           {:ok, _} ->
-            Enum.each(Tenants.get_data_spaces_by_user(user), fn ds ->
-              {:ok, ds_id} = Tenants.to_atom(user, ds.handle)
+            Tenants.get_data_spaces_by_user(user)
+              |> Enum.reject(fn ds -> ds.handle == "trial" end)
+              |> Enum.each(fn ds ->
+                {:ok, ds_id} = Tenants.to_atom(user, ds.handle)
+                {:ok, role} = Tenants.get_data_space_role(user, ds)
 
-              Landlord.update_user(Map.from_struct(user), %{"user_id" => user.id, "ds_id" => ds_id})
-            end)
+                user
+                  |> Map.from_struct()
+                  |> Map.put(:role, role)
+                  |> Landlord.update_user(%{"user_id" => user.id, "ds_id" => ds_id})
+              end)
 
             json(conn, %{
               "status" => "ok"

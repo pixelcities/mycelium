@@ -11,7 +11,8 @@ defmodule LiaisonServerWeb.Auth.Local.UserConfirmationController do
     if user = Accounts.get_user_by_email(email) do
       Accounts.deliver_user_confirmation_instructions(
         user,
-        &Routes.user_confirmation_url(get_external_host(), :confirm_registration, &1)
+        &Routes.user_confirmation_url(get_external_host(), :confirm_registration, &1),
+        false
       )
     end
 
@@ -22,24 +23,34 @@ defmodule LiaisonServerWeb.Auth.Local.UserConfirmationController do
   @doc """
   Complete the user creation
 
-  A newly created user is also invited to a trial dataspace.
+  A newly created user is also invited to a trial dataspace if they requested that as
+  part of the original registration. The trial dataspace invite is special in that most
+  user information will be redacted.
   """
   def confirm_registration(conn, %{"token" => token}) do
     case Accounts.confirm_user(token) do
-      {:ok, user} ->
-        # Grab the trial agent config
-        config = Application.get_env(:key_x, KeyX.TrialAgent)
+      {:ok, {user, join_trial?}} ->
+        if join_trial? do
+          # Grab the trial agent config
+          config = Application.get_env(:key_x, KeyX.TrialAgent)
 
-        # Add the user directly to the trial dataspace
-        with ds <- Tenants.get_data_space_by_handle(:trial),
-             trial_user <- Accounts.get_user_by_email(config[:email]),
-             _ds <- Tenants.add_user_to_data_space(ds, user)
+          # Add the user directly to the trial dataspace
+          with ds <- Tenants.get_data_space_by_handle(:trial),
+               _trial_user <- Accounts.get_user_by_email(config[:email]),
+               _ds <- Tenants.add_user_to_data_space(ds, user)
 
-        do
-          # Share the metadata key
-          TrialAgent.share_manifest_key(user, :trial)
+          do
+            # Share the metadata key
+            TrialAgent.share_manifest_key(user, :trial)
 
-          Landlord.create_user(Map.put(Map.from_struct(user), :role, "collaborator"), %{"user_id" => user.id, "ds_id" => :trial})
+            # Add the new user with a randomized name
+            Landlord.create_user(%{
+              id: user.id,
+              name: random_name(),
+              email: "[REDACTED]",
+              role: "collaborator"
+            }, %{"user_id" => user.id, "ds_id" => :trial})
+          end
         end
 
         json(conn, %{status: "ok"})
@@ -58,4 +69,9 @@ defmodule LiaisonServerWeb.Auth.Local.UserConfirmationController do
         end
     end
   end
+
+  defp random_name() do
+    "user#{Enum.random(100_000..999_999)}"
+  end
+
 end

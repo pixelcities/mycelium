@@ -17,7 +17,8 @@ defmodule LiaisonServerWeb.Auth.Local.UserRegistrationController do
           {:ok, _} =
             Accounts.deliver_user_confirmation_instructions(
               user,
-              &Routes.user_confirmation_url(get_external_host(), :confirm_registration, &1)
+              &Routes.user_confirmation_url(get_external_host(), :confirm_registration, &1),
+              Map.get(user_params, "join_trial", "false") == "true"
             )
         end
 

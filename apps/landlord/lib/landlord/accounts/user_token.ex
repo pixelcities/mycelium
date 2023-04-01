@@ -116,7 +116,7 @@ defmodule Landlord.Accounts.UserToken do
           from token in token_and_context_query(hashed_token, context),
             join: user in assoc(token, :user),
             where: token.inserted_at > ago(^days, "day") and token.sent_to == user.email,
-            select: user
+            select: [user, token]
 
         {:ok, query}
 
