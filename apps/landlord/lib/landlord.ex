@@ -20,6 +20,20 @@ defmodule Landlord do
 
   def create_user(attrs, %{"user_id" => _user_id, "ds_id" => ds_id} = metadata), do: dispatch(CreateUser.new(attrs), ds_id, metadata)
 
+  @doc """
+  Create user in the trial data space
+
+  Most user information is redacted in the trial space.
+  """
+  def create_trial_user(user_id, %{"user_id" => _user_id, "ds_id" => :trial} = metadata) do
+    dispatch(CreateUser.new(%{
+      id: user_id,
+      name: random_name(),
+      email: "[REDACTED]",
+      role: "collaborator"
+    }), :trial, metadata)
+  end
+
   def update_user(attrs, %{"user_id" => _user_id, "ds_id" => ds_id} = metadata), do: dispatch(UpdateUser.new(attrs), ds_id, metadata)
 
   def delete_user(attrs, %{"user_id" => _user_id, "ds_id" => ds_id} = metadata), do: dispatch(DeleteUser.new(attrs), ds_id, metadata)
@@ -48,6 +62,10 @@ defmodule Landlord do
     else
       reply -> reply
     end
+  end
+
+  defp random_name() do
+    "user#{Enum.random(100_000..999_999)}"
   end
 
 end

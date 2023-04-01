@@ -14,7 +14,7 @@ defmodule Landlord.Repo.Migrations.CreateDataSpaces do
     create unique_index(:data_spaces, [:handle])
 
     create table(:data_spaces__users) do
-      add :data_space_id, references(:data_spaces, type: :uuid)
+      add :data_space_id, references(:data_spaces, type: :uuid, on_delete: :delete_all), null: false
       add :user_id, references(:users, type: :uuid)
     end
 

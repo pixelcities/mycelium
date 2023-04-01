@@ -43,13 +43,7 @@ defmodule LiaisonServerWeb.Auth.Local.UserConfirmationController do
             # Share the metadata key
             TrialAgent.share_manifest_key(user, :trial)
 
-            # Add the new user with a randomized name
-            Landlord.create_user(%{
-              id: user.id,
-              name: random_name(),
-              email: "[REDACTED]",
-              role: "collaborator"
-            }, %{"user_id" => user.id, "ds_id" => :trial})
+            Landlord.create_trial_user(user.id, %{"user_id" => user.id, "ds_id" => :trial})
           end
         end
 
@@ -68,10 +62,6 @@ defmodule LiaisonServerWeb.Auth.Local.UserConfirmationController do
             |> json(%{error: "user confirmation link is invalid or it has expired"})
         end
     end
-  end
-
-  defp random_name() do
-    "user#{Enum.random(100_000..999_999)}"
   end
 
 end

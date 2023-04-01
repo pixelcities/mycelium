@@ -12,6 +12,7 @@ defmodule Landlord.Tenants do
   require Logger
 
   alias Landlord.Repo
+  alias Landlord.Accounts
   alias Landlord.Accounts.{User, UserNotifier}
   alias Landlord.Tenants.{DataSpace, DataSpaceUser, DataSpaceToken}
 
@@ -155,6 +156,8 @@ defmodule Landlord.Tenants do
     if user_create do
       Landlord.create_user(Map.put(Map.from_struct(user), :role, "owner"), %{"user_id" => user.id, "ds_id" => handle})
     end
+
+    {:ok, data_space}
   end
 
   @doc """
@@ -249,6 +252,55 @@ defmodule Landlord.Tenants do
       else
         err -> err
       end
+    end
+  end
+
+  @doc """
+  Delete a data space
+
+  This will first trigger a callback to all other applications, where they can
+  handle the graceful shutdown of a data space (e.g. by stopping the appropiate
+  supervisors and cleaning the read models).
+  """
+  def delete_data_space(%DataSpace{} = data_space) do
+    Landlord.Registry.dispatch(String.to_existing_atom(data_space.handle), [mode: "stop"])
+
+    Repo.delete(data_space)
+  end
+
+  @doc """
+  Reset a data space
+
+  This is identical to deleting and recreating a data space with all the
+  existing members. The data space id will change.
+  """
+  def reset_data_space(%DataSpace{} = data_space) do
+    members = Repo.all(from u in DataSpaceUser, where: u.data_space_id == ^data_space.id)
+    {[creator | owners], collaborators} = Enum.split_with(members, fn member -> member.role == "owner" end)
+
+    # Special case for the trial space. We have to make sure most user information
+    # is redacted before sending the command to the data space application.
+    is_trial? = data_space.handle == "trial"
+
+    with {:ok, _} <- delete_data_space(data_space),
+         {:ok, new_data_space} <- create_data_space(Accounts.get_user!(creator.user_id), Map.from_struct(data_space), [user_create: !is_trial?])
+    do
+      handle = String.to_existing_atom(new_data_space.handle)
+
+      Enum.each(owners ++ collaborators, fn member ->
+        user = Accounts.get_user!(member.user_id)
+        add_user_to_data_space(new_data_space, user)
+
+        if is_trial? do
+          Landlord.create_trial_user(user.id, %{"user_id" => user.id, "ds_id" => :trial})
+        else
+          Landlord.create_user(Map.put(Map.from_struct(user), :role, member.role), %{"user_id" => user.id, "ds_id" => handle})
+        end
+      end)
+    else
+      err ->
+        IO.inspect(err)
+        err
     end
   end
 
