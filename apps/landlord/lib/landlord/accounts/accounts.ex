@@ -63,7 +63,9 @@ defmodule Landlord.Accounts do
   ## User registration
 
   @doc """
-  Registers a user with an invite token
+  Register a user
+
+  This may optionally include an invite token
 
   If a valid invite token is included in the request, we can immediatly confirm
   the user because the invite was sent to the email address already.
@@ -76,6 +78,8 @@ defmodule Landlord.Accounts do
       iex> register_user(%{field: bad_value})
       {:error, %Ecto.Changeset{}}
   """
+  def register_user(%{"confirm_password" => _}), do: {:error, :robot}
+
   def register_user(%{"invite" => token} = attrs) do
     case %User{}
       |> User.registration_changeset(attrs)
