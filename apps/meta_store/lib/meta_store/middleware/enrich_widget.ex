@@ -30,7 +30,11 @@ defimpl Core.Middleware.CommandEnrichment, for: [Core.Commands.PutWidgetSetting,
         widget ->
           case MetaStore.get_collection!(widget.collection, tenant: ds_id) do
             nil -> []
-            collection -> collection.schema.shares
+            collection ->
+              case MetaStore.get_schema!(collection.schema.id) do
+                nil -> []
+                schema -> schema.shares
+              end
           end
       end
 
