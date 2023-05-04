@@ -345,7 +345,7 @@ defmodule Core.Commands.CreateWidget do
   def handle_validate(changeset) do
     changeset
     |> validate_required([:id, :workspace, :type])
-    |> validate_inclusion(:type, ["chart"])
+    |> validate_inclusion(:type, ["chart", "map"])
     |> validate_format(:color, ~r/^#[0-9a-fA-F]{6}$/)
     |> validate_position()
     |> validate_shares(:access)
@@ -372,7 +372,7 @@ defmodule Core.Commands.UpdateWidget do
   def handle_validate(changeset) do
     changeset
     |> validate_required([:id, :workspace, :type])
-    |> validate_inclusion(:type, ["chart"])
+    |> validate_inclusion(:type, ["chart", "map"])
     |> validate_format(:color, ~r/^#[0-9a-fA-F]{6}$/)
     |> validate_position()
     |> validate_shares(:access)
@@ -425,11 +425,11 @@ defmodule Core.Commands.PutWidgetSetting do
     id: :binary_id,
     workspace: :string,
     key: :string,
-    value: :string
+    value: {:string, default: ""}
 
   def handle_validate(changeset) do
     changeset
-    |> validate_required([:id, :workspace, :key, :value])
+    |> validate_required([:id, :workspace, :key])
   end
 end
 

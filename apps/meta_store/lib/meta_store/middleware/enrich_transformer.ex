@@ -33,9 +33,13 @@ defimpl Core.Middleware.CommandEnrichment, for: [Core.Commands.UpdateTransformer
           case MetaStore.get_collection!(id, tenant: ds_id) do
             nil -> id == transformer_id
             collection ->
-              Enum.any?(collection.schema.shares, fn share ->
-                share.principal == user_id
-              end)
+              case MetaStore.get_schema!(collection.schema.id, tenant: ds_id) do
+                nil -> []
+                schema ->
+                  Enum.any?(schema.shares, fn share ->
+                    share.principal == user_id
+                  end)
+              end
           end
         "column" ->
           case MetaStore.get_column!(id, tenant: ds_id) do
