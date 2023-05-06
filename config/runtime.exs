@@ -1,8 +1,10 @@
 import Config
 
+validate_len = fn env, len -> if String.length(env) == len, do: env, else: nil end
+
 if config_env() == :prod do
   # Env vars
-  secret_key_base = System.get_env("SECRET_KEY_BASE") ||
+  secret_key_base = System.get_env("SECRET_KEY_BASE") |> validate_len.(64) ||
     raise """
     environment variable SECRET_KEY_BASE is missing.
     You can generate one by calling: mix phx.gen.secret
@@ -11,7 +13,7 @@ if config_env() == :prod do
   host = System.get_env("HOST") || "datagarden.app"
   port = String.to_integer(System.get_env("PORT") || "5000")
 
-  content_secret_key_base = System.get_env("CONTENT_SECRET_KEY_BASE") ||
+  content_secret_key_base = System.get_env("CONTENT_SECRET_KEY_BASE") |> validate_len.(64) ||
     raise """
     environment variable CONTENT_SECRET_KEY_BASE is missing.
     """
@@ -19,16 +21,16 @@ if config_env() == :prod do
   content_host = System.get_env("CONTENT_HOST") || "datagarden.page"
   content_port = String.to_integer(System.get_env("CONTENT_PORT") || "5001")
 
-  agent_secret_key = System.get_env("AGENT_SECRET_KEY") ||
+  agent_secret_key = System.get_env("AGENT_SECRET_KEY") |> validate_len.(32) ||
     raise """
     environment variable AGENT_SECRET_KEY is missing.
-    Please add a 32 byte secret
+    Please add a 16 byte secret in hex
     """
 
-  integrity_secret_key = System.get_env("INTEGRITY_SECRET_KEY") ||
+  integrity_secret_key = System.get_env("INTEGRITY_SECRET_KEY") |> validate_len.(64) ||
     raise """
     environment variable INTEGRITY_SECRET_KEY is missing.
-    Please add a 32 byte secret
+    Please add a 32 byte secret in hex
     """
 
   pg_host = System.get_env("PGHOST") || "localhost"
