@@ -35,6 +35,7 @@ defmodule Landlord.MixProject do
       {:ecto_sql, "~> 3.6"},
       {:jason, "~> 1.3"},
       {:postgrex, "~> 0.16"},
+      {:req, "~> 0.3.0"},
 
       {:swoosh, "~> 1.7"},
       {:ex_aws, "~> 2.3"},

@@ -95,7 +95,10 @@ config :landlord, Landlord.Repo,
   database: "landlord"
 
 config :landlord, Landlord.Mailer,
-  adapter: Swoosh.Adapters.ExAwsAmazonSES
+adapter: Swoosh.Adapters.ExAwsAmazonSES
+
+config :landlord, Landlord.Tenants.SubscriptionApi,
+  basepath: "https://vendors.paddle.com"
 
 
 # KeyX

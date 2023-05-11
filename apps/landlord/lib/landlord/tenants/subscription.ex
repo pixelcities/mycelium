@@ -68,4 +68,9 @@ defmodule Landlord.Tenants.Subscription do
         )
       )
   end
+
+  def not_cancelled_subscription_query(%DataSpace{} = data_space) do
+    from s in Subscription,
+      where: s.data_space_id == ^data_space.id and s.status != :deleted
+  end
 end

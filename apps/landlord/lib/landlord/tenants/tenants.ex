@@ -14,7 +14,7 @@ defmodule Landlord.Tenants do
   alias Landlord.Repo
   alias Landlord.Accounts
   alias Landlord.Accounts.{User, UserNotifier}
-  alias Landlord.Tenants.{DataSpace, DataSpaceUser, DataSpaceToken, Subscription}
+  alias Landlord.Tenants.{DataSpace, DataSpaceUser, DataSpaceToken, Subscription, SubscriptionApi}
 
   ## Database getters
 
@@ -127,6 +127,26 @@ defmodule Landlord.Tenants do
       where: u.user_id == ^user_id and u.data_space_id == ^data_space.id and u.role == "owner"
 
     Repo.exists?(query)
+  end
+
+  @doc """
+  Get the subscription status
+
+  Uses a checkout id to get the subscription status. Useful to check if everything is okay
+  during the checkout process.
+  """
+  def get_subscription_status(%User{} = user, checkout_id) do
+    case Repo.one(from s in Subscription, where: s.checkout_id == ^checkout_id) do
+      nil -> {:error, :no_such_subscription}
+      subscription ->
+        data_space = get_data_space!(subscription.data_space_id)
+
+        if is_owner?(data_space, user) do
+          {:ok, subscription.status}
+        else
+          {:error, :unauthorized}
+        end
+    end
   end
 
 
@@ -262,7 +282,7 @@ defmodule Landlord.Tenants do
     if not email_is_member?(data_space, user.email) do
       {:error, :invalid_membership}
     else
-      with {:ok, _} <- Repo.delete(Repo.one(from u in DataSpaceUser, where: u.user_id == ^user.id and u.data_space_id == ^data_space.id)) do
+      with {:ok, _} <- Repo.transaction(delete_member_multi(user, data_space)) do
         Landlord.delete_user(%{id: user.id}, %{"user_id" => user.id, "ds_id" => data_space.handle})
       else
         err -> err
@@ -278,7 +298,7 @@ defmodule Landlord.Tenants do
   supervisors and cleaning the read models).
   """
   def delete_data_space(%DataSpace{} = data_space) do
-    unless Repo.exists?(Subscription.active_subscription_query(data_space)) do
+    unless Repo.exists?(Subscription.not_cancelled_subscription_query(data_space)) do
       Landlord.Registry.dispatch(String.to_existing_atom(data_space.handle), [mode: "stop"])
 
       Repo.delete(data_space)
@@ -359,6 +379,24 @@ defmodule Landlord.Tenants do
     Ecto.Multi.new()
     |> Ecto.Multi.insert(:user, %DataSpaceUser{user: user, data_space: data_space, role: "collaborator", status: "pending"})
     |> Ecto.Multi.delete_all(:tokens, DataSpaceToken.user_and_data_space_query(user, data_space))
+  end
+
+  # TODO: Use quantity from subscription
+  defp delete_member_multi(user, data_space) do
+    Ecto.Multi.new()
+    |> Ecto.Multi.run(:nr_users, fn repo, _ ->
+      {:ok, repo.all(from u in DataSpaceUser,
+        where: u.data_space_id == ^data_space.id,
+        select: [:id],
+        lock: "FOR UPDATE"
+      ) |> Enum.count()}
+    end)
+    |> Ecto.Multi.one(:subscription, (from s in Subscription, where: s.data_space_id == ^data_space.id, select: [:subscription_id]))
+    |> Ecto.Multi.one(:data_space_user, (from u in DataSpaceUser, where: u.user_id == ^user.id and u.data_space_id == ^data_space.id))
+    |> Ecto.Multi.delete(:delete, fn %{data_space_user: data_space_user} -> data_space_user end)
+    |> Ecto.Multi.run(:change_seats, fn _repo, %{subscription: subscription, nr_users: nr_users} ->
+      SubscriptionApi.change_seats(subscription.subscription_id, nr_users - 1)
+    end)
   end
 
   defp email_is_member?(%DataSpace{} = data_space, email) do

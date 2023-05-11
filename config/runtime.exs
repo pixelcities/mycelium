@@ -110,8 +110,8 @@ if config_env() == :prod do
   config :data_store, DataStore.Data,
     role_arn: data_store_role_arn
 
-  config :landlord, :paddle,
+  config :landlord, Landlord.Tenants.SubscriptionApi,
     vendor_id: paddle_vendor_id,
-    auth_code: paddle_auth_code
+    vendor_auth_code: paddle_auth_code
 
 end

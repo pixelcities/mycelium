@@ -115,6 +115,9 @@ config :landlord, Landlord.Repo,
 config :landlord, Landlord.Mailer,
   adapter: Swoosh.Adapters.Local
 
+config :landlord, Landlord.Tenants.SubscriptionApi,
+  basepath: "https://sandbox-vendors.paddle.com"
+
 
 # KeyX
 config :key_x, :backend_config,
