@@ -14,7 +14,7 @@ defmodule Landlord.Tenants do
   alias Landlord.Repo
   alias Landlord.Accounts
   alias Landlord.Accounts.{User, UserNotifier}
-  alias Landlord.Tenants.{DataSpace, DataSpaceUser, DataSpaceToken}
+  alias Landlord.Tenants.{DataSpace, DataSpaceUser, DataSpaceToken, Subscription}
 
   ## Database getters
 
@@ -133,20 +133,35 @@ defmodule Landlord.Tenants do
   ## Database setters
 
   @doc """
+  Prepare for the creation of a new data space
+
+  A dataspace requires a metadata key, which should be created beforehand.
+  The key id is then associated with the data space.
+
+  Will insert a row for the soon to be created data space, but not set it to
+  active just yet, nor trigger any of the application callbacks.
+
+  Complete the creation process with create_data_space/3.
+  """
+  def prepare_data_space(%User{} = user, %{key_id: _key_id} = attrs, _opts \\ []) do
+    %DataSpace{}
+    |> DataSpace.changeset(attrs, is_active: false)
+    |> Ecto.Changeset.put_assoc(:data_spaces__users, [%{user: user, role: "owner", status: "confirmed"}])
+    |> Repo.insert()
+  end
+
+  @doc """
   Create a new data space
 
-  A dataspace requires a metadata key, which should be created
-  beforehand. The key id is then associated with the data space.
+  Takes a previously prepared data space and launches it by setting it to active and
+  triggering all the required application callbacks.
 
   Collaborators may be invited using invite_to_data_space/4.
   """
-  def create_data_space(%User{} = user, %{key_id: _key_id} = attrs, opts \\ []) do
+  def create_data_space(%User{} = user, %DataSpace{is_active: false} = data_space, opts \\ []) do
     user_create = Keyword.get(opts, :user_create, false)
 
-    {:ok, data_space} = %DataSpace{}
-    |> DataSpace.changeset(attrs)
-    |> Ecto.Changeset.put_assoc(:data_spaces__users, [%{user: user, role: "owner", status: "confirmed"}])
-    |> Repo.insert()
+    {:ok, data_space} = Repo.update(DataSpace.set_is_active_changeset(data_space))
 
     # Verified by the DataSpace changeset
     handle = String.to_atom(data_space.handle)
@@ -263,9 +278,13 @@ defmodule Landlord.Tenants do
   supervisors and cleaning the read models).
   """
   def delete_data_space(%DataSpace{} = data_space) do
-    Landlord.Registry.dispatch(String.to_existing_atom(data_space.handle), [mode: "stop"])
+    unless Repo.exists?(Subscription.active_subscription_query(data_space)) do
+      Landlord.Registry.dispatch(String.to_existing_atom(data_space.handle), [mode: "stop"])
 
-    Repo.delete(data_space)
+      Repo.delete(data_space)
+    else
+      {:error, :data_space_has_active_subscription}
+    end
   end
 
   @doc """
@@ -283,7 +302,9 @@ defmodule Landlord.Tenants do
     is_trial? = data_space.handle == "trial"
 
     with {:ok, _} <- delete_data_space(data_space),
-         {:ok, new_data_space} <- create_data_space(Accounts.get_user!(creator.user_id), Map.from_struct(data_space), [user_create: !is_trial?])
+         user <- Accounts.get_user!(creator.user_id),
+         {:ok, new_data_space} <- prepare_data_space(user, Map.from_struct(data_space)),
+         {:ok, new_data_space} <- create_data_space(user, new_data_space, [user_create: !is_trial?])
     do
       handle = String.to_existing_atom(new_data_space.handle)
 
@@ -303,6 +324,32 @@ defmodule Landlord.Tenants do
         err
     end
   end
+
+
+  ## Subscription events
+
+  @doc """
+  Manage the subscription lifecycle
+
+  Receives webhook events that keep our state in sycn with the external subscription provider. A
+  subscription is generally never deleted, the status field is continously updated to reflect the
+  subscription status instead.
+
+  The passthrough field contains the data space handle.
+  """
+  def manage_subscription(%{"alert_name" => alert_name, "passthrough" => handle} = params) when
+    alert_name in ["subscription_created", "subscription_updated", "subscription_cancelled", "subscription_payment_succeeded"]
+  do
+    case get_data_space_by_handle(handle) do
+      nil -> {:error, :no_such_data_space}
+      data_space ->
+        %Subscription{}
+        |> Subscription.changeset(params)
+        |> Ecto.Changeset.put_assoc(:data_space, data_space)
+        |> Repo.insert!()
+    end
+  end
+  def manage_subscription(_params), do: {:error, :not_interested}
 
 
   defp accept_invite_multi(user, data_space) do

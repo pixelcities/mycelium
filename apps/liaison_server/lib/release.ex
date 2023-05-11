@@ -21,7 +21,8 @@ defmodule LiaisonServer.Release do
     {:ok, user} = Landlord.Accounts.create_agent(email)
     key_id = KeyX.TrialAgent.create_manifest_key()
 
-    Landlord.Tenants.create_data_space(user, %{key_id: key_id, handle: name})
+    {:ok, data_space} = Landlord.Tenants.prepare_data_space(user, %{key_id: key_id, handle: name})
+    Landlord.Tenants.create_data_space(user, data_space)
     LiaisonServer.Application.init_event_store!(name)
   end
 end

@@ -4,7 +4,7 @@ defmodule Mycelium.MixProject do
   def project do
     [
       apps_path: "apps",
-      version: "0.1.18",
+      version: "0.1.19",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       releases: [

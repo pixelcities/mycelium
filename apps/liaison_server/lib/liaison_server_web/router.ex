@@ -110,6 +110,14 @@ defmodule LiaisonServerWeb.Router do
     put "/sync", ProtocolController, :put_state
   end
 
+  ## Subscription routes
+
+  scope "/subscriptions", LiaisonServerWeb.Subscriptions do
+    pipe_through [:api]
+
+    post "/webhook", PaddleController, :webhook
+  end
+
 
   defp handle_errors(conn, %{reason: %Phoenix.Router.NoRouteError{message: message}}) do
     conn

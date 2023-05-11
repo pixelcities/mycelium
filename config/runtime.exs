@@ -43,6 +43,15 @@ if config_env() == :prod do
     environment variable DATA_STORE_ROLE_ARN is missing.
     """
 
+  paddle_vendor_id = System.get_env("PADDLE_VENDOR_ID") ||
+    raise """
+    environment variable PADDLE_VENDOR_ID is missing.
+    """
+
+  paddle_auth_code = System.get_env("PADDLE_AUTH_CODE") ||
+    raise """
+    environment variable PADDLE_AUTH_CODE is missing.
+    """
 
   # Configs
 
@@ -100,5 +109,9 @@ if config_env() == :prod do
 
   config :data_store, DataStore.Data,
     role_arn: data_store_role_arn
+
+  config :landlord, :paddle,
+    vendor_id: paddle_vendor_id,
+    auth_code: paddle_auth_code
 
 end
