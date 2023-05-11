@@ -343,10 +343,13 @@ defmodule Landlord.Tenants do
     case get_data_space_by_handle(handle) do
       nil -> {:error, :no_such_data_space}
       data_space ->
-        %Subscription{}
+        case Repo.get(Subscription, params["subscription_id"]) do
+          nil -> %Subscription{}
+          subscription -> Repo.preload(subscription, [:data_space])
+        end
         |> Subscription.changeset(params)
         |> Ecto.Changeset.put_assoc(:data_space, data_space)
-        |> Repo.insert!()
+        |> Repo.insert_or_update()
     end
   end
   def manage_subscription(_params), do: {:error, :not_interested}

@@ -113,8 +113,6 @@ defmodule LiaisonServerWeb.Router do
   ## Subscription routes
 
   scope "/subscriptions", LiaisonServerWeb.Subscriptions do
-    pipe_through [:api]
-
     post "/webhook", PaddleController, :webhook
   end
 

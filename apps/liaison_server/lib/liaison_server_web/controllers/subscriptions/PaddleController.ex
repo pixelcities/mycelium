@@ -12,7 +12,7 @@ defmodule LiaisonServerWeb.Subscriptions.PaddleController do
     IO.inspect(params)
 
     case Tenants.manage_subscription(params) do
-      :ok -> json(conn, "")
+      {:ok, _} -> json(conn, %{"status" => "ok"})
       {:error, error} ->
         Logger.error("Error processing Paddle webhook: #{inspect(error)}")
 
