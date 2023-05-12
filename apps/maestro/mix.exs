@@ -32,11 +32,11 @@ defmodule Maestro.MixProject do
   defp deps do
     [
       {:commanded, "~> 1.4"},
-      {:commanded_eventstore_adapter, "~> 1.2"},
-      {:commanded_ecto_projections, "~> 1.2"},
-      {:eventstore, "~> 1.3"},
-      {:ecto_sql, "~> 3.6"},
-      {:postgrex, "~> 0.16"},
+      {:commanded_ecto_projections, "~> 1.3"},
+      {:commanded_eventstore_adapter, "~> 1.4"},
+      {:eventstore, "~> 1.4"},
+      {:ecto_sql, "~> 3.9"},
+      {:postgrex, "~> 0.17"},
       {:jason, "~> 1.3"},
 
       {:core, "~> 0.1", in_umbrella: true},

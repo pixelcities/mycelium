@@ -28,9 +28,9 @@ defmodule KeyX.MixProject do
   defp deps do
     [
       {:commanded, "~> 1.4"},
-      {:commanded_eventstore_adapter, "~> 1.2"},
-      {:eventstore, "~> 1.3"},
-      {:ecto_sql, "~> 3.6"},
+      {:commanded_eventstore_adapter, "~> 1.4"},
+      {:eventstore, "~> 1.4"},
+      {:ecto_sql, "~> 3.9"},
       {:jason, "~> 1.3"},
       {:postgrex, "~> 0.16"},
       {:rustler, "~> 0.25"},

@@ -71,6 +71,6 @@ defmodule ContentServer.Aggregates.Page do
     }
   end
 
-  def apply(%Page{} = page, %PageDeleted{} = event), do: page
+  def apply(%Page{} = page, %PageDeleted{} = _event), do: page
 
 end

@@ -7,7 +7,7 @@ defmodule ContentServer.App do
     ]
   use Commanded.CommandDispatchValidation
 
-  if Application.fetch_env!(:content_server, :backend_config)[:backend_app] == __MODULE__ do
+  if Application.compile_env!(:content_server, :backend_config)[:backend_app] == __MODULE__ do
     router ContentServer.Router
   end
 end

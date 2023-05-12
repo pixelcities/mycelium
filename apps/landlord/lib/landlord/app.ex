@@ -7,7 +7,7 @@ defmodule Landlord.App do
     ]
   use Commanded.CommandDispatchValidation
 
-  if Application.fetch_env!(:landlord, :backend_config)[:backend_app] == __MODULE__ do
+  if Application.compile_env!(:landlord, :backend_config)[:backend_app] == __MODULE__ do
     router Landlord.Router
   end
 end

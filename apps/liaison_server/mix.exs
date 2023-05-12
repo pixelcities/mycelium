@@ -27,11 +27,11 @@ defmodule LiaisonServer.MixProject do
   defp deps do
     [
       {:commanded, "~> 1.4"},
-      {:commanded_ecto_projections, "~> 1.2"},
-      {:commanded_eventstore_adapter, "~> 1.2"},
+      {:commanded_ecto_projections, "~> 1.3"},
+      {:commanded_eventstore_adapter, "~> 1.4"},
       {:cors_plug, "~> 2.0"},
       {:cowboy_telemetry, "~> 0.4", runtime: false},
-      {:eventstore, "~> 1.3"},
+      {:eventstore, "~> 1.4"},
       {:hammer, "~> 6.0"},
       {:hammer_plug, "~> 2.1"},
       {:jason, "~> 1.3"},

@@ -28,13 +28,13 @@ defmodule Landlord.MixProject do
   defp deps do
     [
       {:commanded, "~> 1.4"},
-      {:commanded_eventstore_adapter, "~> 1.2"},
-      {:eventstore, "~> 1.3"},
+      {:commanded_eventstore_adapter, "~> 1.4"},
+      {:eventstore, "~> 1.4"},
 
       {:argon2_elixir, "~> 2.4"},
-      {:ecto_sql, "~> 3.6"},
+      {:ecto_sql, "~> 3.9"},
       {:jason, "~> 1.3"},
-      {:postgrex, "~> 0.16"},
+      {:postgrex, "~> 0.17"},
       {:req, "~> 0.3.0"},
 
       {:swoosh, "~> 1.7"},

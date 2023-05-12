@@ -7,7 +7,7 @@ defmodule DataStore.App do
     ]
   use Commanded.CommandDispatchValidation
 
-  if Application.fetch_env!(:data_store, :backend_config)[:backend_app] == __MODULE__ do
+  if Application.compile_env!(:data_store, :backend_config)[:backend_app] == __MODULE__ do
     router DataStore.Router
   end
 end

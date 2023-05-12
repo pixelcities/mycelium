@@ -156,12 +156,10 @@ defmodule MetaStore.Aggregates.Transformer do
     end
   end
 
-  @doc """
-  Validate access for the WAL changes
-
-  TODO: Validate strict query structure per transformer type, with the exception
-  of the custom transformer.
-  """
+  # Validate access for the WAL changes
+  #
+  # TODO: Validate strict query structure per transformer type, with the exception
+  # of the custom transformer.
   defp validate_wal_changes(original_wal, command_wal, access_map) do
     original_identifers = Map.to_list(Map.get(original_wal || %{}, "identifiers", %{}))
     command_identifiers = Map.to_list(Map.get(command_wal || %{}, "identifiers", %{}))

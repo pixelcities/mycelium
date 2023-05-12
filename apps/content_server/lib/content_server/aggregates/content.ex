@@ -79,6 +79,6 @@ defmodule ContentServer.Aggregates.Content do
     }
   end
 
-  def apply(%Content{} = content, %ContentDeleted{} = event), do: content
+  def apply(%Content{} = content, %ContentDeleted{} = _event), do: content
 
 end

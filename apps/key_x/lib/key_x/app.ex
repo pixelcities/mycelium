@@ -7,7 +7,7 @@ defmodule KeyX.App do
     ]
   use Commanded.CommandDispatchValidation
 
-  if Application.fetch_env!(:key_x, :backend_config)[:backend_app] == __MODULE__ do
+  if Application.compile_env!(:key_x, :backend_config)[:backend_app] == __MODULE__ do
     router KeyX.Router
   end
 end
