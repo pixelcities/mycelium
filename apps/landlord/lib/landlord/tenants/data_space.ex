@@ -52,8 +52,16 @@ defmodule Landlord.Tenants.DataSpace do
     {subscription, subscription_is_active} = Subscription.active_subscription_clause()
 
     from d in DataSpace,
-      join: assoc(d, :subscription), as: ^subscription,
+      left_join: assoc(d, :subscription), as: ^subscription,
       where: ^(dynamic([d], d.handle == "trial" or (d.is_active == true and ^subscription_is_active)))
+  end
+
+  def get_inactive_data_spaces do
+    {subscription, subscription_is_active} = Subscription.active_subscription_clause()
+
+    from d in DataSpace,
+      left_join: assoc(d, :subscription), as: ^subscription,
+      where: ^(dynamic([d], d.handle != "trial" and (d.is_active != true or not ^subscription_is_active)))
   end
 
   defp validate_handle(changeset) do

@@ -75,8 +75,10 @@ defmodule LiaisonServerWeb.Router do
     post "/:handle/invite", DataSpaceController, :invite_to_data_space
     post "/:handle/cancel_invite", DataSpaceController, :cancel_invite
     post "/:handle/confirm_member", DataSpaceController, :confirm_member
+    post "/:handle/create", DataSpaceController, :prepare_data_space
     delete "/:handle/leave", DataSpaceController, :leave_data_space
     put "/accept_invite/:token", DataSpaceController, :accept_invite
+    put "/activate/:checkout_id", DataSpaceController, :activate_data_space
   end
 
   ## KeyStore routes
@@ -114,6 +116,12 @@ defmodule LiaisonServerWeb.Router do
 
   scope "/subscriptions", LiaisonServerWeb.Subscriptions do
     post "/webhook", PaddleController, :webhook
+  end
+
+  scope "/subscriptions", LiaisonServerWeb.Subscriptions do
+    pipe_through [:api, :require_authenticated_user]
+
+    get "/info/:handle", SubscriptionController, :get_subscription
   end
 
 

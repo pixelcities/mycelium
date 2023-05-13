@@ -5,14 +5,17 @@ defmodule Landlord.Tenants.Subscription do
   import Ecto.Changeset
   import Ecto.Query
 
-  alias Landlord.Tenants.DataSpace
+  alias Landlord.Tenants.{
+    DataSpace,
+    Subscription
+  }
 
   @subscriptions_enabled Application.compile_env(:landlord, Landlord.Tenants.SubscriptionApi)[:enabled]
 
   @statuses [:active, :trialing, :past_due, :paused, :deleted]
 
   @primary_key {:subscription_id, :string, autogenerate: false}
-  @derive {Jason.Encoder, only: [:checkout_id, :cancel_url, :update_url]}
+  @derive {Jason.Encoder, only: [:subscription_id, :status, :quantity, :cancel_url, :update_url]}
 
   schema "subscriptions" do
     field :cancel_url, :string
@@ -74,6 +77,20 @@ defmodule Landlord.Tenants.Subscription do
       )}
     else
       {:subscription, true}
+    end
+  end
+
+  def checkout_query(checkout_id) do
+    {identifier, subscription_is_active} = active_subscription_clause()
+
+    if @subscriptions_enabled do
+      from s in Subscription, as: ^identifier,
+        join: d in assoc(s, :data_space),
+        where: ^(dynamic([s, _], s.checkout_id == ^checkout_id and ^subscription_is_active)),
+        select: d
+    else
+      from d in DataSpace,
+        where: d.handle == ^checkout_id
     end
   end
 end
