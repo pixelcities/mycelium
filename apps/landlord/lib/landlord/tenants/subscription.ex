@@ -5,10 +5,9 @@ defmodule Landlord.Tenants.Subscription do
   import Ecto.Changeset
   import Ecto.Query
 
-  alias Landlord.Tenants.{
-    DataSpace,
-    Subscription
-  }
+  alias Landlord.Tenants.DataSpace
+
+  @subscriptions_enabled Application.compile_env(:landlord, Landlord.Tenants.SubscriptionApi)[:enabled]
 
   @statuses [:active, :trialing, :past_due, :paused, :deleted]
 
@@ -60,17 +59,21 @@ defmodule Landlord.Tenants.Subscription do
     |> cast(changes, Enum.dedup([:subscription_id, :status] ++ Map.keys(changes)))
   end
 
-  def active_subscription_query(%DataSpace{} = data_space) do
-    from s in Subscription,
-      where: s.data_space_id == ^data_space.id and (
+  @doc """
+  Get a where statement to determine if a subscription is active
+
+  Returns a tuple with named binding to be used in the parent query and
+  the where clause.
+  """
+  def active_subscription_clause do
+    if @subscriptions_enabled do
+      {:subscription, dynamic([subscription: s],
         s.status == :active or (
           s.status in [:paused, :deleted] and s.valid_to > ^Date.utc_today()
         )
-      )
-  end
-
-  def not_cancelled_subscription_query(%DataSpace{} = data_space) do
-    from s in Subscription,
-      where: s.data_space_id == ^data_space.id and s.status != :deleted
+      )}
+    else
+      {:subscription, true}
+    end
   end
 end

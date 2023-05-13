@@ -1,6 +1,13 @@
 defmodule Landlord.Tenants.DataSpace do
   use Ecto.Schema
   import Ecto.Changeset
+  import Ecto.Query
+
+  alias Landlord.Tenants.{
+    DataSpace,
+    DataSpaceUser,
+    Subscription
+  }
 
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
@@ -14,8 +21,9 @@ defmodule Landlord.Tenants.DataSpace do
     field :picture, :string
     field :is_active, :boolean, default: false
 
-    has_many :data_spaces__users, Landlord.Tenants.DataSpaceUser
+    has_many :data_spaces__users, DataSpaceUser
     has_many :users, through: [:data_spaces__users, :user]
+    has_one :subscription, Subscription
 
     timestamps()
   end
@@ -33,6 +41,20 @@ defmodule Landlord.Tenants.DataSpace do
     change(data_space, is_active: true)
   end
 
+  @doc """
+  Get a list of all active data spaces
+
+  This includes having an active subscription and having the data space
+  itself be actived as well (there is an active commanded application for
+  this data space).
+  """
+  def get_active_data_spaces do
+    {subscription, subscription_is_active} = Subscription.active_subscription_clause()
+
+    from d in DataSpace,
+      join: assoc(d, :subscription), as: ^subscription,
+      where: ^(dynamic([d], d.handle == "trial" or (d.is_active == true and ^subscription_is_active)))
+  end
 
   defp validate_handle(changeset) do
     changeset
@@ -42,21 +64,4 @@ defmodule Landlord.Tenants.DataSpace do
     |> unsafe_validate_unique(:handle, Landlord.Repo)
     |> unique_constraint(:handle)
   end
-end
-
-defmodule Landlord.Tenants.DataSpaceUser do
-  use Ecto.Schema
-  import Ecto.Changeset
-
-  schema "data_spaces__users" do
-    field :role, :string
-    field :status, :string
-    belongs_to :user, Landlord.Accounts.User, type: :binary_id
-    belongs_to :data_space, Landlord.Tenants.DataSpace, type: :binary_id
-  end
-
-  def confirm_member_changeset(data_space_user) do
-    change(data_space_user, status: "confirmed")
-  end
-
 end

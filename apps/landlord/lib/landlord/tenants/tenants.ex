@@ -16,6 +16,7 @@ defmodule Landlord.Tenants do
   alias Landlord.Accounts.{User, UserNotifier}
   alias Landlord.Tenants.{DataSpace, DataSpaceUser, DataSpaceToken, Subscription, SubscriptionApi}
 
+
   ## Database getters
 
   @doc """
@@ -25,8 +26,8 @@ defmodule Landlord.Tenants do
   """
   def get() do
     try do
-      tenants = Repo.all(from d in DataSpace, select: d.handle)
-        |> Enum.map(fn handle -> String.to_atom(handle) end)
+      tenants = Repo.all(DataSpace.get_active_data_spaces())
+        |> Enum.map(fn data_space -> String.to_atom(data_space.handle) end)
       {:ok, tenants}
     rescue
       e in Postgrex.Error ->
@@ -46,15 +47,25 @@ defmodule Landlord.Tenants do
   @doc """
   Gets all data spaces
   """
-  def get_data_spaces(), do: Repo.all(DataSpace)
+  def get_data_spaces(), do: Repo.all(DataSpace.get_active_data_spaces())
 
   @doc """
   Get data spaces for given user
   """
   def get_data_spaces_by_user(user) do
+    Repo.all(from d in DataSpace.get_active_data_spaces(),
+      join: u in assoc(d, :data_spaces__users),
+      where: u.user_id == ^user.id and u.status == "confirmed"
+    )
+  end
+
+  @doc """
+  Get data spaces for given user, which may be inactive
+  """
+  def unsafe_get_data_spaces_by_user(user) do
     Repo.all(from d in DataSpace,
-      join: u in assoc(d, :users),
-      where: u.id == ^user.id
+      join: u in assoc(d, :data_spaces__users),
+      where: u.user_id == ^user.id and u.status == "confirmed"
     )
   end
 
@@ -62,8 +73,9 @@ defmodule Landlord.Tenants do
   Get data space role for given user
   """
   def get_data_space_role(user, data_space) do
-    case Repo.one(from d in DataSpaceUser,
-      where: d.data_space_id == ^data_space.id and d.user_id == ^user.id
+    case Repo.one(from d in DataSpace.get_active_data_spaces(),
+      join: u in assoc(d, :data_spaces__users),
+      where: d.data_space_id == ^data_space.id and u.user_id == ^user.id and u.status == "confirmed"
     ) do
       nil -> {:error, nil}
       data_space_user -> {:ok, data_space_user.role}
@@ -77,6 +89,15 @@ defmodule Landlord.Tenants do
   def get_data_space_by_handle(handle) when is_atom(handle), do:
     get_data_space_by_handle(Atom.to_string(handle))
   def get_data_space_by_handle(handle) do
+    Repo.one(from d in DataSpace.get_active_data_spaces(),
+      where: d.handle == ^handle
+    )
+  end
+
+  @doc """
+  Get a single data space, which may be inactive
+  """
+  def unsafe_get_data_space_by_handle(handle) do
     Repo.one(from d in DataSpace,
       where: d.handle == ^handle
     )
@@ -88,9 +109,9 @@ defmodule Landlord.Tenants do
   Users should not be able to get data spaces they are not a part of.
   """
   def get_data_space_by_user_and_handle(user, handle) do
-    case Repo.one(from d in DataSpace,
-      join: u in assoc(d, :users),
-      where: d.handle == ^handle and u.id == ^user.id
+    case Repo.one(from d in DataSpace.get_active_data_spaces(),
+      join: u in assoc(d, :data_spaces__users),
+      where: d.handle == ^handle and u.user_id == ^user.id and u.status == "confirmed"
     ) do
       nil -> {:error, nil}
       data_space -> {:ok, data_space}
@@ -114,9 +135,8 @@ defmodule Landlord.Tenants do
   """
   def is_member?(%DataSpace{} = data_space, %User{} = user), do: is_member?(data_space, user.id)
   def is_member?(%DataSpace{} = data_space, user_id) do
-    query = from u in User,
-      join: d in assoc(u, :data_spaces),
-      where: d.id == ^data_space.id and u.id == ^user_id
+    query = from u in DataSpaceUser,
+      where: u.user_id == ^user_id and u.data_space_id == ^data_space.id and u.status == "confirmed"
 
     Repo.exists?(query)
   end
@@ -124,10 +144,15 @@ defmodule Landlord.Tenants do
   def is_owner?(%DataSpace{} = data_space, %User{} = user), do: is_owner?(data_space, user.id)
   def is_owner?(%DataSpace{} = data_space, user_id) do
     query = from u in DataSpaceUser,
-      where: u.user_id == ^user_id and u.data_space_id == ^data_space.id and u.role == "owner"
+      where: u.user_id == ^user_id and u.data_space_id == ^data_space.id and u.role == "owner" and u.status == "confirmed"
 
     Repo.exists?(query)
   end
+
+  def get_subscription(%DataSpace{} = data_space), do:
+    Repo.one(from s in Subscription, where: s.data_space_id == ^data_space.id)
+  def get_subscription(subscription_id), do:
+    Repo.one(from s in Subscription, where: s.subscription_id == ^subscription_id)
 
   @doc """
   Get the subscription status
@@ -240,11 +265,14 @@ defmodule Landlord.Tenants do
       case Repo.one(from u in DataSpaceUser, where: u.user_id == ^new_member_id and u.data_space_id == ^data_space.id) do
         nil -> {:error, :member_has_not_accepted_invite}
         changeset ->
-          data_space_user = Repo.update!(DataSpaceUser.confirm_member_changeset(changeset)) |> Repo.preload(:user)
-          handle = String.to_existing_atom(data_space.handle)
+          with {:ok, %{data_space_user: data_space_user}} <- Repo.transaction(confirm_member_multi(changeset, data_space)) do
+            handle = String.to_existing_atom(data_space.handle)
 
-          Landlord.confirm_invite(%{email: data_space_user.user.email}, %{"user_id" => user.id, "ds_id" => handle})
-          Landlord.create_user(Map.put(Map.from_struct(data_space_user.user), :role, data_space_user.role), %{"user_id" => user.id, "ds_id" => handle})
+            Landlord.confirm_invite(%{email: data_space_user.user.email}, %{"user_id" => user.id, "ds_id" => handle})
+            Landlord.create_user(Map.put(Map.from_struct(data_space_user.user), :role, data_space_user.role), %{"user_id" => user.id, "ds_id" => handle})
+          else
+            err -> err
+          end
       end
     else
       {:error, :invalid_membership}
@@ -272,7 +300,7 @@ defmodule Landlord.Tenants do
   Only to be used internally. The metadata key still has te be shared beforehand.
   """
   def add_user_to_data_space(%DataSpace{} = data_space, %User{} = user) do
-    Repo.transaction(accept_invite_multi(user, data_space))
+    Repo.transaction(accept_invite_multi(user, data_space, status: "confirmed"))
   end
 
   @doc """
@@ -298,7 +326,18 @@ defmodule Landlord.Tenants do
   supervisors and cleaning the read models).
   """
   def delete_data_space(%DataSpace{} = data_space) do
-    unless Repo.exists?(Subscription.not_cancelled_subscription_query(data_space)) do
+    subscription = get_subscription(data_space)
+
+    active_subscription? = if subscription != nil && subscription.status != :deleted do
+      case SubscriptionApi.cancel(subscription.subscription_id) do
+        {:ok, _} -> false
+        _ -> true
+      end
+    else
+      false
+    end
+
+    unless active_subscription? do
       Landlord.Registry.dispatch(String.to_existing_atom(data_space.handle), [mode: "stop"])
 
       Repo.delete(data_space)
@@ -340,7 +379,7 @@ defmodule Landlord.Tenants do
       end)
     else
       err ->
-        IO.inspect(err)
+        Logger.error(Exception.format(:error, err))
         err
     end
   end
@@ -360,7 +399,7 @@ defmodule Landlord.Tenants do
   def manage_subscription(%{"alert_name" => alert_name, "passthrough" => handle} = params) when
     alert_name in ["subscription_created", "subscription_updated", "subscription_cancelled", "subscription_payment_succeeded"]
   do
-    case get_data_space_by_handle(handle) do
+    case unsafe_get_data_space_by_handle(handle) do
       nil -> {:error, :no_such_data_space}
       data_space ->
         case Repo.get(Subscription, params["subscription_id"]) do
@@ -375,21 +414,44 @@ defmodule Landlord.Tenants do
   def manage_subscription(_params), do: {:error, :not_interested}
 
 
-  defp accept_invite_multi(user, data_space) do
+  defp accept_invite_multi(user, data_space, opts \\ []) do
+    status = Keyword.get(opts, :status, "pending")
+
     Ecto.Multi.new()
-    |> Ecto.Multi.insert(:user, %DataSpaceUser{user: user, data_space: data_space, role: "collaborator", status: "pending"})
+    |> Ecto.Multi.insert(:user, %DataSpaceUser{user: user, data_space: data_space, role: "collaborator", status: status})
     |> Ecto.Multi.delete_all(:tokens, DataSpaceToken.user_and_data_space_query(user, data_space))
   end
 
-  # TODO: Use quantity from subscription
+  defp confirm_member_multi(data_space_user, data_space) do
+    Ecto.Multi.new()
+    |> Ecto.Multi.run(:nr_users, fn repo, _ ->
+      {:ok, repo.all(from u in DataSpaceUser,
+        where: u.data_space_id == ^data_space.id,
+        select: u.status,
+        lock: "FOR UPDATE"
+      ) |> Enum.filter(fn x -> x.status == "confirmed" end) |> Enum.count()} # Only count the results after obtaining the lock
+    end)
+    |> Ecto.Multi.one(:subscription, (from s in Subscription, where: s.data_space_id == ^data_space.id, select: [:subscription_id]))
+    |> Ecto.Multi.run(:data_space_user, fn repo, _ ->
+      unless data_space_user.status == "confirmed" do
+        {:ok, repo.update!(DataSpaceUser.confirm_member_changeset(data_space_user)) |> repo.preload(:user)}
+      else
+        {:error, :user_already_confirmed}
+      end
+    end)
+    |> Ecto.Multi.run(:change_seats, fn _repo, %{subscription: subscription, nr_users: nr_users} ->
+      SubscriptionApi.change_seats(subscription.subscription_id, nr_users + 1)
+    end)
+  end
+
   defp delete_member_multi(user, data_space) do
     Ecto.Multi.new()
     |> Ecto.Multi.run(:nr_users, fn repo, _ ->
       {:ok, repo.all(from u in DataSpaceUser,
         where: u.data_space_id == ^data_space.id,
-        select: [:id],
+        select: u.status,
         lock: "FOR UPDATE"
-      ) |> Enum.count()}
+      ) |> Enum.filter(fn x -> x.status == "confirmed" end) |> Enum.count()}
     end)
     |> Ecto.Multi.one(:subscription, (from s in Subscription, where: s.data_space_id == ^data_space.id, select: [:subscription_id]))
     |> Ecto.Multi.one(:data_space_user, (from u in DataSpaceUser, where: u.user_id == ^user.id and u.data_space_id == ^data_space.id))

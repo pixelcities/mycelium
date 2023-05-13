@@ -98,7 +98,8 @@ config :landlord, Landlord.Mailer,
 adapter: Swoosh.Adapters.ExAwsAmazonSES
 
 config :landlord, Landlord.Tenants.SubscriptionApi,
-  basepath: "https://vendors.paddle.com"
+  basepath: "https://vendors.paddle.com",
+  enabled: true
 
 
 # KeyX
