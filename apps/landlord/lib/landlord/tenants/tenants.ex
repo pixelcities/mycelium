@@ -152,6 +152,26 @@ defmodule Landlord.Tenants do
     Repo.one(from s in Subscription, where: s.subscription_id == ^subscription_id)
 
   @doc """
+  Validate if the current user can create a subscription with this product id
+
+  Inactive spaces also count towards this limit, as they are effectively a wildcard.
+  Deleting an inactive data spaces will free up this limit.
+  """
+  def subscription_available?(%User{} = user, product_id) do
+    nr_subscriptions =
+      Repo.all(Subscription.subscription_plan_query(product_id))
+      |> Enum.filter(fn s -> is_owner?(s.data_space, user) end)
+      |> Enum.count()
+
+    nr_inactive =
+      get_inactive_data_spaces_by_user(user)
+      |> Enum.filter(fn ds -> is_owner?(ds, user) end)
+      |> Enum.count()
+
+    SubscriptionApi.within_plan_limit?(product_id, nr_subscriptions + nr_inactive + 1)
+  end
+
+  @doc """
   Get data space during checkout process
 
   Uses the checkout id to get a subscription. When the subscription is found and active,
@@ -440,7 +460,7 @@ defmodule Landlord.Tenants do
       end
     end)
     |> Ecto.Multi.run(:change_seats, fn _repo, %{subscription: subscription, nr_users: nr_users} ->
-      if SubscriptionApi.within_limit?(subscription.subscription_plan_id, nr_users + 1) do
+      if SubscriptionApi.within_user_limit?(subscription.subscription_plan_id, nr_users + 1) do
         SubscriptionApi.change_seats(subscription.subscription_id, nr_users + 1)
       else
         {:error, :plan_limit_reached}

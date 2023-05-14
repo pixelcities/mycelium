@@ -122,6 +122,7 @@ defmodule LiaisonServerWeb.Router do
     pipe_through [:api, :require_authenticated_user]
 
     get "/info/:handle", SubscriptionController, :get_subscription
+    get "/plan", SubscriptionController, :get_subscription_available
   end
 
 

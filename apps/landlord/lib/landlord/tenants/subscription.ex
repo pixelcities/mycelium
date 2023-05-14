@@ -93,4 +93,10 @@ defmodule Landlord.Tenants.Subscription do
         where: d.handle == ^checkout_id
     end
   end
+
+  def subscription_plan_query(product_id) do
+    from s in Subscription,
+      where: s.subscription_plan_id == ^product_id,
+      preload: [:data_space]
+  end
 end

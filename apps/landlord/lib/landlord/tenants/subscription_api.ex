@@ -8,31 +8,28 @@ defmodule Landlord.Tenants.SubscriptionApi do
   @plans %{
     "free" => %{
       product_id: "50825",
-      max_users: 3
+      max_users: 3,
+      max_plans: 1
     },
     "standard" => %{
       product_id: "50826",
-      max_users: :unlimited
+      max_users: :unlimited,
+      max_plans: :unlimited
     }
   }
   @product_ids Map.values(@plans) |> Enum.map(fn x -> x[:product_id] end)
 
   def get_plan_id(name), do: @plans[String.downcase(name)][:product_id]
 
-  def get_plan_limit(id), do:
+  def get_user_limit(id), do:
     Map.values(@plans) |> Enum.find_value(fn x -> if x[:product_id] == id, do: x[:max_users] end)
 
-  def within_limit?(id, new_quantity) do
-    if @subscriptions_enabled do
-      case get_plan_limit(id) do
-        nil -> false
-        :unlimited -> true
-        max -> new_quantity <= max
-      end
-    else
-      true
-    end
-  end
+  def get_plan_limit(id), do:
+    Map.values(@plans) |> Enum.find_value(fn x -> if x[:product_id] == id, do: x[:max_plans] end)
+
+
+  def within_user_limit?(id, new_quantity), do: within_limit?(get_user_limit(id), new_quantity)
+  def within_plan_limit?(id, new_quantity), do: within_limit?(get_plan_limit(id), new_quantity)
 
   def generate_redirect(product_id, email, handle) when
     product_id in @product_ids and not is_nil(email) and not is_nil(handle)
@@ -68,6 +65,18 @@ defmodule Landlord.Tenants.SubscriptionApi do
 
   defp config() do
     Application.get_env(:landlord, Landlord.Tenants.SubscriptionApi)
+  end
+
+  defp within_limit?(limit, value) do
+    if @subscriptions_enabled do
+      case limit do
+        nil -> false
+        :unlimited -> true
+        max -> value <= max
+      end
+    else
+      true
+    end
   end
 
   defp update_subscription(subscription_id, params) do
