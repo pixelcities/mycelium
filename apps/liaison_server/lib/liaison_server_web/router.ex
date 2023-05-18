@@ -77,6 +77,7 @@ defmodule LiaisonServerWeb.Router do
     post "/:handle/confirm_member", DataSpaceController, :confirm_member
     post "/:handle/create", DataSpaceController, :prepare_data_space
     delete "/:handle/leave", DataSpaceController, :leave_data_space
+    delete "/:handle/delete", DataSpaceController, :delete_data_space
     put "/accept_invite/:token", DataSpaceController, :accept_invite
     put "/activate/:checkout_id", DataSpaceController, :activate_data_space
   end
@@ -123,6 +124,7 @@ defmodule LiaisonServerWeb.Router do
 
     get "/info/:handle", SubscriptionController, :get_subscription
     get "/plan", SubscriptionController, :get_subscription_available
+    put "/:subscription_id/change_plan", SubscriptionController, :change_subscription_plan
   end
 
 

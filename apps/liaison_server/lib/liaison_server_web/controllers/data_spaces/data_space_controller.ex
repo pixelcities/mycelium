@@ -166,6 +166,22 @@ defmodule LiaisonServerWeb.DataSpaces.DataSpaceController do
     end
   end
 
+  def delete_data_space(conn, %{"handle" => handle}) do
+    user = conn.assigns.current_user
+
+    with {:ok, data_space} <- Tenants.get_data_space_by_user_and_handle(user, handle, unsafe: true),
+         true <- Tenants.is_owner?(data_space, user),
+         {:ok, _} <- Tenants.delete_data_space(data_space)
+    do
+      json(conn, "")
+
+    else
+      err ->
+        Logger.error(Exception.format(:error, err))
+        send_json_resp(conn, 500)
+    end
+  end
+
   defp send_json_resp(conn, 400), do: conn |> put_status(400) |> json(%{"status" => "bad request"})
   defp send_json_resp(conn, 403), do: conn |> put_status(403) |> json(%{"status" => "forbidden"})
   defp send_json_resp(conn, 404), do: conn |> put_status(404) |> json(%{"status" => "not found"})

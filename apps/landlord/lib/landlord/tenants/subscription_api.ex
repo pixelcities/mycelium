@@ -20,6 +20,8 @@ defmodule Landlord.Tenants.SubscriptionApi do
   @product_ids Map.values(@plans) |> Enum.map(fn x -> x[:product_id] end)
 
   def get_plan_id(name), do: @plans[String.downcase(name)][:product_id]
+  def get_plan_name(id), do:
+    Enum.find_value(@plans, fn {k, v} -> if v[:product_id] == id, do: k end)
 
   def get_user_limit(id), do:
     Map.values(@plans) |> Enum.find_value(fn x -> if x[:product_id] == id, do: x[:max_users] end)

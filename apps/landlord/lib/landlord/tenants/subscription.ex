@@ -15,7 +15,7 @@ defmodule Landlord.Tenants.Subscription do
   @statuses [:active, :trialing, :past_due, :paused, :deleted]
 
   @primary_key {:subscription_id, :string, autogenerate: false}
-  @derive {Jason.Encoder, only: [:subscription_id, :status, :quantity, :cancel_url, :update_url]}
+  @derive {Jason.Encoder, only: [:subscription_id, :status, :quantity, :cancel_url, :update_url, :valid_to]}
 
   schema "subscriptions" do
     field :cancel_url, :string

@@ -75,7 +75,8 @@ defmodule Landlord.Tenants do
   def get_data_space_role(user, data_space) do
     case Repo.one(from d in DataSpace.get_active_data_spaces(),
       join: u in assoc(d, :data_spaces__users),
-      where: d.data_space_id == ^data_space.id and u.user_id == ^user.id and u.status == "confirmed"
+      where: d.id == ^data_space.id and u.user_id == ^user.id and u.status == "confirmed",
+      select: u
     ) do
       nil -> {:error, nil}
       data_space_user -> {:ok, data_space_user.role}
@@ -147,9 +148,9 @@ defmodule Landlord.Tenants do
   end
 
   def get_subscription(%DataSpace{} = data_space), do:
-    Repo.one(from s in Subscription, where: s.data_space_id == ^data_space.id)
+    Repo.one(from s in Subscription, where: s.data_space_id == ^data_space.id, preload: [:data_space])
   def get_subscription(subscription_id), do:
-    Repo.one(from s in Subscription, where: s.subscription_id == ^subscription_id)
+    Repo.one(from s in Subscription, where: s.subscription_id == ^subscription_id, preload: [:data_space])
 
   @doc """
   Validate if the current user can create a subscription with this product id
@@ -169,6 +170,15 @@ defmodule Landlord.Tenants do
       |> Enum.count()
 
     SubscriptionApi.within_plan_limit?(product_id, nr_subscriptions + nr_inactive + 1)
+  end
+
+  def subscription_downgrade_available?(%DataSpace{} = data_space, product_id) do
+    nr_users = Repo.one(from u in DataSpaceUser,
+      where: u.data_space_id == ^data_space.id,
+      select: count(u.id)
+    )
+
+    SubscriptionApi.within_user_limit?(product_id, nr_users)
   end
 
   @doc """
@@ -358,7 +368,9 @@ defmodule Landlord.Tenants do
     end
 
     unless active_subscription? do
-      Landlord.Registry.dispatch(String.to_existing_atom(data_space.handle), [mode: "stop"])
+      if data_space.is_active do
+        Landlord.Registry.dispatch(String.to_existing_atom(data_space.handle), [mode: "stop"])
+      end
 
       Repo.delete(data_space)
     else
