@@ -10,7 +10,7 @@ defmodule Landlord.Tenants.Subscription do
     Subscription
   }
 
-  @subscriptions_enabled Application.compile_env(:landlord, Landlord.Tenants.SubscriptionApi)[:enabled]
+  @subscriptions_enabled Application.compile_env(:landlord, :subscriptions)[:enabled]
 
   @statuses [:active, :trialing, :past_due, :paused, :deleted]
 

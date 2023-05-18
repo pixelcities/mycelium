@@ -3,7 +3,7 @@ defmodule Landlord.Tenants.SubscriptionApi do
 
   require Logger
 
-  @subscriptions_enabled Application.compile_env(:landlord, Landlord.Tenants.SubscriptionApi)[:enabled]
+  @subscriptions_enabled Application.compile_env(:landlord, :subscriptions)[:enabled]
 
   @plans %{
     "free" => %{
