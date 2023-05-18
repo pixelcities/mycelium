@@ -7,12 +7,12 @@ defmodule Landlord.Tenants.SubscriptionApi do
 
   @plans %{
     "free" => %{
-      product_id: "50825",
+      product_id: "830432",
       max_users: 3,
       max_plans: 1
     },
     "standard" => %{
-      product_id: "50826",
+      product_id: "830433",
       max_users: :unlimited,
       max_plans: :unlimited
     }

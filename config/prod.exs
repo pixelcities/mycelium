@@ -99,7 +99,7 @@ adapter: Swoosh.Adapters.ExAwsAmazonSES
 
 config :landlord, :subscriptions, enabled: true
 config :landlord, Landlord.Tenants.SubscriptionApi,
-  basepath: "https://sandbox-vendors.paddle.com"
+  basepath: "https://vendors.paddle.com"
 
 
 # KeyX
