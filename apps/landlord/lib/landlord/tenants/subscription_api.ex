@@ -153,7 +153,14 @@ defmodule Landlord.Tenants.SubscriptionApi do
       case Req.post(config[:basepath] <> "/api/2.0/product/generate_pay_link", json: data) do
         {:ok, response} ->
           case response.body do
-            %{"success" => true, "response" => %{"url" => url}} -> {:ok, url}
+            %{"success" => true, "response" => %{"url" => url}} ->
+              # Required by the paddle checkout
+              uri_with_referer =
+                URI.parse(url)
+                |> URI.append_query(URI.encode_query(%{"parent_url" => URI.to_string(Core.Utils.Web.get_external_host())}))
+                |> URI.to_string()
+
+              {:ok, uri_with_referer}
             %{"error" => %{"message" => error}} -> {:error, error}
             _ -> {:error, nil}
           end
