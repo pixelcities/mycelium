@@ -15,7 +15,7 @@ defmodule LiaisonServerWeb.DataSpaceChannel do
     if authorized?(user, maybe_ds_id, payload) do
       {:ok, ds_id} = maybe_ds_id
       data_space = Tenants.get_data_space_by_handle(ds_id)
-      {:ok, role} = Tenants.get_data_space_role(user, data_space)
+      role = Tenants.get_data_space_role!(user, data_space)
 
       socket = assign(socket, :current_ds, ds_id)
       socket = assign(socket, :current_role, role)
@@ -193,10 +193,14 @@ defmodule LiaisonServerWeb.DataSpaceChannel do
     ds_id = socket.assigns.current_ds
     role = socket.assigns.current_role
 
-    with {:ok, :done} <- func.(Map.fetch!(action, "payload"), %{"user_id" => user.id, "ds_id" => ds_id, "role" => role}) do
-      {:noreply, socket}
+    unless is_nil(role) do
+      with {:ok, :done} <- func.(Map.fetch!(action, "payload"), %{"user_id" => user.id, "ds_id" => ds_id, "role" => role}) do
+        {:noreply, socket}
+      else
+        err -> {:stop, err, socket}
+      end
     else
-      err -> {:stop, err, socket}
+      {:stop, :unconfirmed_member, socket}
     end
   end
 

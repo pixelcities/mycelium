@@ -51,11 +51,14 @@ defmodule Landlord.Tenants do
 
   @doc """
   Get data spaces for given user
+
+  Allows pending members to retrieve the data space as well. They are a valid
+  member to receive events, but should not yet be able to dispatch any.
   """
   def get_data_spaces_by_user(user) do
     Repo.all(from d in DataSpace.get_active_data_spaces(),
       join: u in assoc(d, :data_spaces__users),
-      where: u.user_id == ^user.id and u.status == "confirmed"
+      where: u.user_id == ^user.id and (u.status == "confirmed" or u.status == "pending")
     )
   end
 
@@ -82,6 +85,7 @@ defmodule Landlord.Tenants do
       data_space_user -> {:ok, data_space_user.role}
     end
   end
+  def get_data_space_role!(user, data_space), do: elem(get_data_space_role(user, data_space), 1)
 
   @doc """
   Get a single data space
@@ -109,7 +113,7 @@ defmodule Landlord.Tenants do
 
     case Repo.one(from d in (if unsafe, do: DataSpace, else: DataSpace.get_active_data_spaces()),
       join: u in assoc(d, :data_spaces__users),
-      where: d.handle == ^handle and u.user_id == ^user.id and u.status == "confirmed"
+      where: d.handle == ^handle and u.user_id == ^user.id and (u.status == "confirmed" or u.status == "pending")
     ) do
       nil -> {:error, nil}
       data_space -> {:ok, data_space}
