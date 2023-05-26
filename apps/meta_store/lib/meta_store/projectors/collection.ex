@@ -4,6 +4,8 @@ defmodule MetaStore.Projectors.Collection do
     name: "Projectors.Collection",
     consistency: :strong
 
+  require Logger
+
   @impl Commanded.Projections.Ecto
   def schema_prefix(_event, %{"ds_id" => ds_id} = _metadata), do: ds_id
 
@@ -101,6 +103,13 @@ defmodule MetaStore.Projectors.Collection do
       {:ok, repo.get(Collection, collection.id, prefix: ds_id)}
     end)
     |> Ecto.Multi.delete(:delete, fn %{get_collection: s} -> s end)
+  end
+
+  @impl true
+  def error({:error, error}, _event, _failure_context) do
+    Logger.error(fn -> "Collection projector failed:" <> inspect(error) end)
+
+    :skip
   end
 
   defp upsert_collection(multi, collection, ds_id) do

@@ -36,6 +36,13 @@ defmodule MetaStore.Projectors.Source do
     |> Ecto.Multi.delete(:delete, fn %{get_source: s} -> s end)
   end
 
+  @impl true
+  def error({:error, error}, _event, _failure_context) do
+    Logger.error(fn -> "Source projector failed:" <> inspect(error) end)
+
+    :skip
+  end
+
   defp upsert_source(multi, source, ds_id) do
     multi
     |> Ecto.Multi.run(:get_source, fn repo, _changes ->

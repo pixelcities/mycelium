@@ -97,6 +97,13 @@ defmodule MetaStore.Projectors.Widget do
     |> Ecto.Multi.delete(:delete, fn %{get_widget: s} -> s end)
   end
 
+  @impl true
+  def error({:error, error}, _event, _failure_context) do
+    Logger.error(fn -> "Widget projector failed:" <> inspect(error) end)
+
+    :skip
+  end
+
   defp upsert_widget(multi, widget, ds_id) do
     multi
     |> Ecto.Multi.run(:get_widget, fn repo, _changes ->

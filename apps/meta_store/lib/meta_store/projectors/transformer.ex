@@ -123,6 +123,12 @@ defmodule MetaStore.Projectors.Transformer do
     :skip
   end
 
+  @impl true
+  def error({:error, error}, _event, _failure_context) do
+    Logger.error(fn -> "Transformer projector failed:" <> inspect(error) end)
+
+    :skip
+  end
 
   defp upsert_transformer(multi, transformer, ds_id) do
     multi
