@@ -5,7 +5,7 @@ defmodule Landlord.Accounts.User do
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
 
-  @derive {Jason.Encoder, only: [:id, :email, :name, :picture]}
+  @derive {Jason.Encoder, only: [:id, :email, :name, :picture, :confirmed_at]}
   schema "users" do
     field :email, :string
     field :name, :string

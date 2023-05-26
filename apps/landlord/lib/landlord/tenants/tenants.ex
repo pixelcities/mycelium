@@ -476,8 +476,10 @@ defmodule Landlord.Tenants do
       end
     end)
     |> Ecto.Multi.run(:change_seats, fn _repo, %{subscription: subscription, nr_users: nr_users} ->
-      if SubscriptionApi.within_user_limit?(subscription.subscription_plan_id, nr_users + 1) do
-        SubscriptionApi.change_seats(subscription.subscription_id, nr_users + 1)
+      sub = subscription && Map.from_struct(subscription)
+
+      if SubscriptionApi.within_user_limit?(sub[:subscription_plan_id], nr_users + 1) do
+        SubscriptionApi.change_seats(sub[:subscription_id], nr_users + 1)
       else
         {:error, :plan_limit_reached}
       end
@@ -497,7 +499,9 @@ defmodule Landlord.Tenants do
     |> Ecto.Multi.one(:data_space_user, (from u in DataSpaceUser, where: u.user_id == ^user.id and u.data_space_id == ^data_space.id))
     |> Ecto.Multi.delete(:delete, fn %{data_space_user: data_space_user} -> data_space_user end)
     |> Ecto.Multi.run(:change_seats, fn _repo, %{subscription: subscription, nr_users: nr_users} ->
-      SubscriptionApi.change_seats(subscription.subscription_id, nr_users - 1)
+      sub = subscription && Map.from_struct(subscription)
+
+      SubscriptionApi.change_seats(sub[:subscription_id], nr_users - 1)
     end)
   end
 

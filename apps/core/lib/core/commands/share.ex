@@ -5,12 +5,17 @@ defmodule Core.Commands.ShareSecret do
     receiver: :string,
     ciphertext: :string
 
-  def validate_key_id(changeset, validation_fun) do
+  def validate_key_id(changeset, validation_fun, user_id) do
     changeset
     |> validate_change(:key_id, fn :key_id, key_id ->
-      case validation_fun.(key_id) do
-        {:ok, _} -> []
-        {:error, _} -> [key_id: "user does not own this key"]
+      # Special case for "hello" messages. Will never be saved by a client.
+      if key_id == user_id do
+        []
+      else
+        case validation_fun.(key_id) do
+          {:ok, _} -> []
+          {:error, _} -> [key_id: "user does not own this key"]
+        end
       end
     end)
   end

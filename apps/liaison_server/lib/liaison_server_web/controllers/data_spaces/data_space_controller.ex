@@ -131,23 +131,27 @@ defmodule LiaisonServerWeb.DataSpaces.DataSpaceController do
   do
     user = conn.assigns.current_user
 
-    case SubscriptionApi.get_plan_id(plan) do
-      nil -> send_json_resp(conn, 400)
-      product_id ->
-        if Tenants.subscription_available?(user, product_id) do
-          case Tenants.prepare_data_space(user, %{name: name, handle: handle, key_id: key_id}) do
-            {:ok, data_space} ->
-              case SubscriptionApi.generate_redirect(product_id, user.email, data_space.handle) do
-                {:ok, uri} -> json(conn, %{"uri" => uri})
-                _ -> send_json_resp(conn, 500)
-              end
-            e ->
-              Logger.error(Exception.format(:error, e))
-              send_json_resp(conn, 400)
+    unless is_nil(user.confirmed_at) do
+      case SubscriptionApi.get_plan_id(plan) do
+        nil -> send_json_resp(conn, 400)
+        product_id ->
+          if Tenants.subscription_available?(user, product_id) do
+            case Tenants.prepare_data_space(user, %{name: name, handle: handle, key_id: key_id}) do
+              {:ok, data_space} ->
+                case SubscriptionApi.generate_redirect(product_id, user.email, data_space.handle) do
+                  {:ok, uri} -> json(conn, %{"uri" => uri})
+                  _ -> send_json_resp(conn, 500)
+                end
+              e ->
+                Logger.error(Exception.format(:error, e))
+                send_json_resp(conn, 400)
+            end
+          else
+            send_json_resp(conn, 403)
           end
-        else
-          send_json_resp(conn, 403)
-        end
+      end
+    else
+      send_json_resp(conn, 403)
     end
   end
 
