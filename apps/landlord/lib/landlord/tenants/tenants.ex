@@ -461,7 +461,7 @@ defmodule Landlord.Tenants do
         where: u.data_space_id == ^data_space.id,
         select: u.status,
         lock: "FOR UPDATE"
-      ) |> Enum.filter(fn x -> x.status == "confirmed" end) |> Enum.count()} # Only count the results after obtaining the lock
+      ) |> Enum.filter(fn status -> status == "confirmed" end) |> Enum.count()} # Only count the results after obtaining the lock
     end)
     |> Ecto.Multi.one(:subscription, (from s in Subscription, where: s.data_space_id == ^data_space.id, select: [:subscription_id, :subscription_plan_id]))
     |> Ecto.Multi.run(:data_space_user, fn repo, _ ->
@@ -487,7 +487,7 @@ defmodule Landlord.Tenants do
         where: u.data_space_id == ^data_space.id,
         select: u.status,
         lock: "FOR UPDATE"
-      ) |> Enum.filter(fn x -> x.status == "confirmed" end) |> Enum.count()}
+      ) |> Enum.filter(fn status -> status == "confirmed" end) |> Enum.count()}
     end)
     |> Ecto.Multi.one(:subscription, (from s in Subscription, where: s.data_space_id == ^data_space.id, select: [:subscription_id]))
     |> Ecto.Multi.one(:data_space_user, (from u in DataSpaceUser, where: u.user_id == ^user.id and u.data_space_id == ^data_space.id))
