@@ -26,8 +26,7 @@ defimpl Core.Middleware.CommandEnrichment, for: [Core.Commands.UpdateTransformer
   defp build_access_map(transformer_id, identifiers, user_id, ds_id) do
     identifiers
     |> Map.to_list()
-    |> Enum.filter(fn ({_k, v}) -> Map.get(v, "action") != "add" end)
-    |> Enum.map(fn ({k, %{"id" => id, "type" => type}}) ->
+    |> Enum.map(fn ({k, %{"id" => id, "type" => type} = v}) ->
       access = case type do
         "table" ->
           case MetaStore.get_collection!(id, tenant: ds_id) do
@@ -43,7 +42,7 @@ defimpl Core.Middleware.CommandEnrichment, for: [Core.Commands.UpdateTransformer
           end
         "column" ->
           case MetaStore.get_column!(id, tenant: ds_id) do
-            nil -> false
+            nil -> Map.get(v, "action") == "add"
             column ->
               Enum.any?(column.shares, fn share ->
                 share.principal == user_id
