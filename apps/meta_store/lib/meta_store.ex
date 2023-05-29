@@ -92,7 +92,9 @@ defmodule MetaStore do
     ), prefix: tenant)
   end
 
-  def get_collection!(id, opts \\ []) do
+  def get_collection!(id, opts \\ [])
+  def get_collection!(nil, _opts), do: nil
+  def get_collection!(id, opts) do
     tenant = Keyword.fetch!(opts, :tenant)
 
     Repo.one((from c in Collection,

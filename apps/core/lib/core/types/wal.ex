@@ -20,7 +20,8 @@ defmodule Core.Types.WAL do
       ...>   ],
       ...>   "artifacts" => [
       ...>     "[1,2,3]"
-      ...>   ]
+      ...>   ],
+      ...>   "data" => ""
       ...> }).valid?
       true
 
@@ -32,7 +33,8 @@ defmodule Core.Types.WAL do
       ...>   ],
       ...>   "artifacts" => [
       ...>     "[1,2,3]"
-      ...>   ]
+      ...>   ],
+      ...>   "data" => ""
       ...> }).errors
       [{:transactions, {"Non-existent parameter at positions: [\\"$1\\"]", []}}]
 
@@ -40,7 +42,7 @@ defmodule Core.Types.WAL do
   ## Identifier instructions
 
   Identifiers may reference either tables or columns. Because in most operations schemas
-  are assumed to be immutable, identifiers can optionally include actions thate can mutate
+  are assumed to be immutable, identifiers can optionally include actions that can mutate
   the schema. Other actions are also possible, but rare.
 
   The two mutations that are commonly used are: "add" and "drop". Adding or altering a column
@@ -54,7 +56,8 @@ defmodule Core.Types.WAL do
       ...>   },
       ...>   "values" => %{},
       ...>   "transactions" => [],
-      ...>   "artifacts" => []
+      ...>   "artifacts" => [],
+      ...>   "data" => ""
       ...> }).valid?
       true
 
@@ -69,16 +72,17 @@ defmodule Core.Types.WAL do
     field :values, :map
     field :transactions, {:array, :string}
     field :artifacts, {:array, :string}
+    field :data, :string, default: ""
   end
 
   def changeset(wal, attrs) do
     wal
-    |> cast(attrs, [:identifiers, :values, :transactions, :artifacts])
+    |> cast(attrs, [:identifiers, :values, :transactions, :artifacts, :data])
   end
 
   def new(attrs) do
     changeset(%__MODULE__{}, attrs)
-    |> validate_required([:identifiers, :values, :transactions, :artifacts])
+    |> validate_required([:identifiers, :values, :transactions, :artifacts, :data])
     |> validate_identifiers()
     |> validate_statements()
     |> validate_artifacts()
