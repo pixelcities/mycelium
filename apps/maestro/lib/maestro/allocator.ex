@@ -153,6 +153,9 @@ defmodule Maestro.Allocator do
           {:error, :task_noop} ->
             Logger.debug("Task \"#{task.id}\" for worker \"#{user_id}\" was a noop")
 
+          {:error, e} ->
+            Logger.error("Error assigning task \"#{task.id}\": " <> inspect(e))
+
           _ ->
             Logger.info("Assigning task \"#{task.id}\" to worker \"#{user_id}\"")
         end

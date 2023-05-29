@@ -328,7 +328,7 @@ defmodule MetaStore do
   def delete_collection(%{"id" => id, "workspace" => _workspace} = attrs, %{"user_id" => _user_id, "ds_id" => ds_id} = metadata) do
     collection = MetaStore.get_collection!(id, tenant: ds_id)
 
-    if collection.type == "source" do
+    if collection && collection.type == "source" do
       if length(collection.targets) == 0 do
         handle_dispatch(DeleteCollection.new(attrs), metadata)
 
@@ -344,7 +344,11 @@ defmodule MetaStore do
       end
 
     else
-      dispatch_error(:cannot_delete_collection, metadata)
+      if is_nil(collection) do # Better be safe than sorry
+        handle_dispatch(DeleteCollection.new(attrs), metadata)
+      else
+        dispatch_error(:cannot_delete_collection, metadata)
+      end
     end
   end
 

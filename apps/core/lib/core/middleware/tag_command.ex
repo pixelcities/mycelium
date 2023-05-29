@@ -4,6 +4,8 @@ defmodule Core.Middleware.TagCommand do
   alias Commanded.Middleware.Pipeline
   import Commanded.Middleware.Pipeline
 
+  require Logger
+
   @doc """
   Tag each command with metadata
   """
@@ -22,8 +24,15 @@ defmodule Core.Middleware.TagCommand do
         {:error, _} -> extract_ds_from_application(pipeline)
       end
 
-      pipeline
-      |> assign_metadata("ds_id", ds_id)
+      if is_nil(ds_id) do
+        Logger.critical("Unable to tag command with data space id!")
+
+        pipeline
+        |> halt()
+      else
+        pipeline
+        |> assign_metadata("ds_id", ds_id)
+      end
     else
       pipeline
     end
