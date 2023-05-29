@@ -15,7 +15,7 @@ defmodule MetaStore.Projections.Schema do
     belongs_to :collection, MetaStore.Projections.Collection,
       where: [source: nil]
     has_many :columns, MetaStore.Projections.Column
-    many_to_many :shares, MetaStore.Projections.Share, join_through: "schemas__shares"
+    many_to_many :shares, MetaStore.Projections.Share, join_through: "schemas__shares", on_replace: :delete
 
     timestamps()
   end
@@ -39,7 +39,7 @@ defmodule MetaStore.Projections.Column do
     field :concept_id, :binary_id
     field :key_id, :binary_id
     belongs_to :schema, MetaStore.Projections.Schema
-    many_to_many :shares, MetaStore.Projections.Share, join_through: "columns__shares"
+    many_to_many :shares, MetaStore.Projections.Share, join_through: "columns__shares", on_replace: :delete
 
     timestamps()
   end
