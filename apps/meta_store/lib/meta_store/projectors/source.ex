@@ -7,6 +7,8 @@ defmodule MetaStore.Projectors.Source do
   @impl Commanded.Projections.Ecto
   def schema_prefix(_event, %{"ds_id" => ds_id} = _metadata), do: ds_id
 
+  require Logger
+
   alias Core.Events.{
     SourceCreated,
     SourceUpdated,
@@ -38,7 +40,7 @@ defmodule MetaStore.Projectors.Source do
 
   @impl true
   def error({:error, error}, _event, _failure_context) do
-    Logger.error(fn -> "Source projector failed:" <> inspect(error) end)
+    Logger.error(fn -> "Source projector is skipping event due to:" <> inspect(error) end)
 
     :skip
   end

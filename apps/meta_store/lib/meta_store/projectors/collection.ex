@@ -107,7 +107,7 @@ defmodule MetaStore.Projectors.Collection do
 
   @impl true
   def error({:error, error}, _event, _failure_context) do
-    Logger.error(fn -> "Collection projector failed:" <> inspect(error) end)
+    Logger.error(fn -> "Collection projector is skipping event due to:" <> inspect(error) end)
 
     :skip
   end

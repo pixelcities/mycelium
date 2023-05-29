@@ -7,6 +7,8 @@ defmodule MetaStore.Projectors.Transformer do
   @impl Commanded.Projections.Ecto
   def schema_prefix(_event, %{"ds_id" => ds_id} = _metadata), do: ds_id
 
+  require Logger
+
   alias Core.Events.{
     TransformerCreated,
     TransformerUpdated,
@@ -125,7 +127,7 @@ defmodule MetaStore.Projectors.Transformer do
 
   @impl true
   def error({:error, error}, _event, _failure_context) do
-    Logger.error(fn -> "Transformer projector failed:" <> inspect(error) end)
+    Logger.error(fn -> "Transformer projector is skipping event due to:" <> inspect(error) end)
 
     :skip
   end
