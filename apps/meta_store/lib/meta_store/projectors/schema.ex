@@ -29,7 +29,7 @@ defmodule MetaStore.Projectors.Schema do
           schema
           |> repo.preload(:shares, prefix: tenant)
           |> Ecto.Changeset.change()
-          |> Ecto.Changeset.put_assoc(:shares, shares)
+          |> Ecto.Changeset.put_assoc(:shares, shares) # TODO: (RuntimeError) you are attempting to change relation :shares of MetaStore.Projections.Schema but the `:on_replace` option of this relation is set to `:raise`
           |> repo.update!(prefix: tenant)
 
           {:ok, schema}

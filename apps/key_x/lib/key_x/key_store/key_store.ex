@@ -67,6 +67,18 @@ defmodule KeyX.KeyStore do
     |> Repo.insert_or_update()
   end
 
+  # TODO: This can race between insert/upsert?
+  # ** (exit) an exception was raised:
+  #     ** (Ecto.ConstraintError) constraint error when attempting to insert struct:
+  #
+  #     * "keys_key_id_user_id_index" (unique_constraint)
+  #
+  # If you would like to stop this constraint violation from raising an
+  # exception and instead add it as an error to your changeset, please
+  # call `unique_constraint/3` on your changeset with the constraint
+  # `:name` as an option.
+  #
+  # The changeset has not defined any constraint.
   def upsert_key(key_id, user, attrs) do
     case get_key_by_id_and_user(key_id, user) do
       {:ok, key} -> update_key(key, attrs)
