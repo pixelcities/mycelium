@@ -82,7 +82,7 @@ defmodule Core.Types.WAL do
 
   def new(attrs) do
     changeset(%__MODULE__{}, attrs)
-    |> validate_required([:identifiers, :values, :transactions, :artifacts, :data])
+    |> validate_required([:identifiers, :values, :transactions, :artifacts])
     |> validate_identifiers()
     |> validate_statements()
     |> validate_artifacts()
