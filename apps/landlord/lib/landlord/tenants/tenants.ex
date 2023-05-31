@@ -499,9 +499,13 @@ defmodule Landlord.Tenants do
     |> Ecto.Multi.one(:data_space_user, (from u in DataSpaceUser, where: u.user_id == ^user.id and u.data_space_id == ^data_space.id))
     |> Ecto.Multi.delete(:delete, fn %{data_space_user: data_space_user} -> data_space_user end)
     |> Ecto.Multi.run(:change_seats, fn _repo, %{subscription: subscription, nr_users: nr_users} ->
-      sub = subscription && Map.from_struct(subscription)
+      if data_space.handle != "trial" do
+        sub = subscription && Map.from_struct(subscription)
 
-      SubscriptionApi.change_seats(sub[:subscription_id], nr_users - 1)
+        SubscriptionApi.change_seats(sub[:subscription_id], nr_users - 1)
+      else
+        {:ok, nil}
+      end
     end)
   end
 
