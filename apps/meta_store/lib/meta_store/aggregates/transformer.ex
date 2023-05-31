@@ -170,6 +170,7 @@ defmodule MetaStore.Aggregates.Transformer do
     access_to_identifiers =
       new_identifiers
       |> MapSet.to_list()
+      |> Enum.reject(fn {_k, v} -> Map.get(v, "action") == "drop" end)
       |> Enum.map(fn {k, _v} -> Map.get(access_map, k) end)
       |> Enum.all?()
 
