@@ -4,7 +4,9 @@ defmodule ContentServerWeb.Endpoint do
   @session_options [
     store: :ets,
     key: "_user_content_sid",
-    table: :session
+    table: :session,
+    same_site: "None",
+    secure: true
   ]
 
   socket "/live", Phoenix.LiveView.Socket, websocket: [connect_info: [session: @session_options]]
