@@ -14,8 +14,7 @@ defimpl Core.Middleware.CommandEnrichment, for: Core.Commands.AssignTask do
         user_id = command.worker
 
         case lookup_owned_transformer_fragments(transformer_id, user_id, ds_id) do
-          {:ok, fragments} ->
-            {:ok, Map.put(command, :fragments, fragments)}
+          {:ok, fragments} -> {:ok, Map.put(command, :fragments, fragments)}
           {:error, error} -> {:error, error}
         end
 
@@ -46,7 +45,10 @@ defimpl Core.Middleware.CommandEnrichment, for: Core.Commands.AssignTask do
       end)
 
       # Collect column identifiers required for the transaction by filtering out collections / transformers
-      identifiers = get_transformer_identifiers(transformer)
+      identifiers =
+        get_transformer_identifiers(transformer)
+        |> Enum.reject(fn identifier -> Map.get(identifier, "action") == "drop" end) # Drop doesn't require a query
+        |> Enum.map(fn identifier -> Map.get(identifier, "id") end)
 
       validate_owned_fragments(fragments, identifiers)
     else
@@ -62,7 +64,9 @@ defimpl Core.Middleware.CommandEnrichment, for: Core.Commands.AssignTask do
       schema = MetaStore.get_schema!(collection.schema.id, tenant: ds_id)
 
       fragments = get_fragments_by_schema(schema, user_id, ds_id)
-      identifiers = get_widget_identifiers(widget)
+      identifiers =
+        get_widget_identifiers(widget)
+        |> Enum.map(fn identifier -> Map.get(identifier, "id") end)
 
       validate_owned_fragments([fragments], identifiers)
     else
@@ -76,7 +80,7 @@ defimpl Core.Middleware.CommandEnrichment, for: Core.Commands.AssignTask do
       if left == :ok, do: {:cont, {:ok, Enum.concat(acc, right)}}, else: {:halt, {:error, right}}
     end) do
       {:ok, owned_fragments} ->
-        # If there are identifers that are not owned, we cannot guarantee that the entire task can be run.
+        # If there are identifiers that are not owned, we cannot guarantee that the entire task can be run.
         # Better to strip out all fragments related to the identifiers and have another worker handle it.
         if Enum.any?(identifiers, fn i -> i not in owned_fragments end) do
           {:ok, Enum.reject(owned_fragments, fn f -> f in identifiers end)}
