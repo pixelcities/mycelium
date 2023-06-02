@@ -87,7 +87,7 @@ defmodule LiaisonServer.EventHistory do
       |> Enum.at(0, %{})
       |> Map.get(:event_number, 0)
 
-    if from < max_event_number do
+    if from <= max_event_number do
       # TODO: Return event number as final message
       EventStore.stream_all_forward(from+1, name: Module.concat(EventStore, ds_id))
       |> Enum.reduce_while(:ok, fn event, _ ->
