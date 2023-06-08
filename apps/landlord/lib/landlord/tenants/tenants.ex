@@ -16,6 +16,7 @@ defmodule Landlord.Tenants do
   alias Landlord.Accounts.{User, UserNotifier}
   alias Landlord.Tenants.{DataSpace, DataSpaceUser, DataSpaceToken, Subscription, SubscriptionApi}
 
+  @env Mix.env()
 
   ## Database getters
 
@@ -25,17 +26,22 @@ defmodule Landlord.Tenants do
   Note that a handle is expected to be an atom.
   """
   def get() do
-    try do
-      tenants = Repo.all(DataSpace.get_active_data_spaces())
-        |> Enum.map(fn data_space -> String.to_atom(data_space.handle) end)
-      {:ok, tenants}
-    rescue
-      e in Postgrex.Error ->
-        Logger.error(Exception.format(:error, e, __STACKTRACE__))
-        {:error, e.postgres.code}
-      e ->
-        Logger.error(Exception.format(:error, e, __STACKTRACE__))
-        reraise e, __STACKTRACE__
+    unless @env == :test do
+      try do
+        tenants = Repo.all(DataSpace.get_active_data_spaces())
+          |> Enum.map(fn data_space -> String.to_atom(data_space.handle) end)
+        {:ok, tenants}
+      rescue
+        e in Postgrex.Error ->
+          Logger.error(Exception.format(:error, e, __STACKTRACE__))
+          {:error, e.postgres.code}
+        e ->
+          Logger.error(Exception.format(:error, e, __STACKTRACE__))
+          reraise e, __STACKTRACE__
+      end
+
+    else
+      {:ok, [:test]}
     end
   end
 

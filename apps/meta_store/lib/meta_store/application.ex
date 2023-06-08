@@ -14,10 +14,11 @@ defmodule MetaStore.Application do
     commanded = if app == @parent_module.App do
       Enum.flat_map(tenants, fn tenant ->
         [
-          {MetaStore.App, name: tenant}
+          {MetaStore.App, name: Module.concat(MetaStore.App, tenant)}
         ]
       end) ++ [
-        {MetaStore.TenantSupervisor, registry: Landlord.Registry, tenants: tenants}
+        {MetaStore.TenantSupervisor, registry: Landlord.Registry, tenants: tenants},
+        {Core.Timeline, name: Core.Timeline}
       ]
     else
       []

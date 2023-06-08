@@ -40,6 +40,8 @@ defmodule MetaStore.MixProject do
       {:jason, "~> 1.3"},
       {:mutex, "~> 1.3"},
 
+      {:pg_test_case, "~> 0.1", only: :test},
+
       {:core, "~> 0.1", in_umbrella: true},
       {:landlord, "~> 0.1", in_umbrella: true}
     ]

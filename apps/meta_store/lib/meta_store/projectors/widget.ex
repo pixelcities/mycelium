@@ -7,6 +7,8 @@ defmodule MetaStore.Projectors.Widget do
   @impl Commanded.Projections.Ecto
   def schema_prefix(_event, %{"ds_id" => ds_id} = _metadata), do: ds_id
 
+  require Logger
+
   alias Core.Events.{
     WidgetCreated,
     WidgetUpdated,
