@@ -62,18 +62,47 @@ defmodule KeyX.Protocol do
     bundle_data
   end
 
-  def update_state(state, attrs) do
-    state
-    |> State.changeset(attrs)
-    |> Repo.insert_or_update()
-  end
+  @doc """
+  Update the state blob
 
-  def upsert_state(user, attrs) do
-    case get_state_by_user!(user) do
-      nil -> update_state(%State{user_id: user.id}, attrs)
-      state -> update_state(state, attrs)
+  A state blob should come with a list of message ids that are now
+  known to be "committed" to the state.
+
+  We store the latest message id along with the state, given that all
+  the message ids are in a sequence. If the sequence is broken, every single
+  message id is stored until everything is back in order. Generally, the out
+  of order message array is empty and everything can be tracked with just the
+  latest message id.
+
+  In transit messages are tracked separately by a projector.
+
+  The purpose of tracking the message ids is to be able to compare the two states
+  and optionally re-send the skipped messages in case they were lost in transit.
+  """
+  def upsert_state(user, %{"state" => _, "message_ids" => _} = attrs) do
+    result =
+      Ecto.Multi.new()
+      |> Ecto.Multi.run(:state, fn repo, _ ->
+        case repo.one(from s in State,
+          where: s.user_id == ^user.id,
+          select: [:id, :user_id, :message_id, :message_ids, :in_transit],
+          lock: "FOR UPDATE"
+        ) do
+          nil -> {:ok, State.new(user.id)}
+          state -> {:ok, state}
+        end
+      end)
+      |> Ecto.Multi.insert_or_update(:upsert, fn %{state: state} -> State.update_state(state, attrs) end)
+      |> Repo.transaction()
+
+    case result do
+      {:ok, %{upsert: state}} -> {:ok, state}
+      {:error, _, %Ecto.Changeset{} = changeset, _} -> {:error, changeset}
+      {:error, failed_operation, failed_value, _} ->
+        Logger.error("Failed to upsert state during operation #{inspect(failed_operation)}: #{inspect(failed_value)}")
+        {:error, nil}
     end
   end
-
+  def upsert_state(_, _), do: {:error, :invalid_argument}
 end
 

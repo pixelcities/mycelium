@@ -69,7 +69,7 @@ defmodule LiaisonServerWeb.Protocol.ProtocolController do
   @doc """
   Create or update state
   """
-  def put_state(conn, %{"state" => _} = params) do
+  def put_state(conn, %{"state" => _, "message_ids" => _} = params) do
     user = conn.assigns.current_user
 
     case Protocol.upsert_state(user, params) do
@@ -80,6 +80,10 @@ defmodule LiaisonServerWeb.Protocol.ProtocolController do
         conn
         |> put_status(400)
         |> json(changeset_error(changeset))
+      {:error, _} ->
+        conn
+        |> put_status(500)
+        |> json()
     end
   end
 

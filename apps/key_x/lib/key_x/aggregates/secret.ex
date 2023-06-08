@@ -1,11 +1,10 @@
 defmodule KeyX.Aggregates.Secret do
   @moduledoc """
   Secret share aggregate
-
-  TODO: Add and track committed secret shares
   """
 
-  defstruct key_id: nil,
+  defstruct message_id: 0,
+            key_id: nil,
             owner: nil,
             receiver: nil,
             ciphertext: nil,
@@ -18,14 +17,18 @@ defmodule KeyX.Aggregates.Secret do
   @doc """
   Forward a secret
   """
-  def execute(%Secret{}, %ShareSecret{} = secret) do
-    SecretShared.new(secret, date: NaiveDateTime.utc_now())
+  def execute(%Secret{message_id: message_id}, %ShareSecret{} = secret) do
+    SecretShared.new(secret,
+      message_id: message_id + 1,
+      date: NaiveDateTime.utc_now()
+    )
   end
 
   # State mutators
 
   def apply(%Secret{} = secret, %SecretShared{} = event) do
     %Secret{secret |
+      message_id: event.message_id,
       key_id: event.key_id,
       owner: event.owner,
       receiver: event.receiver,

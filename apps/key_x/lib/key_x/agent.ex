@@ -18,18 +18,16 @@ defmodule KeyX.TrialAgent do
   alias KeyX.{KeyStore, Protocol}
   alias Landlord.Accounts
 
-  @config Application.get_env(:key_x, KeyX.TrialAgent)
-
   def create_manifest_key() do
-    user = Accounts.get_user_by_email(@config[:email])
+    user = Accounts.get_user_by_email(config()[:email])
 
-    secret = Application.get_env(:key_x, KeyX.TrialAgent)[:secret_key] |> Base.decode16!(case: :lower)
+    secret = config()[:secret_key] |> Base.decode16!(case: :lower)
     iv = :crypto.strong_rand_bytes(16)
 
     rand_plaintext = :crypto.strong_rand_bytes(32) |> Base.encode16(case: :lower)
     encrypted = :crypto.crypto_one_time(:aes_128_cbc, secret, iv, rand_plaintext, true)
 
-    {:ok, key} = KeyStore.upsert_key(@config[:key_id], user, %{
+    {:ok, key} = KeyStore.upsert_key(config()[:key_id], user, %{
       ciphertext: "#{Base.encode64(iv, padding: true)}:#{Base.encode64(encrypted, padding: true)}"
     })
 
@@ -37,10 +35,10 @@ defmodule KeyX.TrialAgent do
   end
 
   def get_manifest_key() do
-    user = Accounts.get_user_by_email(@config[:email])
+    user = Accounts.get_user_by_email(config()[:email])
 
-    secret = Application.get_env(:key_x, KeyX.TrialAgent)[:secret_key] |> Base.decode16!(case: :lower)
-    {:ok, key} = KeyStore.get_key_by_id_and_user(@config[:key_id], user)
+    secret = config()[:secret_key] |> Base.decode16!(case: :lower)
+    {:ok, key} = KeyStore.get_key_by_id_and_user(config()[:key_id], user)
     [iv, encrypted] = String.split(key.ciphertext, ":")
 
     :crypto.crypto_one_time(:aes_128_cbc, secret, Base.decode64!(iv, padding: true), Base.decode64!(encrypted, padding: true), false)
@@ -48,7 +46,7 @@ defmodule KeyX.TrialAgent do
 
   def share_manifest_key(receiver, ds_id) do
     key = get_manifest_key()
-    user = Accounts.get_user_by_email(@config[:email])
+    user = Accounts.get_user_by_email(config()[:email])
 
     bundle_id = case Protocol.get_bundle_by_user_id!(receiver.id) do
       bundle -> bundle.bundle_id
@@ -58,7 +56,7 @@ defmodule KeyX.TrialAgent do
     ciphertext = Protocol.Agent.encrypt_once(receiver.id, bundle, key)
 
     KeyX.share_secret(%{
-      key_id: @config[:key_id],
+      key_id: config()[:key_id],
       owner: user.id,
       receiver: receiver.id,
       ciphertext: ciphertext
@@ -66,6 +64,10 @@ defmodule KeyX.TrialAgent do
       "user_id" => user.id,
       "ds_id" => ds_id
     })
+  end
+
+  defp config do
+    Application.get_env(:key_x, KeyX.TrialAgent)
   end
 end
 
