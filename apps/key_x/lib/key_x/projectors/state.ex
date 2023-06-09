@@ -20,8 +20,12 @@ defmodule KeyX.Projectors.State do
         state -> {:ok, state}
       end
     end)
-    |> Ecto.Multi.insert(:message, fn %{state: state} ->
-      %StateMessages{state_id: state.id, message_id: secret.message_id}
+    |> Ecto.Multi.run(:message, fn repo, %{state: state} ->
+      unless is_nil(secret.message_id) do
+        repo.insert(%StateMessages{state_id: state.id, message_id: secret.message_id})
+      else
+        {:ok, nil}
+      end
     end)
   end
 

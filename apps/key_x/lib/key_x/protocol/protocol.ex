@@ -42,10 +42,10 @@ defmodule KeyX.Protocol do
     )
   end
 
-  def get_old_messages_by_user(user, duration_in_minutes \\ 15) do
+  def get_old_messages_by_user_id(user_id, duration_in_minutes \\ 5) do
     Repo.all(from s in State,
       join: m in assoc(s, :messages),
-      where: s.user_id == ^user.id and m.inserted_at < ago(^duration_in_minutes, "minute"),
+      where: s.user_id == ^user_id and m.inserted_at < ago(^duration_in_minutes, "minute"),
       select: m.message_id
     )
   end

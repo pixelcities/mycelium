@@ -6,7 +6,7 @@ defmodule Core.Events.SecretShared do
 
   defimpl Commanded.Event.Upcaster do
     def upcast(%{version: 1} = event, _metadata) do
-      Core.Events.SecretShared.new(event, message_id: 0, version: 2)
+      Core.Events.SecretShared.new(event, message_id: nil, version: 2)
     end
 
     def upcast(event, _metadata), do: event

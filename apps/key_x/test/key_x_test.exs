@@ -35,14 +35,14 @@ defmodule KeyXTest do
     # Created some "in-transit" messages
     for _ <- 1..3, do:  KeyX.Repo.insert(%Protocol.StateMessages{state_id: state_id, message_id: Ecto.UUID.generate()})
 
-    message_ids = Protocol.get_old_messages_by_user(user, 0) # Set to zero minutes ago to just retrieve everything
+    message_ids = Protocol.get_old_messages_by_user_id(user.id, 0) # Set to zero minutes ago to just retrieve everything
 
     assert length(message_ids) == 3
 
     # After committing them there should be none left in transit
     {:ok, changeset} = Protocol.upsert_state(user, %{"state" => "state_1", "message_ids" => message_ids})
     assert changeset.state == "state_1"
-    assert length(Protocol.get_old_messages_by_user(user, 0)) == 0
+    assert length(Protocol.get_old_messages_by_user_id(user.id, 0)) == 0
   end
 
   test "state projector keeps track of in transit messages" do
@@ -65,7 +65,7 @@ defmodule KeyXTest do
 
     wait_for_event(application, SecretShared, fn _event -> true end)
 
-    in_transit = length(Protocol.get_old_messages_by_user(user, 0))
+    in_transit = length(Protocol.get_old_messages_by_user_id(user.id, 0))
 
     assert in_transit == 1
   end

@@ -83,7 +83,7 @@ defmodule LiaisonServerWeb.Protocol.ProtocolController do
       {:error, _} ->
         conn
         |> put_status(500)
-        |> json()
+        |> json(%{})
     end
   end
 
