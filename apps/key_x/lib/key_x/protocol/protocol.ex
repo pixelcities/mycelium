@@ -7,7 +7,7 @@ defmodule KeyX.Protocol do
   require Logger
 
   alias KeyX.Repo
-  alias KeyX.Protocol.{Bundle, State}
+  alias KeyX.Protocol.{Bundle, State, StateMessages}
 
   ## Database getters
 
@@ -42,6 +42,14 @@ defmodule KeyX.Protocol do
     )
   end
 
+  def get_old_messages_by_user(user, duration_in_minutes \\ 15) do
+    Repo.all(from s in State,
+      join: m in assoc(s, :messages),
+      where: s.user_id == ^user.id and m.inserted_at < ago(^duration_in_minutes, "minute"),
+      select: m.message_id
+    )
+  end
+
   ## Database setters
 
   def create_bundle(user, attrs) do
@@ -68,31 +76,28 @@ defmodule KeyX.Protocol do
   A state blob should come with a list of message ids that are now
   known to be "committed" to the state.
 
-  We store the latest message id along with the state, given that all
-  the message ids are in a sequence. If the sequence is broken, every single
-  message id is stored until everything is back in order. Generally, the out
-  of order message array is empty and everything can be tracked with just the
-  latest message id.
+  In transit messages are added to the database by a strongly consistent projector,
+  which we will now remove again because they have been received.
 
-  In transit messages are tracked separately by a projector.
-
-  The purpose of tracking the message ids is to be able to compare the two states
-  and optionally re-send the skipped messages in case they were lost in transit.
+  The purpose of tracking the message ids is to be able to identify and optionally
+  re-send (old) messages that have not been received.
   """
-  def upsert_state(user, %{"state" => _, "message_ids" => _} = attrs) do
+  def upsert_state(user, %{"state" => _, "message_ids" => message_ids} = attrs) do
     result =
       Ecto.Multi.new()
       |> Ecto.Multi.run(:state, fn repo, _ ->
         case repo.one(from s in State,
           where: s.user_id == ^user.id,
-          select: [:id, :user_id, :message_id, :message_ids, :in_transit],
-          lock: "FOR UPDATE"
+          select: [:id, :user_id]
         ) do
           nil -> {:ok, State.new(user.id)}
           state -> {:ok, state}
         end
       end)
       |> Ecto.Multi.insert_or_update(:upsert, fn %{state: state} -> State.update_state(state, attrs) end)
+      |> Ecto.Multi.delete_all(:delete_all, fn %{upsert: state} ->
+        from(c in StateMessages, where: c.state_id == ^state.id and c.message_id in ^message_ids)
+      end)
       |> Repo.transaction()
 
     case result do

@@ -3,7 +3,7 @@ defmodule KeyX.Aggregates.Secret do
   Secret share aggregate
   """
 
-  defstruct message_id: 0,
+  defstruct message_id: nil,
             key_id: nil,
             owner: nil,
             receiver: nil,
@@ -17,9 +17,9 @@ defmodule KeyX.Aggregates.Secret do
   @doc """
   Forward a secret
   """
-  def execute(%Secret{message_id: message_id}, %ShareSecret{} = secret) do
+  def execute(%Secret{}, %ShareSecret{} = secret) do
     SecretShared.new(secret,
-      message_id: message_id + 1,
+      message_id: Ecto.UUID.generate(),
       date: NaiveDateTime.utc_now()
     )
   end
