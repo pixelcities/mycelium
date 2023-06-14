@@ -117,7 +117,8 @@ config :landlord, Landlord.Mailer,
 
 config :landlord, :subscriptions, enabled: false
 config :landlord, Landlord.Tenants.SubscriptionApi,
-  basepath: "https://sandbox-vendors.paddle.com"
+  basepath: "https://sandbox-vendors.paddle.com",
+  checkout_uri: "http://localhost:3001"
 
 
 # KeyX

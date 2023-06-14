@@ -154,13 +154,12 @@ defmodule Landlord.Tenants.SubscriptionApi do
         {:ok, response} ->
           case response.body do
             %{"success" => true, "response" => %{"url" => url}} ->
-              # Required by the paddle checkout
-              uri_with_referer =
-                URI.parse(url)
-                |> URI.append_query(URI.encode_query(%{"parent_url" => URI.to_string(Core.Utils.Web.get_external_host())}))
+              checkout_uri =
+                URI.parse(config[:checkout_uri])
+                |> URI.append_query(URI.encode_query(%{"url" => url}))
                 |> URI.to_string()
 
-              {:ok, uri_with_referer}
+              {:ok, checkout_uri}
             %{"error" => %{"message" => error}} -> {:error, error}
             _ -> {:error, nil}
           end

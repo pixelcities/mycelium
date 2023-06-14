@@ -99,7 +99,8 @@ adapter: Swoosh.Adapters.ExAwsAmazonSES
 
 config :landlord, :subscriptions, enabled: true
 config :landlord, Landlord.Tenants.SubscriptionApi,
-  basepath: "https://vendors.paddle.com"
+  basepath: "https://vendors.paddle.com",
+  checkout_uri: "https://datagarden-checkout.com"
 
 
 # KeyX
