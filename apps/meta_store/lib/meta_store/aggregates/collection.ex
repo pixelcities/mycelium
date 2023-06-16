@@ -213,7 +213,7 @@ defmodule MetaStore.Aggregates.Collection do
 
   def apply(%Collection{} = collection, %CollectionTargetRemoved{} = event) do
     %Collection{collection |
-      targets: Enum.filter(collection.targets, fn target -> target == event.target end),
+      targets: Enum.reject(collection.targets, fn target -> target == event.target end),
       date: event.date
     }
   end

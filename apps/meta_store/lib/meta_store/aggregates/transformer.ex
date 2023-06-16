@@ -241,7 +241,7 @@ defmodule MetaStore.Aggregates.Transformer do
 
   def apply(%Transformer{} = transformer, %TransformerTargetRemoved{} = event) do
     %Transformer{transformer |
-      targets: Enum.filter(transformer.targets, fn target -> target == event.target end),
+      targets: Enum.reject(transformer.targets, fn target -> target == event.target end),
       date: event.date
     }
   end
