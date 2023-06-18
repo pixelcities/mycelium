@@ -14,9 +14,9 @@ defmodule DataStore.Data do
         "bucket" => @bucket,
         "ds" => ds,
         "workspace" => workspace,
-        "type" => _type,
+        "type" => type,
         "dataset" => dataset
-      } -> {:ok, ds, workspace, dataset}
+      } -> {:ok, ds, workspace, type, dataset}
       _ -> {:error, "unauthorized"}
     end
   end
@@ -28,8 +28,8 @@ defmodule DataStore.Data do
   """
   def truncate_dataset(uri) do
     case validate_uri(uri) do
-      {:ok, ds, workspace, dataset} ->
-        S3.list_objects_v2(@bucket, prefix: "#{ds}/#{workspace}/#{dataset}/")
+      {:ok, ds, workspace, type, dataset} ->
+        S3.list_objects_v2(@bucket, prefix: "#{ds}/#{workspace}/#{type}/#{dataset}/")
           |> ExAws.stream!()
           |> Enum.reduce_while(:ok, fn obj, _acc ->
             case S3.delete_object(@bucket, obj.key) |> ExAws.request() do

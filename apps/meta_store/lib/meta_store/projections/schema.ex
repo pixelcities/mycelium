@@ -33,11 +33,12 @@ defmodule MetaStore.Projections.Column do
 
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
-  @derive {Jason.Encoder, only: [:id, :key_id, :concept_id, :shares]}
+  @derive {Jason.Encoder, only: [:id, :key_id, :concept_id, :lineage, :shares]}
 
   schema "columns" do
     field :concept_id, :binary_id
     field :key_id, :binary_id
+    field :lineage, :binary_id
     belongs_to :schema, MetaStore.Projections.Schema
     many_to_many :shares, MetaStore.Projections.Share, join_through: "columns__shares", on_replace: :delete
 
@@ -46,7 +47,7 @@ defmodule MetaStore.Projections.Column do
 
   def changeset(column, attrs) do
     column
-    |> cast(attrs, [:concept_id, :key_id, :schema_id])
+    |> cast(attrs, [:concept_id, :key_id, :lineage, :schema_id])
   end
 
 end

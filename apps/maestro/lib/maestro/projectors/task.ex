@@ -42,7 +42,10 @@ defmodule Maestro.Projectors.Task do
 
     multi
     |> Ecto.Multi.run(:get_task, fn repo, _changes ->
-      {:ok, repo.get(Task, task.id, prefix: ds_id) }
+      case repo.get(Task, task.id, prefix: ds_id) do
+        nil -> {:error, :already_deleted}
+        t -> {:ok, t}
+      end
     end)
     |> Ecto.Multi.update(:update, fn %{get_task: t} ->
       Ecto.Changeset.change(t, worker: nil)

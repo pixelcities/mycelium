@@ -119,7 +119,7 @@ defmodule DataStore.DataTokens do
   defp validate_mode(_mode), do: {:error, "invalid_mode"}
 
   defp validate_path(user, uri, "read") do
-    with {:ok, ds, _, _} <- parse_uri(uri, :read),
+    with {:ok, ds, _, _, _} <- parse_uri(uri, :read),
          :ok <- validate_data_space(ds, user),
          :ok <- validate_ownership(uri, user, ds)
     do

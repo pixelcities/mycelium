@@ -41,7 +41,7 @@ defmodule MetaStore.Projectors.Schema do
                 nil -> %Column{id: c.id}
                 column -> column
               end
-              |> Column.changeset(%{concept_id: c.concept_id, key_id: c.key_id, schema_id: changes.schema.id})
+              |> Column.changeset(%{concept_id: c.concept_id, key_id: c.key_id, lineage: c.lineage, schema_id: changes.schema.id})
               |> repo.insert_or_update!(prefix: tenant)
 
             shares = Enum.map(c.shares, fn share ->

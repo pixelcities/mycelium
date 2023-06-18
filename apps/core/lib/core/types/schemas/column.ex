@@ -5,18 +5,19 @@ defmodule Core.Types.Schemas.Column do
   alias Core.Types.Schemas.Share
 
   @primary_key false
-  @derive {Jason.Encoder, only: [:id, :key_id, :concept_id, :shares]}
+  @derive {Jason.Encoder, only: [:id, :key_id, :concept_id, :lineage, :shares]}
 
   embedded_schema do
     field :id, :string
     field :concept_id, :string
     field :key_id, :string
+    field :lineage, :string
     embeds_many :shares, Share
   end
 
   def changeset(schema, attrs) do
     schema
-    |> cast(attrs, [:id, :concept_id, :key_id])
+    |> cast(attrs, [:id, :concept_id, :key_id, :lineage])
     |> cast_embed(:shares, with: &Share.changeset/2)
     |> validate_required([:id, :concept_id, :key_id])
   end
