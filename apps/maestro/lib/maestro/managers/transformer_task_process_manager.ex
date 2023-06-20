@@ -54,6 +54,7 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
     TransformerInputAdded,
     TransformerWALUpdated,
     TransformerTargetAdded,
+    TransformerPositionSet,
     TransformerIsReadySet,
     TransformerDeleted
   }
@@ -64,6 +65,7 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
   def interested?(%TransformerInputAdded{id: id}), do: {:continue, id}
   def interested?(%TransformerTargetAdded{id: id}), do: {:continue, id}
   def interested?(%TransformerWALUpdated{id: id}), do: {:continue, id}
+  def interested?(%TransformerPositionSet{id: id}), do: {:continue, id}
   def interested?(%TransformerIsReadySet{id: id}), do: {:continue, id}
   def interested?(%TaskCreated{causation_id: id}) when id != nil, do: {:continue, id}
   def interested?(%TaskCompleted{causation_id: id}) when id != nil, do: {:continue, id}
@@ -368,6 +370,12 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
   def apply(%TransformerTaskProcessManager{} = pm, %TransformerWALUpdated{} = event) do
     %TransformerTaskProcessManager{pm |
       transformer: Map.put(pm.transformer, :wal, event.wal)
+    }
+  end
+
+  def apply(%TransformerTaskProcessManager{} = pm, %TransformerPositionSet{} = event) do
+    %TransformerTaskProcessManager{pm |
+      transformer: Map.put(pm.transformer, :position, event.position)
     }
   end
 

@@ -15,6 +15,8 @@ defmodule MetaStore.Projectors.Transformer do
     TransformerWALUpdated,
     TransformerInputAdded,
     TransformerTargetAdded,
+    TransformerTargetRemoved,
+    TransformerPositionSet,
     TransformerIsReadySet,
     TransformerErrorSet,
     TransformerDeleted
@@ -61,6 +63,20 @@ defmodule MetaStore.Projectors.Transformer do
     end, prefix: ds_id)
   end
 
+  project %TransformerTargetRemoved{} = transformer, metadata, fn multi ->
+    ds_id = Map.get(metadata, "ds_id")
+
+    multi
+    |> Ecto.Multi.run(:get_transformer, fn repo, _changes ->
+      {:ok, repo.get(Transformer, transformer.id, prefix: ds_id)}
+    end)
+    |> Ecto.Multi.update(:transformer, fn %{get_transformer: s} ->
+      Transformer.changeset(s, %{
+        targets: Enum.reject(s.targets, fn target -> target == transformer.target end)
+      })
+    end, prefix: ds_id)
+  end
+
   project %TransformerInputAdded{} = transformer, metadata, fn multi ->
     ds_id = Map.get(metadata, "ds_id")
 
@@ -71,6 +87,20 @@ defmodule MetaStore.Projectors.Transformer do
     |> Ecto.Multi.update(:transformer, fn %{get_transformer: s} ->
       Transformer.changeset(s, %{
         collections: Enum.concat(s.collections || [], [transformer.collection])
+      })
+    end, prefix: ds_id)
+  end
+
+  project %TransformerPositionSet{} = transformer, metadata, fn multi ->
+    ds_id = Map.get(metadata, "ds_id")
+
+    multi
+    |> Ecto.Multi.run(:get_transformer, fn repo, _changes ->
+      {:ok, repo.get(Transformer, transformer.id, prefix: ds_id)}
+    end)
+    |> Ecto.Multi.update(:transformer, fn %{get_transformer: s} ->
+      Transformer.changeset(s, %{
+        position: transformer.position
       })
     end, prefix: ds_id)
   end
