@@ -187,6 +187,12 @@ defmodule LiaisonServerWeb.DataSpaceChannel do
   @impl true
   def handle_in("action", %{"type" => "MarkNotificationRead"} = action, socket), do: handle_action(&Landlord.mark_notification_read/2, action, socket)
 
+  @impl true
+  def handle_in("action", %{"type" => "CreateMPC"} = action, socket), do: handle_action(&Maestro.create_mpc/2, action, socket)
+
+  @impl true
+  def handle_in("action", %{"type" => "ShareMPCPartial"} = action, socket), do: handle_action(&Maestro.share_mpc_partial/2, action, socket)
+
 
   defp handle_action(func, action, socket) do
     user = socket.assigns.current_user

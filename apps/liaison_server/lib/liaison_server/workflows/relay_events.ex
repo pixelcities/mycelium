@@ -53,7 +53,9 @@ defmodule LiaisonServer.Workflows.RelayEvents do
     Core.Events.PageCreated,
     Core.Events.PageUpdated,
     Core.Events.PageOrderSet,
-    Core.Events.PageDeleted
+    Core.Events.PageDeleted,
+    Core.Events.MPCCreated,
+    Core.Events.MPCResultShared
   ]
 
 

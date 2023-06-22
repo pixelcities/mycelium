@@ -58,11 +58,11 @@ defmodule MetaStore.Aggregates.Transformer do
     )
   end
 
-  def execute(%Transformer{id: id} = transformer, %UpdateTransformer{__metadata__: %{access_map: access_map}} = update)
+  def execute(%Transformer{id: id, type: type} = transformer, %UpdateTransformer{__metadata__: %{access_map: access_map}} = update)
     when transformer.workspace == update.workspace
   do
     with :ok <- validate_wal_inputs(id, update.wal, transformer.collections, transformer.transformers),
-         :ok <- validate_wal_changes(transformer.wal, update.wal, access_map)
+         :ok <- validate_wal_changes(transformer.wal, update.wal, access_map, type)
     do
       TransformerUpdated.new(update, date: NaiveDateTime.utc_now())
     else
@@ -119,11 +119,11 @@ defmodule MetaStore.Aggregates.Transformer do
     end
   end
 
-  def execute(%Transformer{id: id} = transformer, %UpdateTransformerWAL{__metadata__: %{access_map: access_map}} = update)
+  def execute(%Transformer{id: id, type: type} = transformer, %UpdateTransformerWAL{__metadata__: %{access_map: access_map}} = update)
     when transformer.workspace == update.workspace
   do
     with :ok <- validate_wal_inputs(id, update.wal, transformer.collections, transformer.transformers),
-         :ok <- validate_wal_changes(transformer.wal, update.wal, access_map)
+         :ok <- validate_wal_changes(transformer.wal, update.wal, access_map, type)
     do
       TransformerWALUpdated.new(update, date: NaiveDateTime.utc_now())
     end
@@ -160,7 +160,7 @@ defmodule MetaStore.Aggregates.Transformer do
   #
   # TODO: Validate strict query structure per transformer type, with the exception
   # of the custom transformer.
-  defp validate_wal_changes(original_wal, command_wal, access_map) do
+  defp validate_wal_changes(original_wal, command_wal, access_map, type) do
     original_identifers = Map.to_list(Map.get(original_wal || %{}, "identifiers", %{}))
     command_identifiers = Map.to_list(Map.get(command_wal || %{}, "identifiers", %{}))
 
@@ -174,7 +174,7 @@ defmodule MetaStore.Aggregates.Transformer do
       |> Enum.map(fn {k, _v} -> Map.get(access_map, k) end)
       |> Enum.all?()
 
-    if access_to_identifiers do
+    if access_to_identifiers || type == "mpc" do
       original_transactions = Map.get(original_wal || %{}, "transactions", [])
       command_transactions = Map.get(command_wal || %{}, "transactions", [])
 

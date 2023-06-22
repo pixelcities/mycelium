@@ -180,7 +180,7 @@ defmodule Core.Commands.CreateTransformer do
   def handle_validate(changeset) do
     changeset
     |> validate_required([:id, :workspace, :type])
-    |> validate_inclusion(:type, ["merge", "function", "filter", "aggregate", "custom", "privatise", "attribute"])
+    |> validate_inclusion(:type, ["merge", "function", "filter", "aggregate", "custom", "privatise", "attribute", "mpc"])
     |> validate_component()
     |> validate_wal([allow_nil: true])
   end
@@ -205,7 +205,7 @@ defmodule Core.Commands.UpdateTransformer do
   def handle_validate(changeset) do
     changeset
     |> validate_required([:id, :workspace, :type])
-    |> validate_inclusion(:type, ["merge", "function", "filter", "aggregate", "custom", "privatise", "attribute"])
+    |> validate_inclusion(:type, ["merge", "function", "filter", "aggregate", "custom", "privatise", "attribute", "mpc"])
     |> validate_component()
     |> validate_wal([allow_nil: true])
   end

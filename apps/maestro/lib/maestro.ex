@@ -7,7 +7,16 @@ defmodule Maestro do
 
   import Ecto.Query, warn: false
 
-  alias Core.Commands.{CreateTask, AssignTask, UnAssignTask, CompleteTask, CancelTask, FailTask}
+  alias Core.Commands.{
+    CreateTask,
+    AssignTask,
+    UnAssignTask,
+    CompleteTask,
+    CancelTask,
+    FailTask,
+    CreateMPC,
+    ShareMPCPartial
+  }
   alias Maestro.Projections.Task
   alias Maestro.Repo
 
@@ -48,6 +57,10 @@ defmodule Maestro do
   def cancel_task(attrs, %{"ds_id" => ds_id} = metadata), do: dispatch(CancelTask.new(attrs), metadata, ds_id, :strong)
 
   def fail_task(attrs, %{"ds_id" => ds_id} = metadata), do: dispatch(FailTask.new(attrs), metadata, ds_id)
+
+  def create_mpc(attrs, %{"ds_id" => ds_id} = metadata), do: dispatch(CreateMPC.new(attrs), metadata, ds_id)
+
+  def share_mpc_partial(attrs, %{"ds_id" => ds_id} = metadata), do: dispatch(ShareMPCPartial.new(attrs), metadata, ds_id)
 
   defp dispatch(command, metadata, ds_id, consistency \\ :eventual) do
     with :ok <- @app.validate_and_dispatch(command, consistency: consistency, application: Module.concat(@app, ds_id), metadata: metadata) do

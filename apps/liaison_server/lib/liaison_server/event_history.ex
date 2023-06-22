@@ -61,7 +61,9 @@ defmodule LiaisonServer.EventHistory do
     Events.PageCreated,
     Events.PageUpdated,
     Events.PageOrderSet,
-    Events.PageDeleted
+    Events.PageDeleted,
+    Events.MPCCreated,
+    Events.MPCResultShared
   ]
 
   @spec handle(binary, binary, binary) :: :ok | :error
