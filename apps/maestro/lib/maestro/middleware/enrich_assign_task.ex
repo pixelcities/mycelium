@@ -50,7 +50,7 @@ defimpl Core.Middleware.CommandEnrichment, for: Core.Commands.AssignTask do
         |> Enum.reject(fn identifier -> Map.get(identifier, "action") == "drop" end) # Drop doesn't require a query
         |> Enum.map(fn identifier -> Map.get(identifier, "id") end)
 
-      validate_owned_fragments(fragments, identifiers)
+      validate_owned_fragments(fragments, identifiers, transformer.type)
     else
       {:error, :task_outdated}
     end
@@ -68,13 +68,13 @@ defimpl Core.Middleware.CommandEnrichment, for: Core.Commands.AssignTask do
         get_widget_identifiers(widget)
         |> Enum.map(fn identifier -> Map.get(identifier, "id") end)
 
-      validate_owned_fragments([fragments], identifiers)
+      validate_owned_fragments([fragments], identifiers, "widget")
     else
       {:error, :task_outdated}
     end
   end
 
-  defp validate_owned_fragments(fragments, identifiers) do
+  defp validate_owned_fragments(fragments, identifiers, type) do
     # Concat the owned fragments from each schema
     case Enum.reduce_while(fragments, {:ok, []}, fn {left, right}, {:ok, acc} ->
       if left == :ok, do: {:cont, {:ok, Enum.concat(acc, right)}}, else: {:halt, {:error, right}}
@@ -82,7 +82,7 @@ defimpl Core.Middleware.CommandEnrichment, for: Core.Commands.AssignTask do
       {:ok, owned_fragments} ->
         # If there are identifiers that are not owned, we cannot guarantee that the entire task can be run.
         # Better to strip out all fragments related to the identifiers and have another worker handle it.
-        if Enum.any?(identifiers, fn i -> i not in owned_fragments end) do
+        if type != "mpc" && Enum.any?(identifiers, fn i -> i not in owned_fragments end) do
           {:ok, Enum.reject(owned_fragments, fn f -> f in identifiers end)}
         else
           {:ok, owned_fragments}
