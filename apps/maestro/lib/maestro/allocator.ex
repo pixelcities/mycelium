@@ -51,20 +51,29 @@ defmodule Maestro.Allocator do
 
   @impl true
   def handle_call(:list, _from, workers) do
-    all = :ets.tab2list(workers)
-    {:reply, all, workers}
+    {:reply, :ets.tab2list(workers), workers}
   end
 
   @impl true
   def handle_call(:assign, _from, workers) do
     all = :ets.tab2list(workers)
 
-    Enum.each(all, fn {user_id, meta} ->
+    Enum.each(all, fn {user_id, meta, tasks} ->
       ds_id = Map.get(meta, :ds_id)
+
+      # Get a list of recently executed tasks, no need to bother checking these
+      # again for a (short) while. This also takes care of a worker getting the
+      # same task again and again on error.
+      recent_tasks = get_recent_tasks(tasks)
+      {recent_task_ids, _} = Enum.unzip(recent_tasks)
 
       if ds_id != nil do
         assign_bundle_tasks(user_id, ds_id)
-        assign_tasks(user_id, ds_id)
+
+        case assign_task(user_id, ds_id, recent_task_ids) do
+          nil -> nil
+          task_id -> :ets.insert(workers, {user_id, meta, apply_task(recent_tasks, task_id)})
+        end
       end
     end)
 
@@ -76,8 +85,8 @@ defmodule Maestro.Allocator do
     all = :ets.tab2list(workers)
 
     live_workers = Enum.group_by(all,
-      fn {_worker_id, meta} -> Map.get(meta, :ds_id) end,
-      fn {worker_id, _meta} -> worker_id end
+      fn {_worker_id, meta, _tasks} -> Map.get(meta, :ds_id) end,
+      fn {worker_id, _meta, _tasks} -> worker_id end
     )
 
     Enum.each(live_workers, fn {ds_id, user_ids} ->
@@ -93,10 +102,14 @@ defmodule Maestro.Allocator do
     ds_id = Map.get(meta, :ds_id)
 
     if length(worker) == 0 and ds_id != nil do
-      :ets.insert(workers, {user_id, meta})
+      :ets.insert(workers, {user_id, meta, []})
 
       assign_bundle_tasks(user_id, ds_id)
-      assign_tasks(user_id, ds_id)
+
+      case assign_task(user_id, ds_id, []) do
+        nil -> nil
+        task_id -> :ets.insert(workers, {user_id, meta, apply_task([], task_id)})
+      end
     end
 
     {:noreply, workers}
@@ -113,6 +126,19 @@ defmodule Maestro.Allocator do
     end
 
     {:noreply, workers}
+  end
+
+
+  @ttl 15
+
+  defp get_recent_tasks(tasks) do
+    tasks
+    |> Enum.reject(fn {_task_id, ttl} -> ttl > :os.system_time(:seconds) end)
+  end
+
+  defp apply_task(tasks, task_id) do
+    tasks
+    |> Enum.concat([{task_id, :os.system_time(:seconds) + @ttl}])
   end
 
   defp assign_bundle_tasks(user_id, ds_id) do
@@ -134,8 +160,9 @@ defmodule Maestro.Allocator do
     end
   end
 
-  defp assign_tasks(user_id, ds_id) do
-    Enum.each(Maestro.get_tasks(tenant: ds_id), fn(task) ->
+  # Returns either the assigned task id, or nil
+  defp assign_task(user_id, ds_id, recent_tasks) do
+    Enum.reduce_while(Maestro.get_tasks(tenant: ds_id, ignore_list: recent_tasks), nil, fn(task, _acc) ->
       if task.type == "transformer" or task.type == "widget" do
         case Maestro.assign_task(%{
           id: task.id,
@@ -149,15 +176,19 @@ defmodule Maestro.Allocator do
         }) do
           {:error, :task_outdated} ->
             Maestro.cancel_task(%{id: task.id, is_cancelled: true}, %{"ds_id" => ds_id})
+            {:cont, nil}
 
           {:error, :task_noop} ->
             Logger.debug("Task \"#{task.id}\" for worker \"#{user_id}\" was a noop")
+            {:cont, nil}
 
           {:error, e} ->
             Logger.error("Error assigning task \"#{task.id}\": " <> inspect(e))
+            {:cont, nil}
 
           _ ->
             Logger.info("Assigning task \"#{task.id}\" to worker \"#{user_id}\"")
+            {:halt, task.id}
         end
       end
     end)

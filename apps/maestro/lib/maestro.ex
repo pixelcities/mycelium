@@ -25,9 +25,10 @@ defmodule Maestro do
 
   def get_tasks(opts \\ []) do
     tenant = Keyword.fetch!(opts, :tenant)
+    ignore_list = Keyword.get(opts, :ignore_list, [])
 
     Repo.all((from t in Task,
-      where: t.is_completed == false and t.is_cancelled == false
+      where: t.is_completed == false and t.is_cancelled == false and t.id not in ^ignore_list
     ), prefix: tenant)
   end
 
