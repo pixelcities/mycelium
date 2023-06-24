@@ -13,22 +13,24 @@ defmodule Core.Commands.ShareMPCPartial do
   use Commanded.Command,
     id: :string,
     owner: :string,
-    value: :float
+    partitions: {{:array, :string}, default: []},
+    values: {{:array, :string}, default: []}
 
   def handle_validate(changeset) do
     changeset
-    |> validate_required([:id, :value])
+    |> validate_required([:id, :partitions, :values])
   end
 end
 
 defmodule Core.Commands.ShareMPCResult do
   use Commanded.Command,
     id: :string,
-    value: :float
+    partitions: {{:array, :string}, default: []},
+    values: {{:array, :string}, default: []}
 
   def handle_validate(changeset) do
     changeset
-    |> validate_required([:id, :value])
+    |> validate_required([:id, :partitions, :values])
   end
 end
 
