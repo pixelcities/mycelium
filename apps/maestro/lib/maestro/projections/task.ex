@@ -8,6 +8,7 @@ defmodule Maestro.Projections.Task do
     field :type, :string
     field :task, :map
     field :worker, :binary_id
+    field :worker_history, {:array, :binary_id}, default: []
     field :fragments, {:array, :string}, default: []
     field :metadata, :map, default: %{}
     field :is_cancelled, :boolean, default: false
@@ -18,7 +19,7 @@ defmodule Maestro.Projections.Task do
 
   def changeset(task, attrs) do
     task
-    |> cast(attrs, [:causation_id, :type, :task, :worker, :fragments, :metadata])
+    |> cast(attrs, [:causation_id, :type, :task, :worker, :worker_history, :fragments, :metadata])
   end
 end
 

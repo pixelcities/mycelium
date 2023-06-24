@@ -33,7 +33,10 @@ defmodule Maestro.Projectors.Task do
       {:ok, repo.get(Task, task.id, prefix: ds_id) }
     end)
     |> Ecto.Multi.update(:update, fn %{get_task: t} ->
-      Ecto.Changeset.change(t, worker: task.worker)
+      Ecto.Changeset.change(t,
+        worker: task.worker,
+        worker_history: Enum.uniq(t.worker_history ++ [task.worker])
+      )
     end, prefix: ds_id)
   end
 
@@ -97,6 +100,7 @@ defmodule Maestro.Projectors.Task do
 
   # Error handlers
 
+  @impl true
   def error({:error, :already_deleted}, _event, _failure_context) do
     :skip
   end
