@@ -25,6 +25,7 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
     :uri,
     :target,
     :created_tasks,
+    :requires_approval,
     :is_deleted
   ]
 
@@ -56,6 +57,7 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
     TransformerTargetAdded,
     TransformerPositionSet,
     TransformerIsReadySet,
+    TransformerApproved,
     TransformerDeleted
   }
 
@@ -67,6 +69,7 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
   def interested?(%TransformerWALUpdated{id: id}), do: {:continue, id}
   def interested?(%TransformerPositionSet{id: id}), do: {:continue, id}
   def interested?(%TransformerIsReadySet{id: id}), do: {:continue, id}
+  def interested?(%TransformerApproved{id: id}), do: {:continue, id}
   def interested?(%TaskCreated{causation_id: id}) when id != nil, do: {:continue, id}
   def interested?(%TaskCompleted{causation_id: id}) when id != nil, do: {:continue, id}
   def interested?(%TaskFailed{causation_id: id}) when id != nil, do: {:continue, id}
@@ -92,7 +95,30 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
   dataset uri, after which the collection can be created.
   """
 
-  def handle(%TransformerTaskProcessManager{wants_collection: true, has_collection: false, uri: nil} = pm, %TransformerWALUpdated{wal: _wal} = _event) do
+  def handle(%TransformerTaskProcessManager{wants_collection: true, has_collection: false, uri: nil, requires_approval: false} = pm, %TransformerWALUpdated{wal: _wal} = _event) do
+    [
+      %CreateDataURI{
+        id: pm.id,
+        workspace: pm.transformer.workspace,
+        ds: pm.transformer.ds,
+        type: "collection"
+      },
+      %SetTransformerError{
+        id: pm.id,
+        workspace: pm.transformer.workspace,
+        is_error: false
+      },
+      %SetTransformerIsReady{
+        id: pm.id,
+        workspace: pm.transformer.workspace,
+        is_ready: false
+      }
+    ]
+  end
+
+  def handle(%TransformerTaskProcessManager{wants_collection: true, has_collection: false, uri: nil, requires_approval: true} = pm, %TransformerApproved{nr_parties: nr_parties, signatures: signatures} = _event)
+    when nr_parties == length(signatures)
+  do
     [
       %CreateDataURI{
         id: pm.id,
@@ -357,7 +383,8 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
       id: event.id,
       transformer: event,
       wants_collection: true, # Hardcoded for now
-      has_collection: false
+      has_collection: false,
+      requires_approval: event.type == "mpc"
     }
   end
 

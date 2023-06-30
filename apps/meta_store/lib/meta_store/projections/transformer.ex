@@ -15,13 +15,14 @@ defmodule MetaStore.Projections.Transformer do
     field :transformers, {:array, :binary_id}, default: []
     field :wal, :map
     field :error, :string
+    field :signatures, {:array, :string}, default: []
 
     timestamps()
   end
 
   def changeset(transformer, attrs) do
     transformer
-    |> cast(attrs, [:workspace, :type, :targets, :position, :color, :is_ready, :collections, :transformers, :wal, :error])
+    |> cast(attrs, [:workspace, :type, :targets, :position, :color, :is_ready, :collections, :transformers, :wal, :error, :signatures])
   end
 end
 

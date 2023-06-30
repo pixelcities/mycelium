@@ -10,7 +10,9 @@ defmodule MetaStore.Aggregates.Transformer do
             transformers: [],
             date: nil,
             wal: nil,
-            error: nil
+            error: nil,
+            nr_parties: nil,
+            signatures: []
 
   alias MetaStore.Aggregates.Transformer
   alias Core.Commands.{
@@ -23,6 +25,7 @@ defmodule MetaStore.Aggregates.Transformer do
     UpdateTransformerWAL,
     SetTransformerIsReady,
     SetTransformerError,
+    ApproveTransformer,
     DeleteTransformer
   }
   alias Core.Events.{
@@ -35,6 +38,7 @@ defmodule MetaStore.Aggregates.Transformer do
     TransformerWALUpdated,
     TransformerIsReadySet,
     TransformerErrorSet,
+    TransformerApproved,
     TransformerDeleted
   }
 
@@ -126,6 +130,21 @@ defmodule MetaStore.Aggregates.Transformer do
     TransformerErrorSet.new(command, date: NaiveDateTime.utc_now())
   end
 
+  # MPC Transformers require approval from all parties.
+  #
+  # Each party will have to dispatch a command with their signature to ensure
+  # that this transformer is authorized. Before executing, they will validate
+  # their own signature again. The first party (creator) will also share the
+  # number of involved parties, so that event consumers can easily check if all
+  # expected signatures are present.
+  def execute(%Transformer{nr_parties: nr_parties, signatures: signatures} = _transformer, %ApproveTransformer{} = command) do
+    TransformerApproved.new(command,
+      nr_parties: command.nr_parties || nr_parties,
+      signatures: Enum.uniq(command.signatures ++ signatures),
+      date: NaiveDateTime.utc_now()
+    )
+  end
+
   def execute(%Transformer{} = _transformer, %DeleteTransformer{} = command) do
     TransformerDeleted.new(command, date: NaiveDateTime.utc_now())
   end
@@ -180,7 +199,7 @@ defmodule MetaStore.Aggregates.Transformer do
         end)
         |> Enum.all?()
 
-      if access_to_refs do
+      if access_to_refs || type == "mpc" do
         :ok
       else
         {:error, :invalid_reference_in_transaction}
@@ -267,6 +286,14 @@ defmodule MetaStore.Aggregates.Transformer do
     %Transformer{transformer |
       error: (if updated.is_error, do: Map.get(updated, :error, ""), else: nil),
       date: updated.date
+    }
+  end
+
+  def apply(%Transformer{} = transformer, %TransformerApproved{} = event) do
+    %Transformer{transformer |
+      nr_parties: event.nr_parties,
+      signatures: event.signatures,
+      date: event.date
     }
   end
 

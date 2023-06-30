@@ -46,6 +46,7 @@ defmodule MetaStore do
     UpdateTransformerWAL,
     SetTransformerIsReady,
     SetTransformerError,
+    ApproveTransformer,
     DeleteTransformer,
     CreateWidget,
     UpdateWidget,
@@ -410,6 +411,18 @@ defmodule MetaStore do
 
   def set_transformer_error(attrs, %{"user_id" => _user_id} = metadata) do
     handle_dispatch(SetTransformerError.new(attrs), metadata)
+  end
+
+  @doc """
+  Approve a transformer
+
+  For certain transformers, they need to be approved by all relevant parties before its
+  safe to start the task execution. By sharing their signature each party will signal that
+  they have approved this transformer. Later, during task execution, they will verify
+  their own signature, that is now sent along the transformer, before doing anything.
+  """
+  def approve_transformer(attrs, %{"user_id" => _user_id, "ds_id" => _ds_id} = metadata) do
+    handle_dispatch(ApproveTransformer.new(attrs), metadata)
   end
 
   @doc """

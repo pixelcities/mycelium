@@ -19,6 +19,7 @@ defmodule MetaStore.Projectors.Transformer do
     TransformerPositionSet,
     TransformerIsReadySet,
     TransformerErrorSet,
+    TransformerApproved,
     TransformerDeleted
   }
   alias MetaStore.Projections.Transformer
@@ -135,6 +136,21 @@ defmodule MetaStore.Projectors.Transformer do
     |> Ecto.Multi.update(:transformer, fn %{get_transformer: s} ->
       Transformer.changeset(s, %{
         error: (if transformer.is_error, do: Map.get(transformer, :error, ""), else: nil)
+      })
+    end, prefix: ds_id)
+  end
+
+  project %TransformerApproved{} = transformer, metadata, fn multi ->
+    ds_id = Map.get(metadata, "ds_id")
+
+    multi
+    |> Ecto.Multi.run(:get_transformer, fn repo, _changes ->
+      {:ok, repo.get(Transformer, transformer.id, prefix: ds_id)}
+    end)
+
+    |> Ecto.Multi.update(:transformer, fn %{get_transformer: s} ->
+      Transformer.changeset(s, %{
+        signatures: transformer.signatures
       })
     end, prefix: ds_id)
   end

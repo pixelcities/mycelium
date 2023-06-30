@@ -28,6 +28,7 @@ defmodule MetaStore.Router do
     UpdateTransformerWAL,
     SetTransformerIsReady,
     SetTransformerError,
+    ApproveTransformer,
     DeleteTransformer,
     CreateWidget,
     UpdateWidget,
@@ -75,7 +76,7 @@ defmodule MetaStore.Router do
     to: Collection,
     lifespan: CollectionLifespan
   )
-  dispatch([ CreateTransformer, UpdateTransformer, SetTransformerPosition, AddTransformerTarget, RemoveTransformerTarget, AddTransformerInput, UpdateTransformerWAL, SetTransformerIsReady, SetTransformerError, DeleteTransformer ],
+  dispatch([ CreateTransformer, UpdateTransformer, SetTransformerPosition, AddTransformerTarget, RemoveTransformerTarget, AddTransformerInput, UpdateTransformerWAL, SetTransformerIsReady, SetTransformerError, ApproveTransformer, DeleteTransformer ],
     to: Transformer,
     lifespan: TransformerLifespan
   )

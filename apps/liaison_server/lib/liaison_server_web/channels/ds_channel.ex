@@ -131,6 +131,9 @@ defmodule LiaisonServerWeb.DataSpaceChannel do
   def handle_in("action", %{"type" => "UpdateTransformerWAL"} = action, socket), do: handle_action(&MetaStore.update_transformer_wal/2, action, socket)
 
   @impl true
+  def handle_in("action", %{"type" => "ApproveTransformer"} = action, socket), do: handle_action(&MetaStore.approve_transformer/2, action, socket)
+
+  @impl true
   def handle_in("action", %{"type" => "DeleteTransformer"} = action, socket), do: handle_action(&MetaStore.delete_transformer/2, action, socket)
 
   @impl true

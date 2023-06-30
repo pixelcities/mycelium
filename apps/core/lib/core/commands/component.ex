@@ -314,6 +314,21 @@ defmodule Core.Commands.SetTransformerError do
   end
 end
 
+defmodule Core.Commands.ApproveTransformer do
+  import Core.Types.Component
+
+  use Commanded.Command,
+    id: :binary_id,
+    workspace: :string,
+    nr_parties: :integer,
+    signatures: {{:array, :string}, default: []}
+
+  def handle_validate(changeset) do
+    changeset
+    |> validate_required([:id, :workspace, :signatures])
+  end
+end
+
 defmodule Core.Commands.DeleteTransformer do
   use Commanded.Command,
     id: :binary_id,

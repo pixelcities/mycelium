@@ -111,6 +111,12 @@ defmodule Core.Events.TransformerErrorSet do
     with: [:date]
 end
 
+defmodule Core.Events.TransformerApproved do
+  use Commanded.Event,
+    from: Core.Commands.ApproveTransformer,
+    with: [:date]
+end
+
 defmodule Core.Events.TransformerDeleted do
   use Commanded.Event,
     from: Core.Commands.DeleteTransformer,

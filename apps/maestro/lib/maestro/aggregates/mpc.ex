@@ -2,7 +2,8 @@ defmodule Maestro.Aggregates.MPC do
   defstruct id: nil,
             nr_parties: nil,
             submitted: 0,
-            values: %{}
+            partitions: [],
+            value_map: %{}
 
   alias Maestro.Aggregates.MPC
   alias Core.Commands.{CreateMPC, ShareMPCPartial, ShareMPCResult}
@@ -13,11 +14,12 @@ defmodule Maestro.Aggregates.MPC do
   def execute(%MPC{id: nil}, %CreateMPC{} = command) do
     MPCCreated.new(command, date: NaiveDateTime.utc_now())
   end
+  def execute(%MPC{}, %CreateMPC{} = _command), do: {:error, :mpc_already_created}
 
-  def execute(%MPC{nr_parties: nr_parties, submitted: submitted, values: values}, %ShareMPCPartial{} = command) do
+  def execute(%MPC{nr_parties: nr_parties, submitted: submitted, value_map: value_map} = mpc, %ShareMPCPartial{} = command) do
     if submitted == nr_parties - 1 do
       {partitions, results} =
-        Map.to_list(merge_values(values, command.partitions, command.values))
+        Map.to_list(merge_values(value_map, command.partitions, command.values))
         |> Enum.filter(fn {_, partials } ->
           nr_values = Enum.count(partials, fn x -> x != "" end)
           # Verify that enough parties have submitted values
@@ -37,6 +39,9 @@ defmodule Maestro.Aggregates.MPC do
 
             {partition_key, result}
         end)
+        |> Enum.sort_by(fn {partition_key, _} ->
+          Enum.find_index(mpc.partitions, fn x -> x == partition_key end)
+        end)
         |> Enum.unzip()
 
       MPCResultShared.new(%{
@@ -46,7 +51,11 @@ defmodule Maestro.Aggregates.MPC do
         date: NaiveDateTime.utc_now()
       })
     else
-      MPCPartialShared.new(command, date: NaiveDateTime.utc_now())
+      if length(mpc.partitions) == 0 or mpc.partitions == command.partitions do
+        MPCPartialShared.new(command, date: NaiveDateTime.utc_now())
+      else
+        {:error, :unexpected_partition_order}
+      end
     end
   end
 
@@ -65,7 +74,8 @@ defmodule Maestro.Aggregates.MPC do
     %MPC{mpc |
       id: event.id,
       submitted: mpc.submitted + 1,
-      values: merge_values(mpc.values, event.partitions, event.values)
+      partitions: event.partitions,
+      value_map: merge_values(mpc.value_map, event.partitions, event.values)
     }
   end
 
@@ -73,7 +83,8 @@ defmodule Maestro.Aggregates.MPC do
     %MPC{mpc |
       id: event.id,
       submitted: 0,
-      values: %{}
+      partitions: [],
+      value_map: %{}
     }
   end
 
