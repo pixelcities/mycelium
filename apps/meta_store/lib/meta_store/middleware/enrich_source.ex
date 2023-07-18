@@ -1,7 +1,8 @@
-defimpl Core.Middleware.CommandEnrichment, for: [Core.Commands.UpdateSource, Core.Commands.DeleteSource] do
+defimpl Core.Middleware.CommandEnrichment, for: [Core.Commands.UpdateSource, Core.Commands.UpdateSourceURI, Core.Commands.DeleteSource] do
 
   alias Core.Commands.{
     UpdateSource,
+    UpdateSourceURI,
     DeleteSource
   }
 
@@ -10,6 +11,14 @@ defimpl Core.Middleware.CommandEnrichment, for: [Core.Commands.UpdateSource, Cor
   """
   def enrich(%UpdateSource{} = command, %{"user_id" => user_id} = _metadata) do
     {:ok, %UpdateSource{command |
+      __metadata__: %{
+        user_id: user_id
+      }
+    }}
+  end
+
+  def enrich(%UpdateSourceURI{} = command, %{"user_id" => user_id} = _metadata) do
+    {:ok, %UpdateSourceURI{command |
       __metadata__: %{
         user_id: user_id
       }

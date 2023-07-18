@@ -3,6 +3,7 @@ defmodule DataStore.Aggregates.Dataset do
             workspace: nil,
             uri: nil,
             type: nil,
+            version: 1,
             date: nil
 
   alias DataStore.Aggregates.Dataset
@@ -19,7 +20,7 @@ defmodule DataStore.Aggregates.Dataset do
   A delete request will also delete the `/dataset_id` path itself.
   """
 
-  def execute(%Dataset{id: nil}, %CreateDataURI{} = cmd) do
+  def execute(%Dataset{version: version}, %CreateDataURI{} = cmd) do
     data_space = cmd.ds
 
     if data_space do
@@ -27,7 +28,7 @@ defmodule DataStore.Aggregates.Dataset do
       type = cmd.type
       dataset_id = UUID.uuid4()
 
-      uri = "s3://pxc-collection-store/#{data_space}/#{workspace}/#{type}/#{dataset_id}"
+      uri = "s3://pxc-collection-store/#{data_space}/#{workspace}/#{type}/#{dataset_id}/v#{version}"
       tag = Integrity.sign(uri)
 
       DataURICreated.new(cmd,
@@ -70,7 +71,8 @@ defmodule DataStore.Aggregates.Dataset do
       id: event.id,
       workspace: event.workspace,
       uri: event.uri,
-      type: event.type
+      type: event.type,
+      version: dataset.version + 1
     }
   end
 

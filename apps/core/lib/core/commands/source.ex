@@ -29,9 +29,12 @@ defmodule Core.Commands.CreateSource do
   end
 
   def validate_uri_uniqueness(changeset, uris) do
+    # Strip version information
+    normalized_uris = Enum.map(uris, fn uri -> Regex.replace(~r/\/v[0-9]{1,10}$/, uri, "") end)
+
     changeset
     |> validate_change(:uri, fn :uri, [uri, _tag] ->
-      if uri in uris, do: [uri: "invalid namespace"], else: []
+      if Regex.replace(~r/\/v[0-9]{1,10}$/, uri, "") in uris, do: [uri: "invalid uri"], else: []
     end)
   end
 
@@ -56,6 +59,20 @@ defmodule Core.Commands.UpdateSource do
     changeset
     |> validate_required([:id, :workspace])
     |> validate_length(:uri, is: 2)
+  end
+end
+
+defmodule Core.Commands.UpdateSourceURI do
+  use Core.Utils.EnrichableCommand,
+    id: :string,
+    workspace: :string,
+    uri: {{:array, :string}, []}
+
+  def handle_validate(changeset) do
+    changeset
+    |> validate_required([:id, :workspace, :uri])
+    |> validate_length(:uri, is: 2)
+    |> validate_integrity()
   end
 end
 

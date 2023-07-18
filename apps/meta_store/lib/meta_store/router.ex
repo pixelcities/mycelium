@@ -5,6 +5,7 @@ defmodule MetaStore.Router do
   alias Core.Commands.{
     CreateSource,
     UpdateSource,
+    UpdateSourceURI,
     DeleteSource,
     CreateMetadata,
     UpdateMetadata,
@@ -62,7 +63,7 @@ defmodule MetaStore.Router do
   identify(Transformer, by: :id, prefix: "transformers-")
   identify(Widget, by: :id, prefix: "widgets-")
 
-  dispatch([ CreateSource, UpdateSource, DeleteSource ],
+  dispatch([ CreateSource, UpdateSource, UpdateSourceURI, DeleteSource ],
     to: Source,
     lifespan: SourceLifespan
   )

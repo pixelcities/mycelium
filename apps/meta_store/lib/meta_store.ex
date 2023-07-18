@@ -23,6 +23,7 @@ defmodule MetaStore do
   alias Core.Commands.{
     CreateSource,
     UpdateSource,
+    UpdateSourceURI,
     DeleteSource,
     CreateMetadata,
     UpdateMetadata,
@@ -224,6 +225,16 @@ defmodule MetaStore do
   """
   def update_source(attrs, %{"user_id" => _user_id} = metadata) do
     handle_dispatch(UpdateSource.new(attrs), metadata)
+  end
+
+  @doc """
+  Update the URI of a source
+
+  This is used when a new version for a source was uploaded. The version in the URI
+  is managed by the CreateDataURI command.
+  """
+  def update_source_uri(attrs, %{"user_id" => _user_id} = metadata) do
+    handle_dispatch(UpdateSourceURI.new(attrs), metadata)
   end
 
   def delete_source(attrs, %{"user_id" => _user_id} = metadata) do

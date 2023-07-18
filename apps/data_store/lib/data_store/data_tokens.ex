@@ -119,7 +119,7 @@ defmodule DataStore.DataTokens do
   defp validate_mode(_mode), do: {:error, "invalid_mode"}
 
   defp validate_path(user, uri, "read") do
-    with {:ok, ds, _, _, _} <- parse_uri(uri, :read),
+    with {:ok, ds, _, _, _, _} <- parse_uri(uri, :read),
          :ok <- validate_data_space(ds, user),
          :ok <- validate_ownership(uri, user, ds)
     do
@@ -130,11 +130,11 @@ defmodule DataStore.DataTokens do
   end
 
   defp validate_path(user, uri, "write") do
-    with {:ok, ds, workspace, type, dataset, _} <- parse_uri(uri, :write),
+    with {:ok, ds, workspace, type, dataset, version, _} <- parse_uri(uri, :write),
          :ok <- validate_data_space(ds, user),
          :ok <- validate_workspace(workspace, user)
     do
-      normalized_uri = rebuild_uri(ds, workspace, type, dataset)
+      normalized_uri = rebuild_uri(ds, workspace, type, dataset, version)
       uris = MetaStore.get_all_uris(tenant: ds)
 
       # Validate the caller has access to this URI
@@ -185,7 +185,7 @@ defmodule DataStore.DataTokens do
   end
 
   defp parse_uri(uri, :write) do
-    case Regex.named_captures(~r/^s3:\/\/(?<bucket>[a-z0-9-]+)\/(?<ds>[a-z0-9_]{1,255})\/(?<workspace>[a-z0-9-]{1,255})\/(?<type>[a-z]+)\/(?<dataset>[a-z0-9-]{36})\/(?<fragment>[a-z0-9-]{36}).parquet$/, uri) do
+    case Regex.named_captures(~r/^s3:\/\/(?<bucket>[a-z0-9-]+)\/(?<ds>[a-z0-9_]{1,255})\/(?<workspace>[a-z0-9-]{1,255})\/(?<type>[a-z]+)\/(?<dataset>[a-z0-9-]{36})(?:\/v(?<version>[0-9]{1,10}))?\/(?<fragment>[a-z0-9-]{36}).parquet$/, uri) do
       nil -> {:error, "invalid_uri"}
       %{
         "bucket" => @bucket,
@@ -193,13 +193,15 @@ defmodule DataStore.DataTokens do
         "workspace" => workspace,
         "type" => type,
         "dataset" => dataset,
+        "version" => version,
         "fragment" => fragment
-      } -> {:ok, ds, workspace, type, dataset, fragment}
+      } -> {:ok, ds, workspace, type, dataset, version, fragment}
       _ -> {:error, "unauthorized"}
     end
   end
 
-  defp rebuild_uri(ds, workspace, type, dataset), do: "s3://#{@bucket}/#{ds}/#{workspace}/#{type}/#{dataset}"
+  defp rebuild_uri(ds, workspace, type, dataset, ""), do: "s3://#{@bucket}/#{ds}/#{workspace}/#{type}/#{dataset}"
+  defp rebuild_uri(ds, workspace, type, dataset, version), do: "s3://#{@bucket}/#{ds}/#{workspace}/#{type}/#{dataset}/v#{version}"
 
   defp harden_policy(policy, ip) do
     if @restrict_source_ip do
