@@ -4,6 +4,8 @@ defmodule ContentServer.Projectors.Page do
     name: "Projectors.Page",
     consistency: :strong
 
+  require Logger
+
   @impl Commanded.Projections.Ecto
   def schema_prefix(_event, %{"ds_id" => ds_id} = _metadata), do: ds_id
 
