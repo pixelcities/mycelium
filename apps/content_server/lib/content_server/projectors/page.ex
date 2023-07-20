@@ -49,6 +49,13 @@ defmodule ContentServer.Projectors.Page do
     |> Ecto.Multi.delete(:delete, fn %{get_page: s} -> s end)
   end
 
+  @impl true
+  def error({:error, error}, _event, _failure_context) do
+    Logger.error(fn -> "Page projector is skipping event due to:" <> inspect(error) end)
+
+    :skip
+  end
+
   defp upsert_page(multi, page, ds_id) do
     multi
     |> Ecto.Multi.run(:get_page, fn repo, _changes ->
