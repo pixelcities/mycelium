@@ -20,7 +20,7 @@ defmodule DataStore.Aggregates.Dataset do
   A delete request will also delete the `/dataset_id` path itself.
   """
 
-  def execute(%Dataset{version: version}, %CreateDataURI{} = cmd) do
+  def execute(%Dataset{uri: nil, version: version}, %CreateDataURI{} = cmd) do
     data_space = cmd.ds
 
     if data_space do
@@ -38,6 +38,18 @@ defmodule DataStore.Aggregates.Dataset do
     else
       {:error, :invalid_ds}
     end
+  end
+
+  def execute(%Dataset{uri: old_uri, version: version}, %CreateDataURI{} = cmd) do
+    {:ok, data_space, workspace, type, dataset_id, _} = DataStore.Data.validate_uri(old_uri)
+
+    uri = "s3://pxc-collection-store/#{data_space}/#{workspace}/#{type}/#{dataset_id}/v#{version}"
+    tag = Integrity.sign(uri)
+
+    DataURICreated.new(cmd,
+      uri: uri,
+      tag: tag
+    )
   end
 
   def execute(%Dataset{uri: uri}, %RequestTruncateDataset{} = cmd) do
@@ -61,7 +73,6 @@ defmodule DataStore.Aggregates.Dataset do
   def execute(%Dataset{uri: _uri}, %DeleteDataset{} = cmd) do
     DatasetDeleted.new(cmd, date: NaiveDateTime.utc_now())
   end
-
 
 
   # State mutators

@@ -13,6 +13,6 @@ defimpl Core.Middleware.CommandEnrichment, for: Any do
   @doc """
   By default the command is not modified.
   """
-  def enrich(command, metadata), do: {:ok, command}
+  def enrich(command, _metadata), do: {:ok, command}
 end
 

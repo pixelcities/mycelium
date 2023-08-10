@@ -158,9 +158,10 @@ defmodule DataStore.DataTokens do
     sources = MetaStore.get_sources_by_user(user, tenant: ds)
     collections = MetaStore.get_collections_by_user(user, tenant: ds)
 
-    uris = Enum.map(sources, fn s -> s.uri end) ++ Enum.map(collections, fn c -> c.uri end)
+    # Strip version information
+    uris = Enum.map(sources, fn s -> Regex.replace(~r/\/v[0-9]{1,10}$/, s.uri, "") end) ++ Enum.map(collections, fn c -> Regex.replace(~r/\/v[0-9]{1,10}$/, c.uri, "") end)
 
-    if uri in uris do
+    if Regex.replace(~r/\/v[0-9]{1,10}$/, uri, "") in uris do
       :ok
     else
       {:error, "unauthorized"}

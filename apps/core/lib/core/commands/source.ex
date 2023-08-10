@@ -34,7 +34,7 @@ defmodule Core.Commands.CreateSource do
 
     changeset
     |> validate_change(:uri, fn :uri, [uri, _tag] ->
-      if Regex.replace(~r/\/v[0-9]{1,10}$/, uri, "") in uris, do: [uri: "invalid uri"], else: []
+      if Regex.replace(~r/\/v[0-9]{1,10}$/, uri, "") in normalized_uris, do: [uri: "invalid uri"], else: []
     end)
   end
 
@@ -67,6 +67,16 @@ defmodule Core.Commands.UpdateSourceURI do
     id: :string,
     workspace: :string,
     uri: {{:array, :string}, []}
+
+  defp validate_integrity(changeset) do
+    [uri, tag] = fetch_field!(changeset, :uri)
+
+    unless Core.Integrity.is_valid?(uri, tag) do
+      add_error(changeset, :uri, "Invalid URI")
+    else
+      changeset
+    end
+  end
 
   def handle_validate(changeset) do
     changeset

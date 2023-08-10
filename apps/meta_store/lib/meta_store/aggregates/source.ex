@@ -32,7 +32,7 @@ defmodule MetaStore.Aggregates.Source do
   def execute(%Source{} = source, %UpdateSourceURI{__metadata__: %{user_id: user_id}} = command)
     when source.workspace == command.workspace
   do
-    if authorized?(user_id, source.schema) && valid_uri?(hd(source.uri) == hd(command.uri)) do
+    if authorized?(user_id, source.schema) && valid_uri?(hd(source.uri), hd(command.uri)) do
       SourceURIUpdated.new(command, date: NaiveDateTime.utc_now())
     else
       {:error, :unauthorized}
@@ -107,7 +107,7 @@ defmodule MetaStore.Aggregates.Source do
   def apply(%Source{} = source, %SourceURIUpdated{} = event) do
     %Source{source |
       uri: event.uri,
-      date: updated.date
+      date: event.date
     }
   end
 
