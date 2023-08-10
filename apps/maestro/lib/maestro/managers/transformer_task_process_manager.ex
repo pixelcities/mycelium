@@ -299,7 +299,7 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
           "transformer_id" => t.id,
           "wal" => t.wal
         },
-        fragments: identifiers
+        fragments: Enum.map(identifiers, fn x -> x.id end)
       }
 
     end) ++
@@ -313,7 +313,7 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
           "instruction" => "update_content",
           "widget_id" => w.id,
         },
-        fragments: get_widget_identifiers(w)
+        fragments: Enum.map(get_widget_identifiers(w), fn x -> x.id end)
       }
     end) ++
 

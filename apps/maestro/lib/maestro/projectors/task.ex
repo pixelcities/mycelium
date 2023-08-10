@@ -7,6 +7,8 @@ defmodule Maestro.Projectors.Task do
   @impl Commanded.Projections.Ecto
   def schema_prefix(_event, %{"ds_id" => ds_id} = _metadata), do: ds_id
 
+  require Logger
+
   alias Core.Events.{TaskCreated, TaskAssigned, TaskUnAssigned, TaskCancelled, TaskCompleted, TaskFailed}
   alias Maestro.Projections.Task
 
@@ -102,6 +104,13 @@ defmodule Maestro.Projectors.Task do
 
   @impl true
   def error({:error, :already_deleted}, _event, _failure_context) do
+    :skip
+  end
+
+  @impl true
+  def error({:error, error}, _event, _failure_context) do
+    Logger.error(fn -> "Task projector is skipping event due to:" <> inspect(error) end)
+
     :skip
   end
 

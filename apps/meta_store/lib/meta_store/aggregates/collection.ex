@@ -37,6 +37,7 @@ defmodule MetaStore.Aggregates.Collection do
   def execute(%Collection{id: nil}, %CreateCollection{} = collection) do
     CollectionCreated.new(collection, date: NaiveDateTime.utc_now())
   end
+  def execute(%Collection{}, %CreateCollection{}), do: {:error, :collection_already_exists}
 
   def execute(%Collection{} = collection, %UpdateCollection{__metadata__: %{user_id: user_id}} = update)
     when collection.workspace == update.workspace and hd(collection.uri) == hd(update.uri)

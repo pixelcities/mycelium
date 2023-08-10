@@ -4,6 +4,8 @@ defmodule ContentServer.Projectors.Content do
     name: "Projectors.Content",
     consistency: :strong
 
+  require Logger
+
   @impl Commanded.Projections.Ecto
   def schema_prefix(_event, %{"ds_id" => ds_id} = _metadata), do: ds_id
 
@@ -47,6 +49,13 @@ defmodule ContentServer.Projectors.Content do
       {:ok, repo.get(Content, content.id, prefix: ds_id)}
     end)
     |> Ecto.Multi.delete(:delete, fn %{get_content: s} -> s end)
+  end
+
+  @impl true
+  def error({:error, error}, _event, _failure_context) do
+    Logger.error(fn -> "Content projector is skipping event due to:" <> inspect(error) end)
+
+    :skip
   end
 
   defp upsert_content(multi, content, ds_id) do
