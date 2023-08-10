@@ -14,6 +14,7 @@ defmodule MetaStore.Aggregates.Collection do
   alias Core.Commands.{
     CreateCollection,
     UpdateCollection,
+    UpdateCollectionURI,
     UpdateCollectionSchema,
     SetCollectionColor,
     SetCollectionPosition,
@@ -38,6 +39,13 @@ defmodule MetaStore.Aggregates.Collection do
     CollectionCreated.new(collection, date: NaiveDateTime.utc_now())
   end
   def execute(%Collection{}, %CreateCollection{}), do: {:error, :collection_already_exists}
+
+  def execute(%Collection{} = collection, %UpdateCollectionURI{uri: uri}) do
+    CollectionUpdated.new(collection,
+      uri: uri,
+      date: NaiveDateTime.utc_now()
+    )
+  end
 
   def execute(%Collection{} = collection, %UpdateCollection{__metadata__: %{user_id: user_id}} = update)
     when collection.workspace == update.workspace and hd(collection.uri) == hd(update.uri)

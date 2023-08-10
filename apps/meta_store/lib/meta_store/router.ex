@@ -13,6 +13,7 @@ defmodule MetaStore.Router do
     UpdateConcept,
     CreateCollection,
     UpdateCollection,
+    UpdateCollectionURI,
     UpdateCollectionSchema,
     SetCollectionColor,
     SetCollectionPosition,
@@ -73,7 +74,7 @@ defmodule MetaStore.Router do
   dispatch([ CreateConcept, UpdateConcept ],
     to: Concept
   )
-  dispatch([ CreateCollection, UpdateCollection, UpdateCollectionSchema, SetCollectionColor, SetCollectionPosition, SetCollectionIsReady, AddCollectionTarget, RemoveCollectionTarget, DeleteCollection ],
+  dispatch([ CreateCollection, UpdateCollection, UpdateCollectionURI, UpdateCollectionSchema, SetCollectionColor, SetCollectionPosition, SetCollectionIsReady, AddCollectionTarget, RemoveCollectionTarget, DeleteCollection ],
     to: Collection,
     lifespan: CollectionLifespan
   )

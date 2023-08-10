@@ -12,6 +12,7 @@ defmodule MetaStore.Projectors.Source do
   alias Core.Events.{
     SourceCreated,
     SourceUpdated,
+    SourceURIUpdated,
     SourceDeleted
   }
   alias MetaStore.Projections.Source
@@ -28,6 +29,18 @@ defmodule MetaStore.Projectors.Source do
     ds_id = Map.get(metadata, "ds_id")
 
     upsert_source(multi, source, ds_id)
+  end
+
+  project %SourceURIUpdated{uri: uri} = source, %{"ds_id" => ds_id} = _metadata, fn multi ->
+    multi
+    |> Ecto.Multi.run(:get_source, fn repo, _changes ->
+      {:ok, repo.get(Source, source.id, prefix: ds_id)}
+    end)
+    |> Ecto.Multi.update(:update, fn %{get_source: s} ->
+      Source.changeset(s, %{
+        uri: hd(uri)
+      })
+    end)
   end
 
   project %SourceDeleted{} = source, %{"ds_id" => ds_id} = _metadata, fn multi ->

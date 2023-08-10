@@ -72,6 +72,7 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
   def interested?(%TransformerApproved{id: id}), do: {:continue, id}
   def interested?(%TaskCreated{causation_id: id}) when id != nil, do: {:continue, id}
   def interested?(%TaskCompleted{causation_id: id}) when id != nil, do: {:continue, id}
+  def interested?(%TaskCancelled{causation_id: id}) when id != nil, do: {:continue, id}
   def interested?(%TaskFailed{causation_id: id}) when id != nil, do: {:continue, id}
   def interested?(%DataURICreated{id: id}), do: {:continue, id}
   def interested?(%DatasetTruncated{id: id}), do: {:continue, id}
@@ -299,7 +300,7 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
           "transformer_id" => t.id,
           "wal" => t.wal
         },
-        fragments: Enum.map(identifiers, fn x -> x.id end)
+        fragments: Enum.map(identifiers, fn x -> Map.get(x, "id") end)
       }
 
     end) ++
@@ -313,7 +314,7 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
           "instruction" => "update_content",
           "widget_id" => w.id,
         },
-        fragments: Enum.map(get_widget_identifiers(w), fn x -> x.id end)
+        fragments: Enum.map(get_widget_identifiers(w), fn x -> Map.get(x, "id") end)
       }
     end) ++
 

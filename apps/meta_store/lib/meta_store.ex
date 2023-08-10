@@ -169,7 +169,9 @@ defmodule MetaStore do
     Repo.one((from s in Source,
       join: c in Schema, on: s.id == c.source_id,
       join: h in assoc(c, :shares),
-      where: h.principal == ^user_id and s.uri == ^uri
+      where:
+        h.principal == ^user_id and
+        fragment("regexp_replace(?, '\/v[0-9]{1,10}$', '')", s.uri) == ^(Regex.replace(~r/\/v[0-9]{1,10}$/, uri, ""))
     ), prefix: tenant)
   end
 

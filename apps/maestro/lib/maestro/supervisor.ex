@@ -82,7 +82,8 @@ defmodule Maestro.TenantSupervisor do
     [
       {Maestro.Projectors.Task, application: Module.concat(backend, tenant)},
       {Maestro.Managers.TransformerTaskProcessManager, application: Module.concat(backend, tenant)},
-      {Maestro.Managers.WidgetTaskProcessManager, application: Module.concat(backend, tenant)}
+      {Maestro.Managers.WidgetTaskProcessManager, application: Module.concat(backend, tenant)},
+      {Maestro.Managers.SourceUpdateProcessManager, application: Module.concat(backend, tenant)}
     ]
   end
 

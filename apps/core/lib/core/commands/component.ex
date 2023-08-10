@@ -51,6 +51,21 @@ defmodule Core.Commands.UpdateCollection do
   end
 end
 
+# NOTE: Only used internally & has no linked event
+defmodule Core.Commands.UpdateCollectionURI do
+  import Core.Types.Component
+
+  use Commanded.Command,
+    id: :binary_id,
+    workspace: :string,
+    uri: {{:array, :string}, []}
+
+  def handle_validate(changeset) do
+    changeset
+    |> validate_required([:id, :workspace, :uri])
+  end
+end
+
 defmodule Core.Commands.UpdateCollectionSchema do
   import Core.Types.Component
 
