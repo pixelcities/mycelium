@@ -92,6 +92,9 @@ defmodule LiaisonServerWeb.DataSpaceChannel do
   def handle_in("action", %{"type" => "UpdateConcept"} = action, socket), do: handle_action(&MetaStore.update_concept/2, action, socket)
 
   @impl true
+  def handle_in("action", %{"type" => "DeleteConcept"} = action, socket), do: handle_action(&MetaStore.delete_concept/2, action, socket)
+
+  @impl true
   def handle_in("action", %{"type" => "CreateCollection"} = action, socket), do: handle_action(&MetaStore.create_collection/2, action, socket)
 
   @impl true

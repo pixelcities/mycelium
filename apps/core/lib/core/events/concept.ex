@@ -10,3 +10,9 @@ defmodule Core.Events.ConceptUpdated do
     with: [:date]
 end
 
+defmodule Core.Events.ConceptDeleted do
+  use Commanded.Event,
+    from: Core.Commands.DeleteConcept,
+    with: [:date]
+end
+

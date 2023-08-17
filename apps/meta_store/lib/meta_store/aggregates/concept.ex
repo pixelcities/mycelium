@@ -5,8 +5,8 @@ defmodule MetaStore.Aggregates.Concept do
             date: nil
 
   alias MetaStore.Aggregates.Concept
-  alias Core.Commands.{CreateConcept, UpdateConcept}
-  alias Core.Events.{ConceptCreated, ConceptUpdated}
+  alias Core.Commands.{CreateConcept, UpdateConcept, DeleteConcept}
+  alias Core.Events.{ConceptCreated, ConceptUpdated, ConceptDeleted}
 
 
   def execute(%Concept{id: nil}, %CreateConcept{} = concept) do
@@ -17,6 +17,10 @@ defmodule MetaStore.Aggregates.Concept do
     when concept.workspace == update.workspace
   do
     ConceptUpdated.new(update, date: NaiveDateTime.utc_now())
+  end
+
+  def execute(%Concept{}, %DeleteConcept{} = command) do
+    ConceptDeleted.new(command, date: NaiveDateTime.utc_now())
   end
 
 
@@ -37,5 +41,7 @@ defmodule MetaStore.Aggregates.Concept do
       date: event.date
     }
   end
+
+  def apply(%Concept{}, %ConceptDeleted{}), do: __MODULE__.__struct__
 
 end

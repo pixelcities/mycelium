@@ -29,6 +29,7 @@ defmodule MetaStore do
     UpdateMetadata,
     CreateConcept,
     UpdateConcept,
+    DeleteConcept,
     CreateCollection,
     UpdateCollection,
     UpdateCollectionSchema,
@@ -128,6 +129,14 @@ defmodule MetaStore do
 
     Repo.one((from c in Share,
       where: c.id == ^id
+    ), prefix: tenant)
+  end
+
+  def get_columns_by_concept_id(concept_id, opts \\ []) do
+    tenant = Keyword.fetch!(opts, :tenant)
+
+    Repo.all((from c in Column,
+      where: c.concept_id == ^concept_id
     ), prefix: tenant)
   end
 
@@ -266,6 +275,16 @@ defmodule MetaStore do
 
   def update_concept(attrs, %{"user_id" => _user_id} = metadata) do
     handle_dispatch(UpdateConcept.new(attrs), metadata)
+  end
+
+  def delete_concept(%{"id" => id} = attrs, %{"user_id" => _user_id, "ds_id" => ds_id} = metadata) do
+    live_columns = get_columns_by_concept_id(id, tenant: ds_id)
+
+    if length(live_columns) == 0 do
+      handle_dispatch(DeleteConcept.new(attrs), metadata)
+    else
+      dispatch_error(:concept_is_still_in_use, metadata)
+    end
   end
 
   @doc """

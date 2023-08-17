@@ -11,6 +11,7 @@ defmodule MetaStore.Router do
     UpdateMetadata,
     CreateConcept,
     UpdateConcept,
+    DeleteConcept,
     CreateCollection,
     UpdateCollection,
     UpdateCollectionURI,
@@ -46,6 +47,7 @@ defmodule MetaStore.Router do
     SourceLifespan,
     Metadata,
     Concept,
+    ConceptLifespan,
     Collection,
     CollectionLifespan,
     Transformer,
@@ -71,8 +73,9 @@ defmodule MetaStore.Router do
   dispatch([ CreateMetadata, UpdateMetadata ],
     to: Metadata
   )
-  dispatch([ CreateConcept, UpdateConcept ],
-    to: Concept
+  dispatch([ CreateConcept, UpdateConcept, DeleteConcept ],
+    to: Concept,
+    lifespan: ConceptLifespan
   )
   dispatch([ CreateCollection, UpdateCollection, UpdateCollectionURI, UpdateCollectionSchema, SetCollectionColor, SetCollectionPosition, SetCollectionIsReady, AddCollectionTarget, RemoveCollectionTarget, DeleteCollection ],
     to: Collection,

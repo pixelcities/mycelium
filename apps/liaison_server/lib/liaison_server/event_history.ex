@@ -21,6 +21,7 @@ defmodule LiaisonServer.EventHistory do
     Events.MetadataUpdated,
     Events.ConceptCreated,
     Events.ConceptUpdated,
+    Events.ConceptDeleted,
     Events.UserCreated,
     Events.UserUpdated,
     Events.UserActivitySet,
