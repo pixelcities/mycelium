@@ -92,6 +92,27 @@ defmodule LiaisonServerWeb.DataSpaces.DataSpaceController do
     end
   end
 
+  def remove_member(conn, %{"handle" => handle, "email" => email}) do
+    user = conn.assigns.current_user
+
+    case Tenants.get_data_space_by_user_and_handle(user, handle) do
+      {:ok, data_space} ->
+        if Tenants.is_owner?(data_space, user) do
+          case Landlord.Accounts.get_user_by_email(email) do
+            nil -> send_json_resp(conn, 403)
+            ds_user ->
+              case Tenants.delete_user_from_data_space(data_space, ds_user) do
+                {:ok, _} -> json(conn, %{"status" => "ok"})
+                _ -> send_json_resp(conn, 500)
+              end
+          end
+        else
+          send_json_resp(conn, 403)
+        end
+      {:error, _err} -> send_json_resp(conn, 404)
+    end
+  end
+
   def cancel_invite(conn, %{"handle" => handle, "email" => email}) do
     user = conn.assigns.current_user
 
@@ -185,6 +206,7 @@ defmodule LiaisonServerWeb.DataSpaces.DataSpaceController do
         send_json_resp(conn, 500)
     end
   end
+
 
   defp send_json_resp(conn, 400), do: conn |> put_status(400) |> json(%{"status" => "bad request"})
   defp send_json_resp(conn, 403), do: conn |> put_status(403) |> json(%{"status" => "forbidden"})
