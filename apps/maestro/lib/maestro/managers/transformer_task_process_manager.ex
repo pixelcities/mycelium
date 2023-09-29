@@ -201,8 +201,7 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
     collection = MetaStore.get_collection!(pm.target, tenant: pm.transformer.ds)
 
     if (collection != nil) and (collection.schema != nil) do
-      schema_id = MetaStore.get_collection!(pm.target, tenant: pm.transformer.ds).schema.id
-      schema = MetaStore.get_schema!(schema_id, tenant: pm.transformer.ds)
+      schema = MetaStore.get_schema!(collection.schema.id, tenant: pm.transformer.ds)
 
       %CreateTask{
         id: UUID.uuid4(),
@@ -217,7 +216,7 @@ defmodule Maestro.Managers.TransformerTaskProcessManager do
         },
         fragments: Enum.flat_map(in_collections, fn collection -> collection.schema.column_order end),
         metadata: %{
-          "schema" => schema
+          "rotate_schema" => schema
         }
       }
     else

@@ -19,17 +19,13 @@ defmodule Maestro.Managers.SourceUpdateProcessManager do
 
   alias Maestro.Managers.SourceUpdateProcessManager
   alias Core.Commands.{
-    UpdateSourceSchema,
     UpdateCollectionURI,
-    UpdateCollectionSchema,
     CreateTask,
     CancelTask
   }
   alias Core.Events.{
     CollectionCreated,
-    CollectionSchemaUpdated,
     CollectionDeleted,
-    SourceSchemaUpdated,
     SourceURIUpdated,
     TaskCreated,
     TaskFailed,
@@ -43,8 +39,6 @@ defmodule Maestro.Managers.SourceUpdateProcessManager do
   def interested?(%CollectionCreated{id: id, type: "source"}), do: {:start, id}
   # Not interested in source update events when there are no source collections (skipped in error handler)
   def interested?(%SourceURIUpdated{id: id}), do: {:continue!, id}
-  def interested?(%SourceSchemaUpdated{id: id}), do: {:continue!, id}
-  def interested?(%CollectionSchemaUpdated{id: id}), do: {:continue!, id}
   def interested?(%TaskCreated{causation_id: id}) when id != nil, do: {:continue, id}
   def interested?(%TaskCompleted{causation_id: id}) when id != nil, do: {:continue, id}
   def interested?(%TaskCancelled{causation_id: id}) when id != nil, do: {:continue, id}
@@ -87,32 +81,6 @@ defmodule Maestro.Managers.SourceUpdateProcessManager do
     end)
   end
 
-  # Update the counterpart's schema when it gets updated.
-  def handle(%SourceUpdateProcessManager{schema: old_schema} = pm, %CollectionSchemaUpdated{schema: schema} = _event) when
-    old_schema.tag != schema.tag
-  do
-    [
-      %UpdateSourceSchema{
-        id: pm.collection.id,
-        workspace: pm.collection.workspace,
-        schema: schema
-      }
-    ]
-  end
-  def handle(%SourceUpdateProcessManager{}, %CollectionSchemaUpdated{}), do: nil
-
-  def handle(%SourceUpdateProcessManager{schema: old_schema} = pm, %SourceSchemaUpdated{schema: schema} = _event) when
-    old_schema.tag != schema.tag
-  do
-    [
-      %UpdateCollectionSchema{
-        id: pm.collection.id,
-        workspace: pm.collection.workspace,
-        schema: schema
-      }
-    ]
-  end
-  def handle(%SourceUpdateProcessManager{}, %SourceSchemaUpdated{}), do: nil
 
   # Error handlers
 
@@ -138,20 +106,7 @@ defmodule Maestro.Managers.SourceUpdateProcessManager do
   def apply(%SourceUpdateProcessManager{} = pm, %CollectionCreated{} = event) do
     %SourceUpdateProcessManager{pm |
       id: event.id,
-      collection: event,
-      schema: event.schema
-    }
-  end
-
-  def apply(%SourceUpdateProcessManager{} = pm, %CollectionSchemaUpdated{} = event) do
-    %SourceUpdateProcessManager{pm |
-      schema: event.schema
-    }
-  end
-
-  def apply(%SourceUpdateProcessManager{} = pm, %SourceSchemaUpdated{} = event) do
-    %SourceUpdateProcessManager{pm |
-      schema: event.schema
+      collection: event
     }
   end
 
