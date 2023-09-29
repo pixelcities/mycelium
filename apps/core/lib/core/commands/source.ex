@@ -62,6 +62,18 @@ defmodule Core.Commands.UpdateSource do
   end
 end
 
+defmodule Core.Commands.UpdateSourceSchema do
+  use Core.Utils.EnrichableCommand,
+    id: :string,
+    workspace: :string,
+    schema: Core.Types.Schema
+
+  def handle_validate(changeset) do
+    changeset
+    |> validate_required([:id, :workspace, :schema])
+  end
+end
+
 defmodule Core.Commands.UpdateSourceURI do
   use Core.Utils.EnrichableCommand,
     id: :string,

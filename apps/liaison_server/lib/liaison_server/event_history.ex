@@ -14,6 +14,7 @@ defmodule LiaisonServer.EventHistory do
   @events [
     Events.SourceCreated,
     Events.SourceUpdated,
+    Events.SourceSchemaUpdated,
     Events.SourceURIUpdated,
     Events.SourceDeleted,
     Events.DataURICreated,

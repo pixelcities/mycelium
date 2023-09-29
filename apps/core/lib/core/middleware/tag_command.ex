@@ -19,9 +19,9 @@ defmodule Core.Middleware.TagCommand do
       # If an event (mostly coming from managers) is lacking the ds_id, we
       # try looking up past events for that id or fallback to parsing it from
       # the module name.
-      ds_id = case Core.Timeline.lookup(correlation_id) do
-        {:ok, meta} -> Map.get(meta, "ds_id")
-        {:error, _} -> extract_ds_from_application(pipeline)
+      {ds_id, user_id} = case Core.Timeline.lookup(correlation_id) do
+        {:ok, %{"ds_id" => ds_id} = meta} -> {ds_id, Map.get(meta, "user_id")}
+        _ -> {extract_ds_from_application(pipeline), nil}
       end
 
       if is_nil(ds_id) do
@@ -30,8 +30,14 @@ defmodule Core.Middleware.TagCommand do
         pipeline
         |> halt()
       else
-        pipeline
-        |> assign_metadata("ds_id", ds_id)
+        unless is_nil(user_id) do
+          pipeline
+          |> assign_metadata("ds_id", ds_id)
+          |> assign_metadata("user_id", user_id)
+        else
+          pipeline
+          |> assign_metadata("ds_id", ds_id)
+        end
       end
     else
       pipeline

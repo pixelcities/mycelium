@@ -8,8 +8,8 @@ defmodule MetaStore.Aggregates.Source do
             date: nil
 
   alias MetaStore.Aggregates.Source
-  alias Core.Commands.{CreateSource, UpdateSource, UpdateSourceURI, DeleteSource}
-  alias Core.Events.{SourceCreated, SourceUpdated, SourceURIUpdated, SourceDeleted}
+  alias Core.Commands.{CreateSource, UpdateSource, UpdateSourceURI, UpdateSourceSchema, DeleteSource}
+  alias Core.Events.{SourceCreated, SourceUpdated, SourceURIUpdated, SourceSchemaUpdated, SourceDeleted}
 
   @doc """
   Publish a source
@@ -28,6 +28,17 @@ defmodule MetaStore.Aggregates.Source do
     end
   end
   def execute(%Source{} = _source, %UpdateSource{} = _update), do: {:error, :invalid_update}
+
+  def execute(%Source{} = source, %UpdateSourceSchema{__metadata__: %{user_id: user_id, is_internal: is_internal}} = update)
+    when source.workspace == update.workspace
+  do
+    if is_internal || (authorized?(user_id, source.schema) && valid_shares?(user_id, source.schema, update.schema)) do
+      SourceSchemaUpdated.new(update, date: NaiveDateTime.utc_now())
+    else
+      {:error, :unauthorized}
+    end
+  end
+  def execute(%Source{} = _source, %UpdateSourceSchema{} = _update), do: {:error, :invalid_update}
 
   def execute(%Source{} = source, %UpdateSourceURI{__metadata__: %{user_id: user_id}} = command)
     when source.workspace == command.workspace
@@ -100,6 +111,13 @@ defmodule MetaStore.Aggregates.Source do
     %Source{source |
       schema: updated.schema,
       is_published: updated.is_published,
+      date: updated.date
+    }
+  end
+
+  def apply(%Source{} = source, %SourceSchemaUpdated{} = updated) do
+    %Source{source |
+      schema: updated.schema,
       date: updated.date
     }
   end

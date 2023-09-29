@@ -74,6 +74,9 @@ defmodule LiaisonServerWeb.DataSpaceChannel do
   def handle_in("action", %{"type" => "UpdateSource"} = action, socket), do: handle_action(&MetaStore.update_source/2, action, socket)
 
   @impl true
+  def handle_in("action", %{"type" => "UpdateSourceSchema"} = action, socket), do: handle_action(&MetaStore.update_source_schema/2, action, socket)
+
+  @impl true
   def handle_in("action", %{"type" => "UpdateSourceURI"} = action, socket), do: handle_action(&MetaStore.update_source_uri/2, action, socket)
 
   @impl true

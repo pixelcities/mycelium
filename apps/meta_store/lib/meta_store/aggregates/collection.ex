@@ -57,8 +57,8 @@ defmodule MetaStore.Aggregates.Collection do
     end
   end
 
-  def execute(%Collection{} = collection, %UpdateCollectionSchema{__metadata__: %{user_id: user_id}} = update) do
-    if authorized?(user_id, collection.schema) && valid_shares?(user_id, collection.schema, update.schema) do
+  def execute(%Collection{} = collection, %UpdateCollectionSchema{__metadata__: %{user_id: user_id, is_internal: is_internal}} = update) do
+    if is_internal || (authorized?(user_id, collection.schema) && valid_shares?(user_id, collection.schema, update.schema)) do
       CollectionSchemaUpdated.new(update, date: NaiveDateTime.utc_now())
     else
       {:error, :unauthorized}

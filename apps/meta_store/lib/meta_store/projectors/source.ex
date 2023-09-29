@@ -12,6 +12,7 @@ defmodule MetaStore.Projectors.Source do
   alias Core.Events.{
     SourceCreated,
     SourceUpdated,
+    SourceSchemaUpdated,
     SourceURIUpdated,
     SourceDeleted
   }
@@ -29,6 +30,11 @@ defmodule MetaStore.Projectors.Source do
     ds_id = Map.get(metadata, "ds_id")
 
     upsert_source(multi, source, ds_id)
+  end
+
+  project %SourceSchemaUpdated{} = source, %{"ds_id" => ds_id} = _metadata, fn multi ->
+    multi
+    |> Projectors.Schema.upsert_schema(source, [is_source: true, tenant: ds_id])
   end
 
   project %SourceURIUpdated{uri: uri} = source, %{"ds_id" => ds_id} = _metadata, fn multi ->

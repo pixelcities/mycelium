@@ -6,6 +6,7 @@ defmodule MetaStore.Router do
     CreateSource,
     UpdateSource,
     UpdateSourceURI,
+    UpdateSourceSchema,
     DeleteSource,
     CreateMetadata,
     UpdateMetadata,
@@ -66,7 +67,7 @@ defmodule MetaStore.Router do
   identify(Transformer, by: :id, prefix: "transformers-")
   identify(Widget, by: :id, prefix: "widgets-")
 
-  dispatch([ CreateSource, UpdateSource, UpdateSourceURI, DeleteSource ],
+  dispatch([ CreateSource, UpdateSource, UpdateSourceURI, UpdateSourceSchema, DeleteSource ],
     to: Source,
     lifespan: SourceLifespan
   )

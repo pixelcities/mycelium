@@ -24,6 +24,7 @@ defmodule MetaStore do
     CreateSource,
     UpdateSource,
     UpdateSourceURI,
+    UpdateSourceSchema,
     DeleteSource,
     CreateMetadata,
     UpdateMetadata,
@@ -236,6 +237,10 @@ defmodule MetaStore do
   """
   def update_source(attrs, %{"user_id" => _user_id} = metadata) do
     handle_dispatch(UpdateSource.new(attrs), metadata)
+  end
+
+  def update_source_schema(attrs, %{"user_id" => _user_id} = metadata) do
+    handle_dispatch(UpdateSourceSchema.new(attrs), metadata)
   end
 
   @doc """

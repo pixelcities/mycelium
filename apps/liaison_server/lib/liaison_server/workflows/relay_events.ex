@@ -6,6 +6,7 @@ defmodule LiaisonServer.Workflows.RelayEvents do
   @events [
     Core.Events.SourceCreated,
     Core.Events.SourceUpdated,
+    Core.Events.SourceSchemaUpdated,
     Core.Events.SourceURIUpdated,
     Core.Events.SourceDeleted,
     Core.Events.DataURICreated,

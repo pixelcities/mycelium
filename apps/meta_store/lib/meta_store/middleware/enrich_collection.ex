@@ -14,10 +14,13 @@ defimpl Core.Middleware.CommandEnrichment, for: [Core.Commands.UpdateCollection,
     }}
   end
 
-  def enrich(%UpdateCollectionSchema{} = command, %{"user_id" => user_id} = _metadata) do
+  def enrich(%UpdateCollectionSchema{} = command, metadata) do
+    user_id = Map.get(metadata, "user_id")
+
     {:ok, %UpdateCollectionSchema{command |
       __metadata__: %{
-        user_id: user_id
+        user_id: user_id,
+        is_internal: is_nil(user_id)
       }
     }}
   end

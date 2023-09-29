@@ -1,8 +1,9 @@
-defimpl Core.Middleware.CommandEnrichment, for: [Core.Commands.UpdateSource, Core.Commands.UpdateSourceURI, Core.Commands.DeleteSource] do
+defimpl Core.Middleware.CommandEnrichment, for: [Core.Commands.UpdateSource, Core.Commands.UpdateSourceURI, Core.Commands.UpdateSourceSchema, Core.Commands.DeleteSource] do
 
   alias Core.Commands.{
     UpdateSource,
     UpdateSourceURI,
+    UpdateSourceSchema,
     DeleteSource
   }
 
@@ -13,6 +14,17 @@ defimpl Core.Middleware.CommandEnrichment, for: [Core.Commands.UpdateSource, Cor
     {:ok, %UpdateSource{command |
       __metadata__: %{
         user_id: user_id
+      }
+    }}
+  end
+
+  def enrich(%UpdateSourceSchema{} = command, metadata) do
+    user_id = Map.get(metadata, "user_id")
+
+    {:ok, %UpdateSourceSchema{command |
+      __metadata__: %{
+        user_id: user_id,
+        is_internal: is_nil(user_id)
       }
     }}
   end
