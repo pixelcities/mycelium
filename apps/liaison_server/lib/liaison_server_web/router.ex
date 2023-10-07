@@ -79,6 +79,7 @@ defmodule LiaisonServerWeb.Router do
     post "/:handle/create", DataSpaceController, :prepare_data_space
     delete "/:handle/leave", DataSpaceController, :leave_data_space
     delete "/:handle/delete", DataSpaceController, :delete_data_space
+    put "/:handle/manifest", DataSpaceController, :update_manifest
     put "/accept_invite/:token", DataSpaceController, :accept_invite
     put "/activate/:checkout_id", DataSpaceController, :activate_data_space
   end

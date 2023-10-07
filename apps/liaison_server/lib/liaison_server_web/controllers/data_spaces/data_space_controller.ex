@@ -39,6 +39,27 @@ defmodule LiaisonServerWeb.DataSpaces.DataSpaceController do
   end
 
   @doc """
+  Update the manifest
+
+  The manifest is user controlled and integrity protected. It stores membership
+  information which can be used to validate the users without the server being able
+  to alter anything.
+  """
+  def update_manifest(conn, %{"handle" => handle, "manifest" => manifest}) do
+    user = conn.assigns.current_user
+
+    case Tenants.get_data_space_by_user_and_handle(user, handle) do
+      {:ok, data_space} ->
+        case Tenants.update_manifest(data_space, manifest) do
+          {:ok, _} -> json(conn, %{"status" => "ok"})
+          _ -> send_json_resp(conn, 500)
+        end
+
+      {:error, _err} -> send_json_resp(conn, 404)
+    end
+  end
+
+  @doc """
   Invite a user by email to a data space
 
   This requires the current user to be the data space owner.

@@ -12,13 +12,14 @@ defmodule Landlord.Tenants.DataSpace do
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
 
-  @derive {Jason.Encoder, only: [:id, :handle, :name, :key_id]}
+  @derive {Jason.Encoder, only: [:id, :handle, :name, :key_id, :manifest]}
   schema "data_spaces" do
     field :handle, :string
     field :name, :string
     field :key_id, :string
     field :description, :string
     field :picture, :string
+    field :manifest, :map
     field :is_active, :boolean, default: false
 
     has_many :data_spaces__users, DataSpaceUser
@@ -32,13 +33,17 @@ defmodule Landlord.Tenants.DataSpace do
     is_active = Keyword.get(opts, :is_active, false)
 
     data_space
-    |> cast(Map.put(attrs, :is_active, is_active), [:handle, :name, :key_id, :description, :picture, :is_active])
+    |> cast(Map.put(attrs, :is_active, is_active), [:handle, :name, :key_id, :description, :picture, :manifest, :is_active])
     |> validate_required([:key_id])
     |> validate_handle()
   end
 
   def set_is_active_changeset(data_space) do
     change(data_space, is_active: true)
+  end
+
+  def set_manifest_changeset(data_space, manifest) do
+    change(data_space, manifest: manifest)
   end
 
   @doc """

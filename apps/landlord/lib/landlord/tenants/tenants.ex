@@ -214,6 +214,10 @@ defmodule Landlord.Tenants do
 
   ## Database setters
 
+  def update_manifest(%DataSpace{} = data_space, manifest) do
+    Repo.update(DataSpace.set_manifest_changeset(data_space, manifest))
+  end
+
   @doc """
   Prepare for the creation of a new data space
 
