@@ -60,6 +60,43 @@ defmodule LiaisonServerWeb.DataSpaces.DataSpaceController do
   end
 
   @doc """
+  Rotate the data space keys
+
+  This will update the key id and force all other clients to leave the data space
+  channel. After that, it's up to the owner to handle the actual rotation of all the
+  encrypted material.
+  """
+  def rotate_keys(conn, %{"handle" => handle, "key_id" => key_id}) do
+    user = conn.assigns.current_user
+
+    case Tenants.get_data_space_by_user_and_handle(user, handle, preload: :users) do
+      {:ok, data_space} ->
+        if Tenants.is_owner?(data_space, user) do
+          case Tenants.update_key_id(data_space, key_id) do
+            {:ok, _} ->
+              channel = "ds:" <> data_space.handle
+
+              data_space.users
+              |> Enum.reject(fn u -> u.id === user.id end)
+              |> Enum.each(fn u ->
+                # If this user is connected to the data space channel, tell them to leave
+                if Map.has_key?(Enum.into(Phoenix.Tracker.list(LiaisonServerWeb.Tracker, channel), %{}), u.id) do
+                  LiaisonServerWeb.Endpoint.broadcast("user:" <> u.id, "mgmt", %{"action" => "rotate"})
+                end
+              end)
+
+              json(conn, %{"status" => "ok"})
+            _ -> send_json_resp(conn, 500)
+          end
+
+        else
+          send_json_resp(conn, 403)
+        end
+      {:error, _err} -> send_json_resp(conn, 404)
+    end
+  end
+
+  @doc """
   Invite a user by email to a data space
 
   This requires the current user to be the data space owner.
@@ -167,6 +204,7 @@ defmodule LiaisonServerWeb.DataSpaces.DataSpaceController do
     "name" => name,
     "handle" => handle,
     "key_id" => key_id,
+    "manifest" => manifest,
     "plan" => plan,
     "interval" => _interval
   })
@@ -178,7 +216,7 @@ defmodule LiaisonServerWeb.DataSpaces.DataSpaceController do
         nil -> send_json_resp(conn, 400)
         product_id ->
           if Tenants.subscription_available?(user, product_id) do
-            case Tenants.prepare_data_space(user, %{name: name, handle: handle, key_id: key_id}) do
+            case Tenants.prepare_data_space(user, %{name: name, handle: handle, key_id: key_id, manifest: manifest}) do
               {:ok, data_space} ->
                 case SubscriptionApi.generate_redirect(product_id, user.email, data_space.handle) do
                   {:ok, uri} -> json(conn, %{"uri" => uri})

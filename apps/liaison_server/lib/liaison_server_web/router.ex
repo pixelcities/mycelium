@@ -77,6 +77,7 @@ defmodule LiaisonServerWeb.Router do
     post "/:handle/confirm_member", DataSpaceController, :confirm_member
     post "/:handle/remove_member", DataSpaceController, :remove_member
     post "/:handle/create", DataSpaceController, :prepare_data_space
+    post "/:handle/rotate", DataSpaceController, :rotate_keys
     delete "/:handle/leave", DataSpaceController, :leave_data_space
     delete "/:handle/delete", DataSpaceController, :delete_data_space
     put "/:handle/manifest", DataSpaceController, :update_manifest

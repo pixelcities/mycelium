@@ -46,6 +46,10 @@ defmodule Landlord.Tenants.DataSpace do
     change(data_space, manifest: manifest)
   end
 
+  def set_key_id_changeset(data_space, key_id) do
+    change(data_space, key_id: key_id)
+  end
+
   @doc """
   Get a list of all active data spaces
 
@@ -53,20 +57,26 @@ defmodule Landlord.Tenants.DataSpace do
   itself be actived as well (there is an active commanded application for
   this data space).
   """
-  def get_active_data_spaces do
+  def get_active_data_spaces(opts \\ []) do
+    preload = Keyword.get(opts, :preload, [])
+
     {subscription, subscription_is_active} = Subscription.active_subscription_clause()
 
     from d in DataSpace,
       left_join: assoc(d, :subscription), as: ^subscription,
-      where: ^(dynamic([d], d.handle == "trial" or (d.is_active == true and ^subscription_is_active)))
+      where: ^(dynamic([d], d.handle == "trial" or (d.is_active == true and ^subscription_is_active))),
+      preload: ^preload
   end
 
-  def get_inactive_data_spaces do
+  def get_inactive_data_spaces(opts \\ []) do
+    preload = Keyword.get(opts, :preload, [])
+
     {subscription, subscription_is_active} = Subscription.active_subscription_clause()
 
     from d in DataSpace,
       left_join: assoc(d, :subscription), as: ^subscription,
-      where: ^(dynamic([d], d.handle != "trial" and (d.is_active != true or not ^subscription_is_active)))
+      where: ^(dynamic([d], d.handle != "trial" and (d.is_active != true or not ^subscription_is_active))),
+      preload: ^preload
   end
 
   defp validate_handle(changeset) do

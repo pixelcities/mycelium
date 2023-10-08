@@ -25,10 +25,10 @@ defmodule Landlord.Tenants do
 
   Note that a handle is expected to be an atom.
   """
-  def get() do
+  def get(opts \\ []) do
     unless @env == :test do
       try do
-        tenants = Repo.all(DataSpace.get_active_data_spaces())
+        tenants = Repo.all(DataSpace.get_active_data_spaces(opts))
           |> Enum.map(fn data_space -> String.to_atom(data_space.handle) end)
         {:ok, tenants}
       rescue
@@ -45,15 +45,15 @@ defmodule Landlord.Tenants do
     end
   end
 
-  def get!() do
-    {:ok, tenants} = __MODULE__.get()
+  def get!(opts \\ []) do
+    {:ok, tenants} = __MODULE__.get(opts)
     tenants
   end
 
   @doc """
   Gets all data spaces
   """
-  def get_data_spaces(), do: Repo.all(DataSpace.get_active_data_spaces())
+  def get_data_spaces(opts \\ []), do: Repo.all(DataSpace.get_active_data_spaces(opts))
 
   @doc """
   Get data spaces for given user
@@ -61,8 +61,8 @@ defmodule Landlord.Tenants do
   Allows pending members to retrieve the data space as well. They are a valid
   member to receive events, but should not yet be able to dispatch any.
   """
-  def get_data_spaces_by_user(user) do
-    Repo.all(from d in DataSpace.get_active_data_spaces(),
+  def get_data_spaces_by_user(user, opts \\ []) do
+    Repo.all(from d in DataSpace.get_active_data_spaces(opts),
       join: u in assoc(d, :data_spaces__users),
       where: u.user_id == ^user.id and (u.status == "confirmed" or u.status == "pending")
     )
@@ -71,8 +71,8 @@ defmodule Landlord.Tenants do
   @doc """
   Get data spaces for given user, which may be inactive
   """
-  def get_inactive_data_spaces_by_user(user) do
-    Repo.all(from d in DataSpace.get_inactive_data_spaces(),
+  def get_inactive_data_spaces_by_user(user, opts \\ []) do
+    Repo.all(from d in DataSpace.get_inactive_data_spaces(opts),
       join: u in assoc(d, :data_spaces__users),
       where: u.user_id == ^user.id and u.status == "confirmed"
     )
@@ -96,7 +96,7 @@ defmodule Landlord.Tenants do
   @doc """
   Get a single data space
   """
-  def get_data_space!(id), do: Repo.get!(DataSpace, id)
+  def get_data_space!(id, opts \\ []), do: Repo.get!(DataSpace, id) |> Repo.preload(Keyword.get(opts, :preload, []))
 
   def get_data_space_by_handle(handle, opts \\ [])
   def get_data_space_by_handle(handle, opts) when is_atom(handle), do:
@@ -104,7 +104,7 @@ defmodule Landlord.Tenants do
   def get_data_space_by_handle(handle, opts) do
     unsafe = Keyword.get(opts, :unsafe, false)
 
-    Repo.one(from d in (if unsafe, do: DataSpace, else: DataSpace.get_active_data_spaces()),
+    Repo.one(from d in (if unsafe, do: DataSpace, else: DataSpace.get_active_data_spaces(opts)),
       where: d.handle == ^handle
     )
   end
@@ -117,7 +117,7 @@ defmodule Landlord.Tenants do
   def get_data_space_by_user_and_handle(user, handle, opts \\ []) do
     unsafe = Keyword.get(opts, :unsafe, false)
 
-    case Repo.one(from d in (if unsafe, do: DataSpace, else: DataSpace.get_active_data_spaces()),
+    case Repo.one(from d in (if unsafe, do: DataSpace, else: DataSpace.get_active_data_spaces(opts)),
       join: u in assoc(d, :data_spaces__users),
       where: d.handle == ^handle and u.user_id == ^user.id and (u.status == "confirmed" or u.status == "pending")
     ) do
@@ -213,6 +213,10 @@ defmodule Landlord.Tenants do
 
 
   ## Database setters
+
+  def update_key_id(%DataSpace{} = data_space, key_id) do
+    Repo.update(DataSpace.set_key_id_changeset(data_space, key_id))
+  end
 
   def update_manifest(%DataSpace{} = data_space, manifest) do
     Repo.update(DataSpace.set_manifest_changeset(data_space, manifest))
