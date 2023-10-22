@@ -6,7 +6,7 @@ defmodule Landlord.Accounts do
   import Ecto.Query, warn: false
 
   alias Landlord.Repo
-  alias Landlord.Accounts.{User, UserToken, UserNotifier}
+  alias Landlord.Accounts.{User, UserToken, UserSetting, UserNotifier}
 
   ## Database getters
 
@@ -59,6 +59,16 @@ defmodule Landlord.Accounts do
 
   """
   def get_user!(id), do: Repo.get!(User, id)
+
+  @doc """
+  Get value from simple KV store for user settings
+  """
+  def get_setting(user, key) do
+    Repo.one(from s in UserSetting,
+      where: s.user_id == ^user.id and s.key == ^key
+    )
+  end
+
 
   ## User registration
 
@@ -135,8 +145,19 @@ defmodule Landlord.Accounts do
     User.registration_changeset(user, attrs, hash_password: false)
   end
 
+
   ## Settings
 
+  @doc """
+  Put setting in simple KV store
+  """
+  def put_setting(user, key, value) do
+    Repo.insert(%UserSetting{
+      user_id: user.id,
+      key: key,
+      value: value
+    }, on_conflict: {:replace, [:value]}, conflict_target: [:user_id, :key])
+  end
 
   @doc """
   Updates the user profile (name / picture)

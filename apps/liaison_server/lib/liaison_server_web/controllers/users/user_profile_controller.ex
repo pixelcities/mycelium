@@ -184,6 +184,25 @@ defmodule LiaisonServerWeb.Users.UserProfileController do
     end
   end
 
+  def get_setting(conn, %{"key" => key}) do
+    user = conn.assigns.current_user
+
+    json(conn, Accounts.get_setting(user, key))
+  end
+
+  def put_setting(conn, %{"key" => key, "value" => value}) do
+    user = conn.assigns.current_user
+
+    case Accounts.put_setting(user, key, value) do
+      {:ok, setting} ->
+        json(conn, setting)
+      _ ->
+        conn
+        |> put_status(500)
+        |> json(%{:error => "error"})
+    end
+  end
+
   defp assign_email_and_password_changesets(conn, _opts) do
     user = conn.assigns.current_user
 

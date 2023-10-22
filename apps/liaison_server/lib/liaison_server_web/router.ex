@@ -63,6 +63,9 @@ defmodule LiaisonServerWeb.Router do
     get "/:id", UserProfileController, :get_user
     put "/profile", UserProfileController, :update_user
     put "/profile/confirm_email/:token/:rotation_token", UserProfileController, :confirm_email
+
+    get "/settings/:key", UserProfileController, :get_setting
+    put "/settings", UserProfileController, :put_setting
   end
 
   ## Data space routes
